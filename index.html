@@ -73,7 +73,7 @@
 
   /* ---------- hero ---------- */
   .hero{position:relative;overflow:hidden;border-bottom:var(--borda)}
-  .hero-track{position:relative;min-height:min(88vh,760px)}
+  .hero-track{position:relative;min-height:min(90vh,820px)}
   .slide{position:absolute;inset:0;display:flex;align-items:flex-end;opacity:0;
          pointer-events:none;transition:opacity .7s ease}
   .slide.on{opacity:1;pointer-events:auto}
@@ -83,7 +83,7 @@
       linear-gradient(180deg,#0c0c0e 0%, #0a0a0b 100%)}
   .slide-foto{align-items:stretch}
   .slide-foto .slide-inner{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
-  .foto-topo{flex:0 0 auto;align-self:center;height:clamp(260px,calc(88vh - 400px),370px);width:auto;max-width:100%;
+  .foto-topo{flex:0 0 auto;align-self:center;height:clamp(300px,calc(90vh - 400px),430px);width:auto;max-width:100%;
      display:block;border-radius:var(--raio);border:var(--borda);box-shadow:0 24px 60px -28px #000}
   .slide-txt{width:100%}
   .slide-inner{position:relative;width:100%;max-width:var(--largura);margin:0 auto;
@@ -344,7 +344,7 @@
     .slide-foto .foto-topo{width:100%;height:auto;max-height:40vh}
     .marca-logo{width:92px;height:48px}
     .pastores .capa{height:158px;justify-content:space-between;gap:0}
-    .culto.foto .selo{left:50%;right:auto;transform:translateX(-50%)}
+    .culto.foto .selo{position:static;transform:none;align-self:center;margin:0 0 14px}
     .pastores .capa .retrato{height:112%}
     .pastores .capa .marca-logo{width:96px;height:50px}
     #mapa{height:300px}
