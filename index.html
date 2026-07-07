@@ -658,11 +658,8 @@ const slidesData=(()=>{
   const mes=HOJE.getMonth();
   const eBanner=e=>e.img||e.banner;                        // tem flyer ou é marcado (ex.: Domingo de Ceia)
   const doMes=futuros.filter(e=>d(e.inicio).getMonth()===mes && !(e.tipo==='culto'&&!eBanner(e)));
-  const fora=futuros.filter(e=>eBanner(e)&&!doMes.includes(e));
-  const flyers=fora.filter(e=>e.img);                      // flyers fora do mês (ex.: DN4)
-  const proxCeia=doMes.some(e=>e.banner)?null:fora.find(e=>e.banner); // só a próxima Ceia, se o mês não tiver
-  const l=[...doMes,...flyers,...(proxCeia?[proxCeia]:[])].sort((a,b)=>d(a.inicio)-d(b.inicio)).slice(0,5);
-  return l.length?l:futuros.slice(0,3);
+  const l=doMes.sort((a,b)=>d(a.inicio)-d(b.inicio)).slice(0,5);
+  return l.length?l:futuros.slice(0,3);                    // fallback só se o mês não tiver nada à frente
 })();
 const track=document.getElementById('track'),dotsBox=document.getElementById('dots');
 function textoSlide(e){
