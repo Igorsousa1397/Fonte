@@ -155,6 +155,7 @@
   .ag-dow{font-size:.72rem;color:var(--cinza);text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
   .ag-titulo{font-weight:500}
   .ag-tipo{display:block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza);margin-top:3px}
+  .ag-hora{text-transform:none;letter-spacing:.02em}
   .ag-item.ag-dest .ag-tipo{color:var(--agua)}
   .ag-acao{justify-self:end}
   .ag-prox{font-size:.72rem;color:var(--agua);font-weight:600;white-space:nowrap}
@@ -608,8 +609,8 @@
 const HOJE = new Date('2026-07-06T00:00:00'); // trocar por new Date() em produção
 const AGENDA = [
   { inicio:'2026-07-11', dow:'Sáb', titulo:'Culto Jovens DN4', tipo:'culto', img:'assets/dn4-jovens.jpg' },
-  { inicio:'2026-07-14', dow:'Ter', titulo:'Através de Você', tipo:'evento', img:'assets/atraves-de-voce.jpg' },
-  { inicio:'2026-07-23', fim:'2026-07-26', dow:'Qui–Dom', titulo:'Aniversário da Igreja', tipo:'evento', destaque:true },
+  { inicio:'2026-07-14', dow:'Ter', titulo:'Através de Você', tipo:'culto', img:'assets/atraves-de-voce.jpg' },
+  { inicio:'2026-07-23', fim:'2026-07-26', dow:'Qui–Dom', titulo:'Aniversário da Igreja', tipo:'conferencia', destaque:true },
   { inicio:'2026-07-28', dow:'Ter', titulo:'Discipulado com Líderes de Célula', tipo:'lideranca' },
   { inicio:'2026-08-04', dow:'Ter', titulo:'Culto “À Fonte do Empreendedor”', tipo:'culto' },
   { inicio:'2026-08-08', dow:'Sáb', titulo:'Culto DN4', tipo:'culto' },
@@ -636,28 +637,46 @@ const AGENDA = [
   { inicio:'2026-12-31', dow:'Qui', titulo:'Culto da Virada', tipo:'culto' },
 ];
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const TIPO_LABEL={culto:'Culto',evento:'Evento',lideranca:'Liderança',marco:'Marco'};
+const TIPO_LABEL={culto:'Culto',evento:'Evento',conferencia:'Conferência',lideranca:'Liderança',marco:'Marco'};
 const d=iso=>new Date(iso+'T00:00:00');
 const diasAte=iso=>Math.ceil((d(iso)-HOJE)/864e5);
 const fmtFaixa=e=>{const i=d(e.inicio);if(!e.fim)return `${i.getDate()} de ${MESES[i.getMonth()]}`;
   const f=d(e.fim);return i.getMonth()===f.getMonth()?`${i.getDate()} a ${f.getDate()} de ${MESES[f.getMonth()]}`
   :`${i.getDate()}/${i.getMonth()+1} a ${f.getDate()}/${f.getMonth()+1}`;};
+/* ---- cultos fixos: Dom (Culto da Família 10h·18h30) e Qua (Quarta Profética 20h), de hoje até dez/2026 ---- */
+(()=>{
+  const iso=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  const faixas=AGENDA.map(e=>[e.inicio,e.fim||e.inicio]);          // datas já ocupadas por eventos especiais
+  const ocupado=s=>faixas.some(([a,b])=>s>=a&&s<=b);
+  const fim=new Date(HOJE.getFullYear(),11,31);
+  for(let dt=new Date(HOJE);dt<=fim;dt.setDate(dt.getDate()+1)){
+    const s=iso(dt),w=dt.getDay();
+    if(ocupado(s))continue;
+    if(w===0){const ceia=dt.getDate()<=7;AGENDA.push({inicio:s,dow:'Dom',titulo:ceia?'Domingo de Ceia':'Culto da Família',tipo:'culto',hora:'10h · 18h30',fixo:true,banner:ceia});}
+    else if(w===3)AGENDA.push({inicio:s,dow:'Qua',titulo:'Quarta Profética',tipo:'culto',hora:'20h',fixo:true});
+  }
+})();
 const futuros=AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));
-const proximoIso=futuros.length?futuros[0].inicio:null;
+const proximoIso=(futuros.find(e=>!e.fixo)||futuros[0]||{}).inicio||null;
 
 /* ---- hero ---- */
 const slidesData=(()=>{
   const mes=HOJE.getMonth();
-  const doMes=futuros.filter(e=>d(e.inicio).getMonth()===mes);
-  const comBanner=futuros.filter(e=>e.img&&!doMes.includes(e)); // ex.: DN4 se ainda não estiver no mês
-  const l=[...doMes,...comBanner].sort((a,b)=>d(a.inicio)-d(b.inicio)).slice(0,5);
+  const eBanner=e=>e.img||e.banner;                        // tem flyer ou é marcado (ex.: Domingo de Ceia)
+  const doMes=futuros.filter(e=>d(e.inicio).getMonth()===mes && !(e.tipo==='culto'&&!eBanner(e)));
+  const fora=futuros.filter(e=>eBanner(e)&&!doMes.includes(e));
+  const flyers=fora.filter(e=>e.img);                      // flyers fora do mês (ex.: DN4)
+  const proxCeia=doMes.some(e=>e.banner)?null:fora.find(e=>e.banner); // só a próxima Ceia, se o mês não tiver
+  const l=[...doMes,...flyers,...(proxCeia?[proxCeia]:[])].sort((a,b)=>d(a.inicio)-d(b.inicio)).slice(0,5);
   return l.length?l:futuros.slice(0,3);
 })();
 const track=document.getElementById('track'),dotsBox=document.getElementById('dots');
 function textoSlide(e){
   if(e.titulo.includes('Submergidos'))return 'Um retiro de 3 dias pra mergulhar no próximo nível. Inscrições abertas pelo app do encontro.';
   if(e.titulo.includes('Peniel'))return 'Encontro com Deus. Três dias que marcam. Faça sua inscrição pelo app.';
+  if(/Ceia/.test(e.titulo))return 'Nosso Domingo de Santa Ceia. Venha participar da mesa do Senhor com a família Fonte.';
   if(e.tipo==='culto')return 'Venha adorar com a gente. Todos são bem-vindos à casa da Fonte.';
+  if(e.tipo==='conferencia')return 'Dias de imersão, palavra e presença. Marque na agenda e participe.';
   if(e.tipo==='lideranca')return 'Momento de formação e alinhamento com quem lidera na igreja.';
   if(e.tipo==='marco')return 'Uma data especial na vida da nossa comunidade.';
   return 'Reserve a data na sua agenda e venha viver esse momento com a Fonte.';}
@@ -729,7 +748,7 @@ function renderAgenda(){
       const row=document.createElement('div');
       row.className='ag-item'+(e.destaque?' ag-dest':'');
       row.innerHTML=`<div class="ag-quando"><div class="ag-dia">${e.fim?i.getDate()+'–'+d(e.fim).getDate():i.getDate()}</div><div class="ag-dow">${e.dow}</div></div>
-        <div class="ag-titulo">${e.titulo}<span class="ag-tipo">${TIPO_LABEL[e.tipo]}</span></div>
+        <div class="ag-titulo">${e.titulo}<span class="ag-tipo">${TIPO_LABEL[e.tipo]}${e.hora?`<span class="ag-hora"> · ${e.hora}</span>`:''}</span></div>
         <div class="ag-acao">${acao}</div>`;
       bloco.appendChild(row);
     });
