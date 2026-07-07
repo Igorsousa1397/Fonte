@@ -191,6 +191,10 @@
   .fcel:hover{color:var(--luz);border-color:var(--cinza)}
   .fcel.on{background:var(--luz);color:#0a0a0b;border-color:var(--luz)}
   .cel-lista{overflow-y:auto;max-height:452px;padding:6px}
+  .cel-mais{display:none;width:100%;margin-top:10px;padding:12px;background:transparent;
+     border:var(--borda);border-radius:100px;color:var(--luz);font-size:.9rem;font-weight:600;
+     cursor:pointer;transition:border-color .2s,background .2s}
+  .cel-mais:hover{border-color:var(--agua-forte);background:rgba(255,255,255,.03)}
   .cel-item{padding:14px 14px;border-radius:var(--raio-sm);cursor:pointer;transition:background .2s;
             border:1px solid transparent}
   .cel-item:hover{background:rgba(255,255,255,.03)}
@@ -276,10 +280,6 @@
   .socials a:hover{border-color:var(--agua);color:var(--agua)}
   .foot-base{margin-top:40px;padding-top:22px;border-top:var(--borda);display:flex;
              justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--cinza);font-size:.82rem}
-  .float-wa{position:fixed;right:18px;bottom:18px;z-index:800;width:54px;height:54px;border-radius:50%;
-            background:#25d366;display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(37,211,102,.6);
-            transition:transform .2s}
-  .float-wa:hover{transform:scale(1.06)}
   .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--grafite-2);
          border:1px solid var(--agua-forte);color:var(--luz);padding:12px 18px;border-radius:100px;
          font-size:.9rem;opacity:0;pointer-events:none;transition:all .3s;z-index:1000}
@@ -305,6 +305,9 @@
     .quem,.contato,.contrib,.cel-topo{grid-template-columns:1fr;gap:26px}
     .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
     .cel-lista{max-height:none}
+    .cel-lista.colapsada .cel-item:nth-child(n+6){display:none}
+    .cel-mais{display:block}
+    .cel-painel.poucas .cel-mais{display:none}
     #mapa{height:440px}
   }
   /* mobile (menu vira gaveta) */
@@ -349,7 +352,6 @@
     .pastores .capa .retrato{height:112%}
     .pastores .capa .marca-logo{width:96px;height:50px}
     #mapa{height:300px}
-    .float-wa{right:14px;bottom:14px;width:50px;height:50px}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 </style>
@@ -460,7 +462,8 @@
       <div id="mapa"></div>
       <div class="cel-painel">
         <div class="cel-filtros" id="celFiltros"></div>
-        <div class="cel-lista" id="celLista"></div>
+        <div class="cel-lista colapsada" id="celLista"></div>
+        <button class="cel-mais" id="celMais" type="button">Ver mais</button>
       </div>
     </div>
   </div>
@@ -598,9 +601,6 @@
   </div>
 </footer>
 
-<a class="float-wa" href="https://wa.me/5511982222149" target="_blank" rel="noopener" aria-label="Fale no WhatsApp">
-  <svg width="26" height="26" fill="#fff" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2zm5.7 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5-4.5-.2-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.3.3c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.9-1c.2-.2.4-.2.6-.1l2 .9c.2.1.4.2.5.3.1.2.1.7-.1 1.3z"/></svg>
-</a>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -797,6 +797,9 @@ function initMapa(){
 function popupHtml(c){return `<b>${c.nome}</b>${c.tag?` · <span style="color:var(--agua);font-size:.75rem">${c.tag}</span>`:''}<br>${c.lider}<br><span style="color:var(--cinza)">${c.end}</span>${c.hora?`<br><span class="p-hora">${c.hora}</span>`:''}`;}
 
 const celLista=document.getElementById('celLista'),celFiltros=document.getElementById('celFiltros');
+const celMais=document.getElementById('celMais'),celPainel=celLista.closest('.cel-painel');
+const LIMITE_CEL=5;
+celMais.onclick=()=>{const ab=celLista.classList.toggle('colapsada')===false;celMais.textContent=ab?'Ver menos':'Ver mais';};
 const cidades=['Todas',...[...new Set(CELULAS.map(c=>c.cidade))]];
 let cidadeAtiva='Todas';
 cidades.forEach(cid=>{const b=document.createElement('button');b.className='fcel'+(cid==='Todas'?' on':'');
@@ -812,12 +815,16 @@ function renderCel(){
     it.onclick=()=>selecionaCel(idx,true);
     celLista.appendChild(it);
   });
+  celLista.classList.add('colapsada');celMais.textContent='Ver mais';
+  celPainel.classList.toggle('poucas',celLista.children.length<=LIMITE_CEL);
 }
 function selecionaCel(idx,fromLista){
   const c=CELULAS[idx];celAtiva=idx;
   document.querySelectorAll('.cel-item').forEach(el=>el.classList.toggle('on',+el.dataset.idx===idx));
+  const alvo=document.querySelector(`.cel-item[data-idx="${idx}"]`);
+  if(alvo&&alvo.offsetParent===null){celLista.classList.remove('colapsada');celMais.textContent='Ver menos';}
   if(mapa&&markers[idx]){mapa.flyTo([c.lat,c.lng],14,{duration:.6});markers[idx].openPopup();}
-  if(fromLista){document.querySelector(`.cel-item[data-idx="${idx}"]`)?.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  if(fromLista){alvo?.scrollIntoView({block:'nearest',behavior:'smooth'});}
 }
 renderCel();
 if(document.readyState==='complete')initMapa(); else window.addEventListener('load',initMapa);
