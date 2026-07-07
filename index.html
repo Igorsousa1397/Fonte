@@ -7,7 +7,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Igreja Fonte · Cajamar</title>
-<link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -128,7 +127,7 @@
       background:
       radial-gradient(90% 120% at 70% 10%,rgba(122,212,207,.18),transparent 60%),
       linear-gradient(135deg,#1a1a1f,#0d0d10);
-      display:flex;align-items:flex-end;justify-content:space-between}
+      display:flex;align-items:flex-end;justify-content:center;gap:8px}
   .pastores .capa .marca-logo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
       width:120px;height:62px;animation:none;opacity:.42;z-index:0}
   .pastores .capa .retrato{position:relative;z-index:1;height:142%;width:auto;display:block}
@@ -178,7 +177,7 @@
   .selo{align-self:flex-start;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
         color:var(--agua);border:1px solid var(--agua-forte);border-radius:100px;padding:4px 10px;margin-bottom:14px}
   .culto.foto .selo{position:absolute;top:20px;right:20px;margin:0;z-index:2;
-     color:#ff6b6b;border-color:rgba(255,107,107,.55);background:rgba(255,80,86,.14)}
+     color:#ff3b3b;border-color:rgba(255,59,59,.7);background:rgba(255,45,45,.22);font-weight:600}
 
   /* Células */
   .cel-topo{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:stretch}
@@ -344,7 +343,8 @@
     .slide h1{font-size:2.3rem}
     .slide-foto .foto-topo{width:100%;height:auto;max-height:40vh}
     .marca-logo{width:92px;height:48px}
-    .pastores .capa{height:158px}
+    .pastores .capa{height:158px;justify-content:space-between;gap:0}
+    .culto.foto .selo{left:50%;right:auto;transform:translateX(-50%)}
     .pastores .capa .retrato{height:112%}
     .pastores .capa .marca-logo{width:96px;height:50px}
     #mapa{height:300px}
