@@ -183,10 +183,15 @@
 
   /* Células */
   .cel-topo{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:stretch}
-  #mapa{height:520px;border-radius:var(--raio);border:var(--borda);background:#0d0d10;z-index:1}
+  #mapa{height:520px;border-radius:var(--raio);border:var(--borda);background:#0d0d10;z-index:1;scroll-margin-top:80px}
   .cel-painel{border:var(--borda);border-radius:var(--raio);background:var(--breu);
               display:flex;flex-direction:column;overflow:hidden}
   .cel-filtros{display:flex;gap:8px;padding:16px 16px 12px;border-bottom:var(--borda);flex-wrap:wrap}
+  .cel-busca{margin:14px 16px 2px;padding:11px 14px;border-radius:12px;border:1px solid var(--neblina);
+             background:var(--grafite);color:var(--luz);font-size:.9rem;font-family:inherit;outline:none;transition:border-color .2s}
+  .cel-busca::placeholder{color:var(--cinza)}
+  .cel-busca:focus{border-color:var(--agua-forte)}
+  .cel-vazio{padding:20px 14px;color:var(--cinza);font-size:.9rem;text-align:center}
   .fcel{font-size:.78rem;font-weight:500;padding:7px 13px;border-radius:100px;border:1px solid var(--neblina);
         background:transparent;color:var(--cinza-claro);cursor:pointer;transition:all .2s}
   .fcel:hover{color:var(--luz);border-color:var(--cinza)}
@@ -478,6 +483,7 @@
     <div class="cel-topo">
       <div id="mapa"></div>
       <div class="cel-painel">
+        <input class="cel-busca" id="celBusca" type="search" placeholder="Buscar célula, líder ou endereço…" autocomplete="off" aria-label="Buscar célula">
         <div class="cel-filtros" id="celFiltros"></div>
         <div class="cel-lista colapsada" id="celLista"></div>
         <button class="cel-mais" id="celMais" type="button">Ver mais</button>
@@ -805,6 +811,7 @@ const CELULAS=[
   // BARUERI
   {nome:'Fonte',lider:'Samuel e Luana',end:'Rua Gabriela, 109 — Parque dos Camargos, Barueri',hora:'20h',cidade:'Barueri',lat:-23.540402,lng:-46.8899412},
 ];
+CELULAS.sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
 
 let mapa,markers=[],celAtiva=null;
 function initMapa(){
@@ -830,22 +837,30 @@ const celMais=document.getElementById('celMais'),celPainel=celLista.closest('.ce
 const LIMITE_CEL=5;
 celMais.onclick=()=>{const ab=celLista.classList.toggle('colapsada')===false;celMais.textContent=ab?'Ver menos':'Ver mais';};
 const cidades=['Todas',...[...new Set(CELULAS.map(c=>c.cidade))]];
-let cidadeAtiva='Todas';
+let cidadeAtiva='Todas', buscaCel='';
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const celBusca=document.getElementById('celBusca');
+if(celBusca) celBusca.addEventListener('input',()=>{buscaCel=celBusca.value;renderCel();});
 cidades.forEach(cid=>{const b=document.createElement('button');b.className='fcel'+(cid==='Todas'?' on':'');
   b.textContent=cid;b.onclick=()=>{cidadeAtiva=cid;[...celFiltros.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');renderCel();};
   celFiltros.appendChild(b);});
 function renderCel(){
   celLista.innerHTML='';
+  const q=norm(buscaCel.trim());
   CELULAS.forEach((c,idx)=>{
     if(cidadeAtiva!=='Todas'&&c.cidade!==cidadeAtiva)return;
+    if(q && !norm(`${c.nome} ${c.lider} ${c.end}`).includes(q))return;
     const it=document.createElement('div');it.className='cel-item';it.dataset.idx=idx;
     it.innerHTML=`<h4>${c.nome}${c.tag?`<span class="cel-badge">${c.tag}</span>`:''}</h4>
       <div class="lider">${c.lider}</div><div class="end">${c.end}</div>${c.hora?`<div class="hora">${c.hora}</div>`:''}`;
     it.onclick=()=>selecionaCel(idx,true);
     celLista.appendChild(it);
   });
-  celLista.classList.add('colapsada');celMais.textContent='Ver mais';
-  celPainel.classList.toggle('poucas',celLista.children.length<=LIMITE_CEL);
+  const buscando=q.length>0;
+  if(!celLista.children.length) celLista.innerHTML='<div class="cel-vazio">Nenhuma célula encontrada.</div>';
+  celLista.classList.toggle('colapsada',!buscando);            // ao buscar, mostra todas
+  celMais.textContent='Ver mais';
+  celPainel.classList.toggle('poucas',buscando||celLista.children.length<=LIMITE_CEL);
 }
 function selecionaCel(idx,fromLista){
   const c=CELULAS[idx];celAtiva=idx;
@@ -853,7 +868,13 @@ function selecionaCel(idx,fromLista){
   const alvo=document.querySelector(`.cel-item[data-idx="${idx}"]`);
   if(alvo&&alvo.offsetParent===null){celLista.classList.remove('colapsada');celMais.textContent='Ver menos';}
   if(mapa&&markers[idx]){mapa.flyTo([c.lat,c.lng],14,{duration:.6});markers[idx].openPopup();}
-  if(fromLista){alvo?.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  if(fromLista){
+    if(window.matchMedia('(max-width:1080px)').matches){
+      document.getElementById('mapa').scrollIntoView({behavior:'smooth',block:'start'});
+    } else {
+      alvo?.scrollIntoView({block:'nearest',behavior:'smooth'});
+    }
+  }
 }
 renderCel();
 if(document.readyState==='complete')initMapa(); else window.addEventListener('load',initMapa);
