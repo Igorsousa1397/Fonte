@@ -601,7 +601,7 @@
     </div>
     <div class="foot-base">
       <span>© 2026 Igreja Apostólica Fonte · Desenvolvido por <span class="dev-cred">iOS Tech</span></span>
-      <span class="foot-legais"><a href="#">Política de Privacidade</a><a href="#">Condições e suporte</a></span>
+      <span class="foot-legais"><a href="politica-de-privacidade.html">Política de Privacidade</a><a href="condicoes.html">Condições e suporte</a></span>
     </div>
   </div>
 </footer>
@@ -731,7 +731,7 @@ const listaBox=document.getElementById('lista'),filtrosBox=document.getElementBy
 const mesesComEvento=[...new Set(AGENDA.map(e=>d(e.inicio).getMonth()))].sort((a,b)=>a-b);
 let filtroAtivo = mesesComEvento.includes(HOJE.getMonth()) ? HOJE.getMonth()
   : (mesesComEvento.find(m=>m>=HOJE.getMonth()) ?? mesesComEvento[0] ?? 'todos');
-[{k:'todos',l:'Todos'},...mesesComEvento.map(m=>({k:m,l:MESES[m]}))].forEach(f=>{
+mesesComEvento.map(m=>({k:m,l:MESES[m]})).forEach(f=>{
   const b=document.createElement('button');b.className='fcel'+(f.k===filtroAtivo?' on':'');b.textContent=f.l;
   b.onclick=()=>{filtroAtivo=f.k;[...filtrosBox.children].forEach(c=>c.classList.remove('on'));b.classList.add('on');renderAgenda();};
   filtrosBox.appendChild(b);});
