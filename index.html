@@ -215,6 +215,7 @@
   .leaflet-popup-content{margin:14px 16px;font-size:.9rem}
   .leaflet-popup-content b{font-family:var(--display);font-size:1.05rem}
   .leaflet-popup-content .p-hora{color:var(--agua);font-weight:600}
+  .leaflet-popup-content .p-foto{width:100%;height:130px;object-fit:cover;border-radius:8px;margin-bottom:8px;display:block}
   .leaflet-popup-close-button{color:var(--cinza)!important}
   .leaflet-control-zoom a{background:var(--grafite)!important;color:var(--luz)!important;
      border-color:var(--neblina)!important}
@@ -780,7 +781,7 @@ const CELULAS=[
   {nome:'Ebenézer',lider:'Sóstenes e Kelly',end:'Rua das Alpínias, 577 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3988088,lng:-46.859581},
   {nome:'Betel',lider:'Rodnei e Débora',end:'Av. das Palmeiras, 720 — ap.97 (Portal)',hora:'19h30',cidade:'Cajamar',lat:-23.4041966,lng:-46.8627586},
   {nome:'Transbordo',lider:'Marlucia e Cícero',end:'Rua Cosmópolis, 123 — Pq. Paraíso',hora:'Sáb 19h',cidade:'Cajamar',lat:-23.4192869,lng:-46.8263836},
-  {nome:'Ekklesia',lider:'Carol e Claiton',end:'Rua das Malvas, 245 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3968332,lng:-46.8646969},
+  {nome:'Ekklesia',lider:'Carol e Claiton',end:'Rua das Malvas, 245 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3968332,lng:-46.8646969,foto:'assets/celulas/ekklesia.jpg'},
   {nome:'Atos 29',lider:'Nicolas e Agatha',end:'Rua Campos do Jordão, 175 — Cond. Vitória 1 (Polvilho/Panorama)',hora:'19h30',cidade:'Cajamar',lat:-23.4129728,lng:-46.8455715},
   {nome:'Yeshua',lider:'Marcio e Nina',end:'Rua dos Araçás, 17 — Bairro Cimiga',hora:'20h',cidade:'Cajamar',lat:-23.3527921,lng:-46.8752369},
   {nome:'Identidade',lider:'Douglas e Fran',end:'Rua das Caliandras, 401 — Portal 3',hora:'20h',cidade:'Cajamar',lat:-23.3991101,lng:-46.8573909},
@@ -816,7 +817,7 @@ function initMapa(){
   const pts=[ANCHOR.igreja,...CELULAS.map(c=>[c.lat,c.lng])];
   mapa.fitBounds(L.latLngBounds(pts).pad(0.12));
 }
-function popupHtml(c){return `<b>${c.nome}</b>${c.tag?` · <span style="color:var(--agua);font-size:.75rem">${c.tag}</span>`:''}<br>${c.lider}<br><span style="color:var(--cinza)">${c.end}</span>${c.hora?`<br><span class="p-hora">${c.hora}</span>`:''}`;}
+function popupHtml(c){return `${c.foto?`<img class="p-foto" src="${c.foto}" alt="Célula ${c.nome}" loading="lazy">`:''}<b>${c.nome}</b>${c.tag?` · <span style="color:var(--agua);font-size:.75rem">${c.tag}</span>`:''}<br>${c.lider}<br><span style="color:var(--cinza)">${c.end}</span>${c.hora?`<br><span class="p-hora">${c.hora}</span>`:''}`;}
 
 const celLista=document.getElementById('celLista'),celFiltros=document.getElementById('celFiltros');
 const celMais=document.getElementById('celMais'),celPainel=celLista.closest('.cel-painel');
