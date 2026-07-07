@@ -73,7 +73,7 @@
 
   /* ---------- hero ---------- */
   .hero{position:relative;overflow:hidden;border-bottom:var(--borda)}
-  .hero-track{position:relative;min-height:min(76vh,620px);transition:min-height .45s ease}
+  .hero-track{position:relative;min-height:min(76vh,620px)}
   .slide{position:absolute;inset:0;display:flex;align-items:flex-end;opacity:0;
          pointer-events:none;transition:opacity .7s ease}
   .slide.on{opacity:1;pointer-events:auto}
@@ -81,12 +81,11 @@
       radial-gradient(120% 90% at 82% 15%, rgba(122,212,207,.10), transparent 55%),
       radial-gradient(90% 120% at 10% 90%, rgba(255,255,255,.04), transparent 60%),
       linear-gradient(180deg,#0c0c0e 0%, #0a0a0b 100%)}
-  .slide-foto{align-items:center}
-  .foto-wrap{position:relative;z-index:1;width:100%;display:flex;flex-direction:column;
-     align-items:center;gap:20px;padding:26px 22px}
-  .foto-art{height:min(480px,calc(76vh - 170px));width:auto;max-width:92vw;display:block;
-     border-radius:var(--raio);border:var(--borda);box-shadow:0 30px 80px -30px #000}
-  .slide-foto .slide-cta{justify-content:center}
+  .slide-bg.foto{background:var(--foto) center/cover no-repeat,
+     linear-gradient(180deg,#0c0c0e 0%, #0a0a0b 100%)}
+  .slide-bg.foto::after{content:"";position:absolute;inset:0;background:
+     linear-gradient(90deg,rgba(10,10,11,.9) 0%,rgba(10,10,11,.55) 38%,rgba(10,10,11,.15) 68%,transparent 100%),
+     linear-gradient(0deg,rgba(10,10,11,.82) 0%,transparent 46%)}
   .slide-inner{position:relative;width:100%;max-width:var(--largura);margin:0 auto;
                padding:60px 22px 64px}
   .slide-tag{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--neblina);
@@ -123,10 +122,12 @@
   .quem p strong{color:var(--luz);font-weight:600}
   .pastores{border:var(--borda);border-radius:var(--raio);overflow:hidden;
             background:linear-gradient(180deg,var(--grafite) 0%,var(--breu) 100%)}
-  .pastores .capa{height:190px;background:
+  .pastores .capa{height:220px;background:
       radial-gradient(90% 120% at 70% 10%,rgba(122,212,207,.18),transparent 60%),
-      linear-gradient(135deg,#1a1a1f,#0d0d10);display:grid;place-items:center}
-  .pastores .capa .marca-logo{width:120px;height:62px;animation:none;opacity:.9}
+      linear-gradient(135deg,#1a1a1f,#0d0d10);
+      display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+  .pastores .capa .retrato{height:100%;width:auto;display:block}
+  .pastores .capa .retrato:first-child{margin-right:-18px}
   .pastores .corpo{padding:24px}
   .pastores h3{font-family:var(--display);font-size:1.35rem;font-weight:700}
   .pastores .cargo{color:var(--agua);font-size:.82rem;letter-spacing:.08em;
@@ -337,11 +338,6 @@
     .ag-acao{grid-column:1 / -1;justify-self:start;margin-top:2px}
     .cel-item h4{font-size:1rem}
     .slide h1{font-size:2.3rem}
-    .hero-track.hero-foto{min-height:calc(50vw + 134px)}
-    .slide-foto{align-items:flex-start}
-    .slide-foto .foto-wrap{padding:10px 0 0;gap:12px}
-    .foto-art{height:auto;width:100%;max-width:100%;border-radius:0;border:none;box-shadow:none}
-    .slide-foto .slide-cta{padding:0 18px 64px}
     .marca-logo{width:92px;height:48px}
     #mapa{height:300px}
     .float-wa{right:14px;bottom:14px;width:50px;height:50px}
@@ -413,7 +409,10 @@
         <p style="color:var(--cinza);font-size:.86rem">✎ Este texto é um rascunho — troque pela história real da igreja e dos pastores.</p>
       </div>
       <div class="pastores">
-        <div class="capa"><span class="marca-logo" role="img" aria-label="Fonte"></span></div>
+        <div class="capa">
+          <img class="retrato" src="assets/eliel.webp" alt="Pr. Eliel Ponciano" loading="lazy">
+          <img class="retrato" src="assets/thamires.webp" alt="Pra. Thamires Ponciano" loading="lazy">
+        </div>
         <div class="corpo">
           <h3>Pr. Eliel &amp; Pra. Thamires Ponciano</h3>
           <div class="cargo">Pastores presidentes</div>
@@ -660,27 +659,18 @@ slidesData.forEach((e,i)=>{
   const s=document.createElement('div');s.className='slide'+(i===0?' on':'')+(e.img?' slide-foto':'');
   const contaHtml=`<span class="conta"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3.2L9 9"/></svg>${conta}</span>`;
   const tag=`<span class="slide-tag"><span class="dot"></span> ${fmtFaixa(e)} · ${e.dow}</span>`;
-  if(e.img){
-    s.innerHTML=`<div class="slide-bg"></div>
-      <div class="foto-wrap">
-        <img class="foto-art" src="${e.img}" alt="${e.titulo}">
-        <div class="slide-cta">${cta}${contaHtml}</div>
-      </div>`;
-  }else{
-    s.innerHTML=`<div class="slide-bg"></div><div class="slide-inner">
-      ${tag}
-      <h1>${e.titulo}</h1><p>${textoSlide(e)}</p>
-      <div class="slide-cta">${cta}${contaHtml}</div></div>`;
-  }
+  const bg=e.img?`<div class="slide-bg foto" style="--foto:url('${e.img}')"></div>`:`<div class="slide-bg"></div>`;
+  s.innerHTML=`${bg}<div class="slide-inner">
+    ${tag}
+    <h1>${e.titulo}</h1><p>${textoSlide(e)}</p>
+    <div class="slide-cta">${cta}${contaHtml}</div></div>`;
   track.appendChild(s);
   const b=document.createElement('button');if(i===0)b.className='on';b.onclick=()=>irPara(i);
   b.setAttribute('aria-label','Ir para '+e.titulo);dotsBox.appendChild(b);
 });
 let atual=0,timer;const slides=[...track.children],dots=[...dotsBox.children];
-function ajustaAltura(){track.classList.toggle('hero-foto',!!(slidesData[atual]&&slidesData[atual].img));}
 function irPara(i){slides[atual].classList.remove('on');dots[atual].classList.remove('on');
-  atual=(i+slides.length)%slides.length;slides[atual].classList.add('on');dots[atual].classList.add('on');ajustaAltura();reiniciar();}
-ajustaAltura();
+  atual=(i+slides.length)%slides.length;slides[atual].classList.add('on');dots[atual].classList.add('on');reiniciar();}
 const prefMov=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function reiniciar(){clearInterval(timer);if(!prefMov)timer=setInterval(()=>irPara(atual+1),6000);}
 document.getElementById('next').onclick=()=>irPara(atual+1);
