@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fotos dos cultos · Igreja Fonte</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --abismo:#0a0a0b; --grafite:#17171b; --neblina:#2a2a31; --cinza:#8b8b95; --cinza-claro:#b8b8c0; --luz:#f5f5f6;
+    --agua:#7ad4cf; --agua-forte:#4bb6b0;
+    --display:"Bricolage Grotesque", system-ui, sans-serif;
+    --corpo:"Inter", system-ui, sans-serif;
+    --borda:1px solid var(--neblina);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--abismo);color:var(--luz);font-family:var(--corpo);line-height:1.7;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+  .top{position:sticky;top:0;z-index:10;background:rgba(10,10,11,.82);backdrop-filter:blur(10px);border-bottom:var(--borda)}
+  .top-in{max-width:960px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .logo{width:104px;height:40px;background:url('assets/fonte-logo.png') left center/contain no-repeat;display:block}
+  .voltar{color:var(--cinza);font-size:.9rem;transition:color .2s}
+  .voltar:hover{color:var(--luz)}
+  .wrap{max-width:960px;margin:0 auto;padding:56px 22px 40px}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cinza);font-weight:600}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,2.9rem);line-height:1.05;margin:10px 0 12px}
+  .sub{color:var(--cinza-claro);max-width:56ch;margin-bottom:22px}
+  .btn-drive{display:inline-flex;align-items:center;gap:8px;background:var(--agua);color:#04201f;
+             font-weight:600;padding:12px 22px;border-radius:100px;transition:transform .15s,background .2s}
+  .btn-drive:hover{background:var(--agua-forte);transform:translateY(-1px)}
+
+  /* ---- carrossel ---- */
+  .carrossel{position:relative;margin-top:34px}
+  .c-viewport{overflow:hidden;border-radius:18px}
+  .c-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);will-change:transform}
+  .c-slide{flex:0 0 100%;position:relative}
+  .c-slide img{width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--grafite)}
+  .c-cap{position:absolute;left:0;right:0;bottom:0;padding:34px 22px 16px;color:var(--luz);font-size:.95rem;
+         background:linear-gradient(to top,rgba(0,0,0,.72),transparent)}
+  .c-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;
+         border:var(--borda);background:rgba(10,10,11,.55);backdrop-filter:blur(6px);color:var(--luz);
+         font-size:1.5rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+         transition:background .2s,border-color .2s;z-index:2}
+  .c-nav:hover{background:rgba(10,10,11,.85);border-color:var(--agua)}
+  .c-nav.prev{left:12px} .c-nav.next{right:12px}
+  .c-dots{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+  .c-dot{width:8px;height:8px;border-radius:50%;background:var(--neblina);border:0;cursor:pointer;padding:0;transition:all .2s}
+  .c-dot.on{background:var(--agua);width:22px;border-radius:100px}
+  .c-vazio{padding:60px 22px;text-align:center;color:var(--cinza);border:1px dashed var(--neblina);border-radius:18px}
+
+  .foot-base{max-width:960px;margin:40px auto 0;padding:22px;border-top:var(--borda);display:flex;
+             justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--cinza);font-size:.82rem}
+  .foot-base .dev-cred{color:var(--agua)}
+  .foot-legais{display:flex;gap:20px;flex-wrap:wrap}
+  .foot-legais a{color:var(--cinza);transition:color .2s}
+  .foot-legais a:hover{color:var(--luz)}
+  @media(max-width:560px){
+    .c-slide img{aspect-ratio:4/3}
+    .c-nav{width:38px;height:38px;font-size:1.3rem}
+  }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-in">
+      <a class="logo" href="index.html" aria-label="Igreja Fonte — início"></a>
+      <a class="voltar" href="index.html">← Voltar ao site</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <span class="eyebrow">Galeria</span>
+    <h1>Fotos dos cultos</h1>
+    <p class="sub">Momentos de adoração e comunhão na Fonte. Veja alguns registros abaixo e o álbum completo no nosso Drive.</p>
+    <a class="btn-drive" id="btnDrive" href="#" target="_blank" rel="noopener">Ver álbum completo no Drive ↗</a>
+
+    <div class="carrossel" id="carrossel">
+      <div class="c-viewport"><div class="c-track" id="track"></div></div>
+      <button class="c-nav prev" id="prev" aria-label="Foto anterior">‹</button>
+      <button class="c-nav next" id="next" aria-label="Próxima foto">›</button>
+      <div class="c-dots" id="dots"></div>
+    </div>
+  </main>
+
+  <footer class="foot-base">
+    <span>© 2026 Igreja Apostólica Fonte · Desenvolvido por <span class="dev-cred">iOS Tech</span></span>
+    <span class="foot-legais">
+      <a href="politica-de-privacidade.html">Política de Privacidade</a>
+      <a href="condicoes.html">Condições e suporte</a>
+      <a href="index.html">Voltar ao início</a>
+    </span>
+  </footer>
+
+<script>
+/* ======================================================================
+   CONFIG — edite só esta parte
+   ---------------------------------------------------------------------
+   1) ALBUM_DRIVE: cole o link da pasta compartilhada do Google Drive.
+   2) FOTOS: liste as fotos (coloque os arquivos em assets/galeria/).
+      'cap' é a legenda (opcional) — pode deixar '' se não quiser.
+   ====================================================================== */
+const ALBUM_DRIVE = "#"; // ex.: "https://drive.google.com/drive/folders/SEU_ID"
+
+const FOTOS = [
+  { src:'assets/galeria/culto-1.jpg', cap:'' },
+  { src:'assets/galeria/culto-2.jpg', cap:'' },
+  { src:'assets/galeria/culto-3.jpg', cap:'' },
+];
+/* ===================== fim da configuração ===================== */
+
+(() => {
+  const track=document.getElementById('track');
+  const dots=document.getElementById('dots');
+  const carrossel=document.getElementById('carrossel');
+  const btn=document.getElementById('btnDrive');
+
+  // botão do Drive
+  if(ALBUM_DRIVE && ALBUM_DRIVE!=='#'){ btn.href=ALBUM_DRIVE; }
+  else { btn.addEventListener('click',e=>{e.preventDefault();alert('Defina o link do álbum em ALBUM_DRIVE (no topo do script).');}); }
+
+  if(!FOTOS.length){
+    carrossel.innerHTML='<div class="c-vazio">Adicione fotos em <b>assets/galeria/</b> e liste-as em <b>FOTOS</b>.</div>';
+    return;
+  }
+
+  let i=0, timer=null;
+  // monta slides + bolinhas
+  FOTOS.forEach((f,idx)=>{
+    const s=document.createElement('div'); s.className='c-slide';
+    const img=document.createElement('img');
+    img.src=f.src; img.alt=f.cap||('Foto do culto '+(idx+1)); img.loading=idx?'lazy':'eager';
+    s.appendChild(img);
+    if(f.cap){ const c=document.createElement('div'); c.className='c-cap'; c.textContent=f.cap; s.appendChild(c); }
+    track.appendChild(s);
+    const d=document.createElement('button'); d.className='c-dot'+(idx?'':' on');
+    d.setAttribute('aria-label','Ir para foto '+(idx+1)); d.onclick=()=>go(idx);
+    dots.appendChild(d);
+  });
+
+  const go=n=>{
+    i=(n+FOTOS.length)%FOTOS.length;
+    track.style.transform=`translateX(${-i*100}%)`;
+    [...dots.children].forEach((d,k)=>d.classList.toggle('on',k===i));
+    reinicia();
+  };
+  const prox=()=>go(i+1), ant=()=>go(i-1);
+
+  document.getElementById('next').onclick=prox;
+  document.getElementById('prev').onclick=ant;
+
+  // teclado
+  document.addEventListener('keydown',e=>{ if(e.key==='ArrowRight')prox(); if(e.key==='ArrowLeft')ant(); });
+
+  // arrastar / swipe
+  let x0=null;
+  const vp=carrossel.querySelector('.c-viewport');
+  vp.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
+  vp.addEventListener('touchend',e=>{ if(x0===null)return; const dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>40){ dx<0?prox():ant(); } x0=null; });
+
+  // autoplay (pausa no hover)
+  const auto=()=>{ timer=setInterval(prox, 5500); };
+  const reinicia=()=>{ clearInterval(timer); auto(); };
+  carrossel.addEventListener('mouseenter',()=>clearInterval(timer));
+  carrossel.addEventListener('mouseleave',auto);
+  document.addEventListener('visibilitychange',()=>{ document.hidden?clearInterval(timer):auto(); });
+
+  // esconde setas/bolinhas se só tiver 1 foto
+  if(FOTOS.length<2){ document.getElementById('prev').style.display='none'; document.getElementById('next').style.display='none'; dots.style.display='none'; }
+  else auto();
+})();
+</script>
+</body>
+</html>
