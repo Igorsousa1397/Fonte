@@ -1,0 +1,19 @@
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# dependências (caso vire projeto Node no futuro)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ambiente / segredos — NUNCA versionar
+.env
+.env.local
+.env*.local
+
+# builds
+dist/
+.vercel/
