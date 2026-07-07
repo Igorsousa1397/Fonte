@@ -247,6 +247,9 @@
 
   /* Contato */
   .contato{display:grid;grid-template-columns:1fr;gap:22px;align-items:start;max-width:640px}
+  #contato .sec-head{text-align:center}
+  #contato .sec-head p{margin-left:auto;margin-right:auto}
+  #contato .contato{margin-left:auto;margin-right:auto}
   .form{border:var(--borda);border-radius:var(--raio);padding:28px;background:var(--grafite)}
   .campo{margin-bottom:16px}
   .campo label{display:block;font-size:.8rem;color:var(--cinza-claro);margin-bottom:7px;font-weight:500}
@@ -281,6 +284,10 @@
   .socials a:hover{border-color:var(--agua);color:var(--agua)}
   .foot-base{margin-top:40px;padding-top:22px;border-top:var(--borda);display:flex;
              justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--cinza);font-size:.82rem}
+  .foot-base .dev-cred{color:var(--agua)}
+  .foot-legais{display:flex;gap:20px;flex-wrap:wrap}
+  .foot-legais a{color:var(--cinza);transition:color .2s}
+  .foot-legais a:hover{color:var(--luz)}
   .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--grafite-2);
          border:1px solid var(--agua-forte);color:var(--luz);padding:12px 18px;border-radius:100px;
          font-size:.9rem;opacity:0;pointer-events:none;transition:all .3s;z-index:1000}
@@ -592,7 +599,10 @@
         <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=-23.40881,-46.86794" target="_blank" rel="noopener">Abrir no Google Maps ↗</a>
       </div>
     </div>
-    <div class="foot-base"><span>© 2026 Igreja Apostólica Fonte</span><span>Pastores Eliel &amp; Thamires Ponciano</span></div>
+    <div class="foot-base">
+      <span>© 2026 Igreja Apostólica Fonte · Desenvolvido por <span class="dev-cred">iOS Tech</span></span>
+      <span class="foot-legais"><a href="#">Política de Privacidade</a><a href="#">Condições e suporte</a></span>
+    </div>
   </div>
 </footer>
 
