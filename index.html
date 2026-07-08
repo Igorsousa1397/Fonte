@@ -377,6 +377,10 @@
            border-bottom:var(--borda);padding:8px 22px 18px;transform:translateY(-170%);
            transition:transform .3s;max-height:calc(100vh - 66px);overflow:auto}
     .mlinks.aberto{transform:translateY(0)}
+    .menu-overlay{position:fixed;inset:0;z-index:800;background:rgba(10,10,11,.35);
+      backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      opacity:0;pointer-events:none;transition:opacity .3s}
+    .menu-overlay.on{opacity:1;pointer-events:auto}
     .mlinks a:not(.btn){padding:14px 0;width:100%;border-bottom:1px solid rgba(42,42,49,.5)}
     .mlinks .btn{margin-top:14px;justify-content:center}
     .menu-btn{display:block}
@@ -443,10 +447,10 @@
     <a href="#celulas">Células</a>
     <a href="galeria.html">Fotos</a>
     <a href="batismo.html">Batismo</a>
-    <a href="login.html">Login (admin)</a>
-    <a class="btn btn-live" href="https://www.youtube.com/@igrejafontecajamar/streams" target="_blank" rel="noopener"><span class="live-dot"></span> Assistir ao vivo</a>
+    <a class="btn btn-claro" href="login.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Fazer login</a>
   </nav>
 </header>
+<div class="menu-overlay" id="menuOverlay"></div>
 
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="topo">
@@ -1044,8 +1048,11 @@ document.getElementById('enviaContato').onclick=()=>{
 
 /* ===================== menu mobile ===================== */
 const mobileMenu=document.getElementById('mobileMenu');
-document.getElementById('menuBtn').onclick=()=>mobileMenu.classList.toggle('aberto');
-mobileMenu.addEventListener('click',e=>{if(e.target.tagName==='A')mobileMenu.classList.remove('aberto');});
+const menuOverlay=document.getElementById('menuOverlay');
+const setMenu=(open)=>{mobileMenu.classList.toggle('aberto',open);if(menuOverlay)menuOverlay.classList.toggle('on',open);};
+document.getElementById('menuBtn').onclick=()=>setMenu(!mobileMenu.classList.contains('aberto'));
+mobileMenu.addEventListener('click',e=>{if(e.target.tagName==='A')setMenu(false);});
+if(menuOverlay)menuOverlay.onclick=()=>setMenu(false);
 
 /* ===================== animações sutis ===================== */
 (function(){
