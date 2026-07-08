@@ -70,13 +70,14 @@
   .btn-fantasma:hover{border-color:var(--cinza);background:rgba(255,255,255,.03)}
   .btn-live{background:#dc2626;border-color:#dc2626;position:relative;animation:liveGlow 2.4s ease-in-out infinite}
   .links a.btn-live,.mlinks a.btn-live{color:#fff}
+  .nav-live-mobile{display:none}
   .btn-live:hover{background:#ef4444;border-color:#ef4444}
   .btn-live .live-dot{width:8px;height:8px;border-radius:50%;background:#fff;position:relative;flex:0 0 auto}
   .btn-live .live-dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;animation:livePulse 1.8s ease-out infinite}
   @keyframes livePulse{0%{transform:scale(1);opacity:.6}80%,100%{transform:scale(3);opacity:0}}
   @keyframes liveGlow{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{box-shadow:0 0 0 6px rgba(220,38,38,.18)}}
   .menu-btn{display:none;background:none;border:none;color:var(--luz);cursor:pointer;padding:6px;
-            grid-column:3;justify-self:end}
+            grid-column:1;justify-self:start}
   .mlinks a{font-size:.9rem;color:var(--cinza-claro);font-weight:500}
 
   /* ---------- hero ---------- */
@@ -374,6 +375,7 @@
     .mlinks a:not(.btn){padding:14px 0;width:100%;border-bottom:1px solid rgba(42,42,49,.5)}
     .mlinks .btn{margin-top:14px;justify-content:center}
     .menu-btn{display:block}
+    .nav-live-mobile{display:inline-flex;grid-column:3;justify-self:end;padding:9px 15px;font-size:.85rem}
     .sec{padding:60px 0}
     .cultos,.insc-grid,.templos{grid-template-columns:1fr}
     .valores{grid-template-columns:1fr}
@@ -431,6 +433,7 @@
     <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
+    <a class="btn btn-live nav-live-mobile" href="https://www.youtube.com/@igrejafontecajamar/streams" target="_blank" rel="noopener"><span class="live-dot"></span> Ao vivo</a>
   </div>
   <nav class="mlinks" id="mobileMenu">
     <a href="#quem">Quem somos</a>
