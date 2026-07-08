@@ -68,12 +68,13 @@
   .btn-claro:hover{background:#fff}
   .btn-fantasma{background:transparent;color:var(--luz);border-color:var(--neblina)}
   .btn-fantasma:hover{border-color:var(--cinza);background:rgba(255,255,255,.03)}
-  .btn-live{background:#e5342b;color:#fff;border-color:#e5342b;position:relative;animation:liveGlow 2.4s ease-in-out infinite}
-  .btn-live:hover{background:#f0453c;border-color:#f0453c}
+  .btn-live{background:#dc2626;border-color:#dc2626;position:relative;animation:liveGlow 2.4s ease-in-out infinite}
+  .links a.btn-live,.mlinks a.btn-live{color:#fff}
+  .btn-live:hover{background:#ef4444;border-color:#ef4444}
   .btn-live .live-dot{width:8px;height:8px;border-radius:50%;background:#fff;position:relative;flex:0 0 auto}
   .btn-live .live-dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;animation:livePulse 1.8s ease-out infinite}
   @keyframes livePulse{0%{transform:scale(1);opacity:.6}80%,100%{transform:scale(3);opacity:0}}
-  @keyframes liveGlow{0%,100%{box-shadow:0 0 0 0 rgba(229,52,43,0)}50%{box-shadow:0 0 0 6px rgba(229,52,43,.18)}}
+  @keyframes liveGlow{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}50%{box-shadow:0 0 0 6px rgba(220,38,38,.18)}}
   .menu-btn{display:none;background:none;border:none;color:var(--luz);cursor:pointer;padding:6px;
             grid-column:3;justify-self:end}
   .mlinks a{font-size:.9rem;color:var(--cinza-claro);font-weight:500}
