@@ -1,0 +1,204 @@
+<!--
+  IGREJA FONTE · Cajamar — Página de inscrição do Batismo
+  Standalone. Mesmo design system do site (dark + acento água). Envio via WhatsApp.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inscrição · Batismo · Igreja Fonte</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --abismo:#0a0a0b; --breu:#101013; --grafite:#17171b; --grafite-2:#1f1f25;
+    --neblina:#2a2a31; --cinza:#8b8b95; --cinza-claro:#b8b8c0; --luz:#f5f5f6;
+    --agua:#7ad4cf; --agua-forte:#4bb6b0; --agua-fundo:rgba(122,212,207,.10);
+    --display:"Bricolage Grotesque", system-ui, sans-serif;
+    --corpo:"Inter", system-ui, sans-serif;
+    --raio:16px; --raio-sm:11px; --borda:1px solid var(--neblina); --largura:760px;
+    --logo:url('assets/fonte-logo.png');
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--abismo);color:var(--luz);font-family:var(--corpo);line-height:1.6;
+       -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+  ::selection{background:var(--agua);color:#04201f}
+  .wrap{max-width:var(--largura);margin:0 auto;padding:0 22px}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(10,10,11,.78);
+         backdrop-filter:saturate(140%) blur(14px);border-bottom:var(--borda)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:64px;max-width:var(--largura);margin:0 auto;padding:0 22px}
+  .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--cinza-claro);font-weight:500}
+  .voltar:hover{color:var(--luz)}
+  .marca-logo{background:var(--logo) center/contain no-repeat;width:92px;height:46px}
+
+  .hero{padding:46px 0 8px}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cinza);font-weight:600}
+  .flyer{margin:22px 0 4px;border-radius:var(--raio);border:var(--borda);box-shadow:0 24px 60px -28px #000;overflow:hidden}
+  .flyer img{width:100%;display:block}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,7vw,3.4rem);letter-spacing:-.03em;line-height:1;margin:26px 0 8px}
+  .chip{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--neblina);border-radius:100px;
+        padding:6px 14px;font-size:.78rem;color:var(--agua);background:var(--agua-fundo);font-weight:600}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--agua);box-shadow:0 0 0 4px var(--agua-fundo)}
+  .intro{color:var(--cinza-claro);margin-top:18px;font-size:1.02rem}
+  .versiculo{color:var(--cinza);font-style:italic;font-size:.95rem;border-left:2px solid var(--agua-forte);
+             padding-left:16px;margin:22px 0 4px}
+
+  .form{border:var(--borda);border-radius:var(--raio);padding:30px;background:var(--grafite);margin:34px 0 60px}
+  .form h2{font-family:var(--display);font-size:1.4rem;font-weight:700;margin-bottom:6px}
+  .form .sub{color:var(--cinza);font-size:.92rem;margin-bottom:24px}
+  .campo{margin-bottom:20px}
+  .campo label{display:block;font-size:.92rem;color:var(--luz);margin-bottom:9px;font-weight:500}
+  .campo .req{color:var(--agua)}
+  .campo .aj{display:block;font-size:.82rem;color:var(--cinza);font-weight:400;margin-top:2px}
+  .campo input{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);
+     padding:13px 15px;color:var(--luz);font-family:var(--corpo);font-size:.98rem;transition:border-color .2s}
+  .campo input:focus{outline:none;border-color:var(--agua-forte)}
+  .campo input::placeholder{color:var(--cinza)}
+  .opcoes{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+  .op{display:flex;align-items:center;gap:12px;border:var(--borda);border-radius:var(--raio-sm);
+      padding:13px 15px;background:var(--breu);cursor:pointer;transition:border-color .2s,background .2s}
+  .op:hover{border-color:var(--cinza)}
+  .op.on{border-color:var(--agua-forte);background:var(--agua-fundo)}
+  .op input{appearance:none;-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+     border:2px solid var(--neblina);flex:0 0 auto;position:relative;cursor:pointer;margin:0}
+  .op input:checked{border-color:var(--agua)}
+  .op input:checked::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--agua)}
+  .op span{font-size:.95rem}
+  .info{border:var(--borda);border-radius:var(--raio-sm);background:var(--breu);padding:15px 16px;margin-bottom:14px;
+        font-size:.9rem;color:var(--cinza-claro)}
+  .info b{color:var(--luz)}
+  .info .pix{color:var(--agua);font-family:var(--display);font-weight:700;letter-spacing:.02em}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;font-weight:600;
+       font-size:1rem;padding:15px 20px;border-radius:100px;cursor:pointer;border:none;background:var(--luz);
+       color:#0a0a0b;transition:transform .15s,background .2s}
+  .btn:hover{background:#fff}
+  .btn:active{transform:translateY(1px)}
+  .aviso{color:var(--cinza);font-size:.8rem;margin-top:14px;text-align:center}
+
+  footer{border-top:var(--borda);background:var(--breu)}
+  .foot{max-width:var(--largura);margin:0 auto;padding:26px 22px;display:flex;justify-content:space-between;
+        gap:16px;flex-wrap:wrap;color:var(--cinza);font-size:.82rem}
+  .foot .dev-cred{color:var(--agua)}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--grafite-2);
+         border:1px solid var(--agua-forte);color:var(--luz);padding:12px 18px;border-radius:100px;
+         font-size:.9rem;opacity:0;pointer-events:none;transition:all .3s;z-index:50}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  @media(max-width:560px){.form{padding:22px}}
+</style>
+
+<header>
+  <div class="nav">
+    <a class="voltar" href="index.html"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4l-6 5 6 5"/></svg> Voltar ao site</a>
+    <a href="index.html"><span class="marca-logo" role="img" aria-label="Igreja Fonte"></span></a>
+  </div>
+</header>
+
+<main class="wrap hero">
+  <span class="eyebrow">Inscrição</span>
+  <div class="flyer"><img src="assets/batismo.jpg" alt="Batismo · Igreja Fonte"></div>
+  <h1>Batismo</h1>
+  <!-- Ajuste a data abaixo quando confirmar -->
+  <span class="chip"><span class="dot"></span> Sábado · data a confirmar</span>
+  <p class="intro"><b style="color:var(--luz);font-weight:600">Shalom!</b> O batismo é mais que um símbolo — é um marco de fé, renúncia e recomeço. É deixar para trás o velho eu e nascer para uma nova vida com Cristo.</p>
+  <div class="versiculo">"Pois em um só corpo todos nós fomos batizados em um único Espírito: quer judeus, quer gregos, quer escravos, quer livres. E a todos nós foi dado beber de um único Espírito." — 1 Coríntios 12:13</div>
+
+  <div class="form">
+    <h2>Faça sua inscrição</h2>
+    <p class="sub">Preencha os dados abaixo. Ao enviar, sua inscrição é encaminhada pelo WhatsApp para a nossa equipe.</p>
+
+    <div class="campo">
+      <label for="b-nome">Qual seu nome completo? <span class="req">*</span></label>
+      <input id="b-nome" placeholder="Seu nome completo">
+    </div>
+
+    <div class="campo">
+      <label for="b-celula">De qual célula você participa? <span class="req">*</span></label>
+      <input id="b-celula" placeholder="Nome da célula">
+    </div>
+
+    <div class="campo">
+      <label for="b-igreja">Você faz parte da Igreja Fonte? <span class="req">*</span>
+        <span class="aj">Caso não faça parte, informe o nome da sua igreja.</span></label>
+      <input id="b-igreja" placeholder="Sim / Não — se não, qual igreja">
+    </div>
+
+    <div class="campo">
+      <label for="b-tel">Telefone (WhatsApp) <span class="req">*</span></label>
+      <input id="b-tel" inputmode="tel" placeholder="(11) 90000-0000">
+    </div>
+
+    <div class="campo">
+      <label for="b-camiseta">Qual o número da sua camiseta? <span class="req">*</span></label>
+      <input id="b-camiseta" placeholder="Ex.: M, G, GG…">
+    </div>
+
+    <div class="campo">
+      <label>Camiseta do batismo <span class="req">*</span></label>
+      <div class="info">
+        Caso queira comprar a camiseta do batismo para recordação:<br>
+        Valor: <b>R$ 42,00</b> · Chave Pix: <span class="pix">43324289866</span><br>
+        No caso de compra, envie o comprovante para o Nº <b>(11) 99317-4500</b>.
+      </div>
+      <div class="opcoes" id="b-opcoes">
+        <label class="op"><input type="radio" name="camisa" value="Usar só no batismo (devolver no mesmo dia)"><span>Usar só no batismo (devolver no mesmo dia)</span></label>
+        <label class="op"><input type="radio" name="camisa" value="Comprar a camiseta (R$ 42,00)"><span>Comprar a camiseta (R$ 42,00)</span></label>
+      </div>
+    </div>
+
+    <button class="btn" id="b-enviar">Enviar inscrição pelo WhatsApp
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>
+    </button>
+    <p class="aviso">Ao enviar, abre o WhatsApp com sua inscrição já preenchida — é só confirmar o envio.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="foot">
+    <span>© 2026 Igreja Apostólica Fonte · Desenvolvido por <span class="dev-cred">iOS Tech</span></span>
+    <a href="index.html">Voltar ao site ↗</a>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // WhatsApp de destino da inscrição (troque se a equipe do batismo usar outro número)
+  var WPP_INSCRICAO = '5511982222149';
+
+  var opcoes = document.getElementById('b-opcoes');
+  opcoes.addEventListener('change', function(){
+    [].forEach.call(opcoes.querySelectorAll('.op'), function(l){
+      l.classList.toggle('on', l.querySelector('input').checked);
+    });
+  });
+
+  function toast(msg){
+    var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
+    clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('on');},2600);
+  }
+
+  document.getElementById('b-enviar').onclick=function(){
+    var g=function(id){return document.getElementById(id).value.trim();};
+    var nome=g('b-nome'), celula=g('b-celula'), igreja=g('b-igreja'), tel=g('b-tel'), camiseta=g('b-camiseta');
+    var opt=opcoes.querySelector('input:checked');
+    if(!nome||!celula||!igreja||!tel||!camiseta||!opt){
+      toast('Preencha todos os campos obrigatórios.'); return;
+    }
+    var linhas=[
+      '*Inscrição de Batismo — Site Fonte*','',
+      '*Nome:* '+nome,
+      '*Célula:* '+celula,
+      '*Igreja Fonte?* '+igreja,
+      '*Telefone:* '+tel,
+      '*Nº da camiseta:* '+camiseta,
+      '*Camiseta:* '+opt.value
+    ];
+    window.open('https://wa.me/'+WPP_INSCRICAO+'?text='+encodeURIComponent(linhas.join('\n')),'_blank');
+    toast('Abrindo o WhatsApp…');
+  };
+</script>
