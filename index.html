@@ -199,6 +199,9 @@
   .templo .linha{display:flex;gap:11px;align-items:flex-start;font-size:.9rem;color:var(--cinza-claro)}
   .templo .linha svg{color:var(--agua);flex-shrink:0;margin-top:1px}
   .templo a.linha:hover{color:var(--luz)}
+  .templo-extra{display:none}
+  .templos.aberto .templo-extra{display:flex}
+  .templos-mais{display:flex;justify-content:center;margin-top:26px}
 
   /* Células */
   .cel-topo{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:stretch}
@@ -540,7 +543,7 @@
         </div>
       </div>
 
-      <div class="templo">
+      <div class="templo templo-extra">
         <div class="templo-foto"><span class="marca-logo" role="img" aria-label="Fonte"></span></div>
         <div class="templo-corpo">
           <span class="selo-t" style="color:var(--cinza-claro);border-color:var(--neblina)">Ministério</span>
@@ -551,7 +554,7 @@
         </div>
       </div>
 
-      <div class="templo">
+      <div class="templo templo-extra">
         <div class="templo-foto"><span class="marca-logo" role="img" aria-label="Fonte"></span></div>
         <div class="templo-corpo">
           <span class="selo-t" style="color:var(--cinza-claro);border-color:var(--neblina)">Ministério</span>
@@ -561,7 +564,7 @@
         </div>
       </div>
 
-      <div class="templo">
+      <div class="templo templo-extra">
         <div class="templo-foto"><span class="marca-logo" role="img" aria-label="Fonte"></span></div>
         <div class="templo-corpo">
           <span class="selo-t" style="color:var(--cinza-claro);border-color:var(--neblina)">Ministério</span>
@@ -573,6 +576,7 @@
       </div>
 
     </div>
+    <div class="templos-mais"><button class="btn btn-fantasma" id="templosMais">Ver mais</button></div>
   </div>
 </section>
 
@@ -1062,5 +1066,16 @@ mobileMenu.addEventListener('click',e=>{if(e.target.tagName==='A')mobileMenu.cla
   lb.addEventListener('click',fecha);
   document.addEventListener('keydown',e=>{if(e.key==='Escape')fecha();});
   document.addEventListener('click',e=>{const p=e.target.closest('.p-foto');if(p){abrirFoto(p.src);}});
+})();
+
+/* ===================== templos: ver mais ===================== */
+(function(){
+  const grid=document.querySelector('.templos'), btn=document.getElementById('templosMais');
+  if(!grid||!btn) return;
+  btn.onclick=()=>{
+    const ab=grid.classList.toggle('aberto');
+    btn.textContent=ab?'Ver menos':'Ver mais';
+    if(ab) grid.querySelectorAll('.templo-extra').forEach(el=>el.classList.add('in'));
+  };
 })();
 </script>
