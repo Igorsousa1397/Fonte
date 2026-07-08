@@ -870,7 +870,12 @@ function selecionaCel(idx,fromLista){
   document.querySelectorAll('.cel-item').forEach(el=>el.classList.toggle('on',+el.dataset.idx===idx));
   const alvo=document.querySelector(`.cel-item[data-idx="${idx}"]`);
   if(alvo&&alvo.offsetParent===null){celLista.classList.remove('colapsada');celMais.textContent='Ver menos';}
-  if(mapa&&markers[idx]){mapa.flyTo([c.lat,c.lng],14,{duration:.6});markers[idx].openPopup();}
+  if(mapa&&markers[idx]){
+    const z=14, off=Math.min(mapa.getSize().y*0.22,130);
+    const centro=mapa.unproject(mapa.project([c.lat,c.lng],z).subtract([0,off]),z);
+    mapa.flyTo(centro,z,{duration:.6});
+    mapa.once('moveend',()=>markers[idx]&&markers[idx].openPopup());
+  }
   if(fromLista){
     if(window.matchMedia('(max-width:1080px)').matches){
       document.getElementById('mapa').scrollIntoView({behavior:'smooth',block:'start'});
