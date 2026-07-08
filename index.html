@@ -1,7 +1,7 @@
 <!--
   IGREJA FONTE · Cajamar — Site institucional
   Design system: preto / grafite / cinza + acento água ("Fonte" = nascente)
-  Seções: Início · Quem Somos · Cultos · Células (mapa) · Agenda · Contribuir · Seja Membro · Contato
+  Seções: Início · Quem Somos · Cultos · Templos · Células (mapa) · Agenda · Contribuir · Seja Membro · Contato
   Single-file, responsivo. Vanilla JS + Leaflet (mapa das células).
 -->
 <meta charset="utf-8">
@@ -181,11 +181,30 @@
   .culto.foto .selo{position:absolute;top:20px;right:20px;margin:0;z-index:2;
      color:#ff3b3b;border-color:rgba(255,59,59,.7);background:rgba(255,45,45,.22);font-weight:600}
 
+  /* Nossos Templos */
+  .templos{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:stretch}
+  .templo{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden;
+          display:flex;flex-direction:column;transition:border-color .25s,transform .25s}
+  .templo:hover{border-color:var(--agua-forte);transform:translateY(-3px)}
+  .templo-foto{position:relative;height:190px;background-size:cover;background-position:center;
+       background:radial-gradient(90% 120% at 70% 10%,rgba(122,212,207,.18),transparent 60%),linear-gradient(135deg,#1a1a1f,#0d0d10);
+       display:flex;align-items:center;justify-content:center}
+  .templo-foto .marca-logo{width:96px;height:50px;opacity:.4;animation:none}
+  .templo-foto.com-foto .marca-logo{display:none}
+  .templo-corpo{padding:22px;display:flex;flex-direction:column;gap:13px;flex:1}
+  .templo h3{font-family:var(--display);font-size:1.3rem;font-weight:700}
+  .templo .selo-t{align-self:flex-start;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--agua);
+       border:1px solid var(--agua-forte);border-radius:100px;padding:3px 9px;margin-bottom:-4px}
+  .templo .past{color:var(--agua);font-size:.85rem;font-weight:600;margin-top:-4px}
+  .templo .linha{display:flex;gap:11px;align-items:flex-start;font-size:.9rem;color:var(--cinza-claro)}
+  .templo .linha svg{color:var(--agua);flex-shrink:0;margin-top:1px}
+  .templo a.linha:hover{color:var(--luz)}
+
   /* Células */
   .cel-topo{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:stretch}
   #mapa{height:520px;border-radius:var(--raio);border:var(--borda);background:#0d0d10;z-index:1;scroll-margin-top:80px}
   .cel-painel{border:var(--borda);border-radius:var(--raio);background:var(--breu);
-              display:flex;flex-direction:column;overflow:hidden}
+              display:flex;flex-direction:column;overflow:hidden;height:520px}
   .cel-filtros{display:flex;gap:8px;padding:16px 16px 12px;border-bottom:var(--borda);flex-wrap:wrap}
   .cel-busca{margin:14px 16px 2px;padding:11px 14px;border-radius:12px;border:1px solid var(--neblina);
              background:var(--grafite);color:var(--luz);font-size:.9rem;font-family:inherit;outline:none;transition:border-color .2s}
@@ -196,7 +215,7 @@
         background:transparent;color:var(--cinza-claro);cursor:pointer;transition:all .2s}
   .fcel:hover{color:var(--luz);border-color:var(--cinza)}
   .fcel.on{background:var(--luz);color:#0a0a0b;border-color:var(--luz)}
-  .cel-lista{overflow-y:auto;max-height:452px;padding:6px}
+  .cel-lista{overflow-y:auto;flex:1;min-height:0;padding:6px}
   .cel-mais{display:none;width:100%;margin-top:10px;padding:12px;background:transparent;
      border:var(--borda);border-radius:100px;color:var(--luz);font-size:.9rem;font-weight:600;
      cursor:pointer;transition:border-color .2s,background .2s}
@@ -328,7 +347,8 @@
   @media(max-width:1080px){
     .quem,.contato,.contrib,.cel-topo{grid-template-columns:1fr;gap:26px}
     .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
-    .cel-lista{max-height:none}
+    .cel-painel{height:auto}
+    .cel-lista{flex:none;max-height:none}
     .cel-lista.colapsada .cel-item:nth-child(n+6){display:none}
     .cel-mais{display:block}
     .cel-painel.poucas .cel-mais{display:none}
@@ -345,13 +365,13 @@
     .mlinks .btn{margin-top:14px;justify-content:center}
     .menu-btn{display:block}
     .sec{padding:60px 0}
-    .cultos,.insc-grid{grid-template-columns:1fr}
+    .cultos,.insc-grid,.templos{grid-template-columns:1fr}
     .valores{grid-template-columns:1fr}
     .passos{grid-template-columns:1fr 1fr}
     .foot-grid{grid-template-columns:1fr;gap:30px}
     #mapa{height:360px}
-    .hero-track{min-height:0}               
-    .slide.on{position:relative}             
+    .hero-track{min-height:0}
+    .slide.on{position:relative}
     .slide-foto .slide-inner{justify-content:flex-start;gap:20px}
   }
   /* celular pequeno */
@@ -386,6 +406,7 @@
     <nav class="links nav-left">
       <a href="#quem">Quem somos</a>
       <a href="#cultos">Cultos</a>
+      <a href="#templos">Templos</a>
       <a href="#celulas">Células</a>
       <a href="galeria.html">Fotos</a>
     </nav>
@@ -403,6 +424,7 @@
   <nav class="mlinks" id="mobileMenu">
     <a href="#quem">Quem somos</a>
     <a href="#cultos">Cultos</a>
+    <a href="#templos">Templos</a>
     <a href="#celulas">Células</a>
     <a href="galeria.html">Fotos</a>
     <a href="#agenda">Agenda</a>
@@ -478,8 +500,53 @@
   </div>
 </section>
 
+<!-- ===================== NOSSOS TEMPLOS ===================== -->
+<section class="sec alt" id="templos">
+  <div class="wrap">
+    <div class="sec-head"><span class="eyebrow">Onde estamos</span><h2>Nossos templos</h2>
+      <p>Duas igrejas e um núcleo, uma só família. Encontre a Fonte mais perto de você.</p></div>
+    <div class="templos">
+
+      <div class="templo">
+        <div class="templo-foto"><span class="marca-logo" role="img" aria-label="Fonte"></span></div>
+        <div class="templo-corpo">
+          <span class="selo-t">Sede</span>
+          <h3>Fonte Cajamar</h3>
+          <div class="past">Pr. Eliel &amp; Pra. Thamires Ponciano</div>
+          <div class="linha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>R. Catiguá, 130 — Polvilho, Cajamar/SP</span></div>
+          <a class="linha" href="https://instagram.com/fontecajamar" target="_blank" rel="noopener"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>@fontecajamar</span></a>
+        </div>
+      </div>
+
+      <div class="templo">
+        <div class="templo-foto"><span class="marca-logo" role="img" aria-label="Fonte"></span></div>
+        <div class="templo-corpo">
+          <span class="selo-t">Igreja</span>
+          <h3>Fonte Itajaí</h3>
+          <div class="past">Pr. Alex &amp; Pra. Tati</div>
+          <div class="linha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Itajaí/SC</span></div>
+          <a class="linha" href="https://instagram.com/fonteitajai" target="_blank" rel="noopener"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>@fonteitajai</span></a>
+        </div>
+      </div>
+
+      <div class="templo">
+        <div class="templo-foto"><span class="marca-logo" role="img" aria-label="Fonte"></span></div>
+        <div class="templo-corpo">
+          <span class="selo-t" style="color:var(--cinza-claro);border-color:var(--neblina)">Núcleo</span>
+          <h3>Fonte Barueri</h3>
+          <div class="past">Samuel &amp; Luana</div>
+          <div class="linha"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>Rua Laura, 47 — Parque dos Camargos, Barueri/SP</span></div>
+          <!-- TODO: adicionar Instagram do núcleo Barueri:
+          <a class="linha" href="https://instagram.com/HANDLE" target="_blank" rel="noopener"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg><span>@HANDLE</span></a> -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ===================== CÉLULAS ===================== -->
-<section class="sec alt" id="celulas">
+<section class="sec" id="celulas">
   <div class="wrap">
     <div class="sec-head"><span class="eyebrow">Células</span><h2>Encontre uma perto de você</h2>
       <p>Toque em um ponto no mapa ou escolha na lista para ver líderes, endereço e horário. Temos células em Cajamar, Santana de Parnaíba e Barueri.</p></div>
@@ -496,7 +563,7 @@
 </section>
 
 <!-- ===================== AGENDA ===================== -->
-<section class="sec" id="agenda">
+<section class="sec alt" id="agenda">
   <div class="wrap">
     <div class="sec-head"><span class="eyebrow">Agenda Ministerial 2026</span><h2>Tudo o que vem por aí</h2></div>
     <div class="cel-filtros" id="filtros" style="border:0;padding:0 0 24px"></div>
@@ -505,7 +572,7 @@
 </section>
 
 <!-- ===================== CONTRIBUIR ===================== -->
-<section class="sec alt" id="contribuir">
+<section class="sec" id="contribuir">
   <div class="wrap">
     <div class="sec-head"><span class="eyebrow">Dízimos &amp; Ofertas</span><h2>Faça parte do que Deus tem feito</h2>
       <p>Sua contribuição sustenta a obra, as células e os projetos sociais da Fonte. Contribua com alegria e no seu tempo.</p></div>
@@ -536,7 +603,7 @@
 </section>
 
 <!-- ===================== SEJA MEMBRO ===================== -->
-<section class="sec" id="membro">
+<section class="sec alt" id="membro">
   <div class="wrap">
     <div class="sec-head"><span class="eyebrow">Seja membro</span><h2>Dê o próximo passo na Fonte</h2>
       <p>Quer chamar a Fonte de casa? O caminho é simples e a gente caminha com você.</p></div>
@@ -562,7 +629,7 @@
 </section>
 
 <!-- ===================== CONTATO ===================== -->
-<section class="sec alt" id="contato">
+<section class="sec" id="contato">
   <div class="wrap">
     <div class="sec-head"><span class="eyebrow">Fale com a gente</span><h2>Dúvidas ou pedidos de oração?</h2>
       <p>Preencha e envie — sua mensagem chega direto no nosso WhatsApp. Estamos aqui por você.</p></div>
@@ -603,6 +670,7 @@
       </div>
       <div><h4>Navegar</h4><ul>
         <li><a href="#quem">Quem somos</a></li><li><a href="#cultos">Cultos</a></li>
+        <li><a href="#templos">Templos</a></li>
         <li><a href="#celulas">Células</a></li><li><a href="#agenda">Agenda</a></li>
         <li><a href="#membro">Seja membro</a></li><li><a href="#contribuir">Contribuir</a></li>
         <li><a href="galeria.html">Fotos dos cultos</a></li>
@@ -787,7 +855,7 @@ const ANCHOR={
 };
 const CELULAS=[
   // CAJAMAR
-{nome:'Betesda',lider:'Cris e Carol',end:'Rua dos Flox, 400 — Cond. San Miguel (T8 ap.05)',hora:'20h',cidade:'Cajamar',tag:'Mulheres',lat:-23.4035007,lng:-46.8587154,foto:'assets/celulas/betesda.jpg', wpp:'5511916405273'},
+  {nome:'Betesda',lider:'Cris e Carol',end:'Rua dos Flox, 400 — Cond. San Miguel (T8 ap.05)',hora:'20h',cidade:'Cajamar',tag:'Mulheres',lat:-23.4035007,lng:-46.8587154,foto:'assets/celulas/betesda.jpg', wpp:'5511916405273'},
   {nome:'Beraká',lider:'Pr. Amilton e Pra. Kátia',end:'Na Igreja (R. Catiguá, 130) — Templo Kids',hora:'20h',cidade:'Cajamar',lat:-23.40868,lng:-46.86781,foto:'assets/celulas/beraka.jpg', wpp:'5511953656812'},
   {nome:'Reobote',lider:'Thais e Junior',end:'Rua Irmã Daria Moreira, 39 — Pq. Paraíso',hora:'20h',cidade:'Cajamar',lat:-23.4106936,lng:-46.8272042,foto:'assets/celulas/reobote.jpg', wpp:'5511997187584'},
   {nome:'Baluarte',lider:'Tati e Bruno',end:'Na Igreja (R. Catiguá, 130) — Templo Principal',hora:'20h',cidade:'Cajamar',lat:-23.40894,lng:-46.86781,foto:'assets/celulas/baluarte.jpg', wpp:'5511990089245'},
@@ -812,7 +880,7 @@ const CELULAS=[
   {nome:'Essência',lider:'Rafael e Ana Clara',end:'Rua do Mandi, 531b — Gleba B, São Pedro',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4293941,lng:-46.8497347,foto:'assets/celulas/essencia.jpg', wpp:'5511932261526'},
   {nome:'Jeová Rafah',lider:'Jardel e Tamiris',end:'Rua Cruzeiro do Sul, 430 — Cond. dos Pássaros (Chác. Solar)',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4123946,lng:-46.8990276, wpp:'5511947851715'},
   // BARUERI
-  {nome:'Fonte',lider:'Samuel e Luana',end:'Rua Gabriela, 109 — Parque dos Camargos, Barueri',hora:'20h',cidade:'Barueri',lat:-23.540402,lng:-46.8899412,foto:'assets/celulas/fonte.jpg', wpp:'5511965731601'},
+  {nome:'Fonte',lider:'Samuel e Luana',end:'Rua Laura, 47 — Parque dos Camargos, Barueri',hora:'20h',cidade:'Barueri',lat:-23.5403764,lng:-46.8909511,foto:'assets/celulas/fonte.jpg', wpp:'5511965731601'},
 ];
 CELULAS.sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
 
@@ -938,9 +1006,9 @@ mobileMenu.addEventListener('click',e=>{if(e.target.tagName==='A')mobileMenu.cla
   document.documentElement.classList.add('anim');
   const header=document.querySelector('header');
   addEventListener('scroll',()=>header.classList.toggle('scrolled',scrollY>8),{passive:true});
-  document.querySelectorAll('.sec-head,.culto,.valor,.passo,.card,.form,.pastores,.quem>div,.cel-topo')
+  document.querySelectorAll('.sec-head,.culto,.templo,.valor,.passo,.card,.form,.pastores,.quem>div,.cel-topo')
     .forEach(el=>el.classList.add('reveal'));
-  ['.cultos','.valores','.passos','.insc-grid'].forEach(sel=>
+  ['.cultos','.templos','.valores','.passos','.insc-grid'].forEach(sel=>
     document.querySelectorAll(sel).forEach(grp=>
       [...grp.children].forEach((ch,i)=>ch.setAttribute('data-d',String((i%3)+1)))));
   if(!('IntersectionObserver' in window) || prefMov){
