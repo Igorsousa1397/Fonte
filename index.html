@@ -72,6 +72,10 @@
   .btn-live{background:#dc2626;border-color:#dc2626;position:relative;animation:liveGlow 2.4s ease-in-out infinite}
   .links a.btn-live,.mlinks a.btn-live{color:#fff}
   .nav-live-mobile{display:none}
+  .icon-login{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;
+     border-radius:50%;border:var(--borda);color:var(--cinza-claro);transition:border-color .2s,color .2s}
+  .icon-login:hover{border-color:var(--agua);color:var(--agua)}
+  .links a.icon-login::after{display:none}
   .btn-live:hover{background:#ef4444;border-color:#ef4444}
   .btn-live .live-dot{width:8px;height:8px;border-radius:50%;background:#fff;position:relative;flex:0 0 auto}
   .btn-live .live-dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;animation:livePulse 1.8s ease-out infinite}
@@ -420,11 +424,12 @@
       <a href="#quem">Quem somos</a>
       <a href="#templos">Templos</a>
       <a href="#celulas">Células</a>
-      <a href="galeria.html">Fotos</a>
     </nav>
     <a class="marca" href="#topo"><span class="marca-logo" role="img" aria-label="Igreja Fonte"></span></a>
     <nav class="links nav-right">
+      <a href="galeria.html">Fotos</a>
       <a href="batismo.html">Batismo</a>
+      <a class="icon-login" href="login.html" title="Área do administrador" aria-label="Login administrativo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
       <a class="btn btn-live" href="https://www.youtube.com/@igrejafontecajamar/streams" target="_blank" rel="noopener"><span class="live-dot"></span> Assistir ao vivo</a>
     </nav>
     <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">
@@ -438,6 +443,7 @@
     <a href="#celulas">Células</a>
     <a href="galeria.html">Fotos</a>
     <a href="batismo.html">Batismo</a>
+    <a href="login.html">Login (admin)</a>
     <a class="btn btn-live" href="https://www.youtube.com/@igrejafontecajamar/streams" target="_blank" rel="noopener"><span class="live-dot"></span> Assistir ao vivo</a>
   </nav>
 </header>
