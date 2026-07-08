@@ -212,6 +212,10 @@
   .cel-item .lider{color:var(--cinza-claro);font-size:.9rem;margin-top:3px}
   .cel-item .end{color:var(--cinza);font-size:.82rem;margin-top:4px}
   .cel-item .hora{color:var(--agua);font-size:.8rem;font-weight:600;margin-top:5px}
+  .cel-wpp{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:.78rem;font-weight:600;
+           color:var(--agua);border:1px solid var(--agua-forte);border-radius:100px;padding:5px 12px;transition:background .2s,transform .15s}
+  .cel-wpp:hover{background:var(--agua-fundo)}
+  .cel-wpp:active{transform:translateY(1px)}
   /* Leaflet dark */
   .leaflet-container{background:#0d0d10;font-family:var(--corpo)}
   .leaflet-popup-content-wrapper{background:var(--grafite-2);color:var(--luz);
@@ -433,13 +437,12 @@
 <!-- ===================== QUEM SOMOS ===================== -->
 <section class="sec alt" id="quem">
   <div class="wrap">
-    <div class="sec-head"><span class="eyebrow">Quem somos</span><h2>Uma igreja que é uma fonte</h2></div>
+    <div class="sec-head"><span class="eyebrow">Quem somos</span><h2>Uma igreja comprometida com Cristo, com a Sua Palavra e com pessoas</h2></div>
     <div class="quem">
       <div>
-        <p>A <strong>Igreja Apostólica Fonte</strong> nasceu do desejo de ver vidas transbordando de Deus em Cajamar e região. Somos uma comunidade que acredita que o encontro genuíno com Jesus muda tudo — e que ninguém foi feito para caminhar sozinho.</p>
-        <p>Ao longo dos anos, a Fonte cresceu em cultos, células e encontros que marcam gerações, como o <strong>Encontro com Deus (Peniel)</strong> e o <strong>Submergidos</strong>. Nosso chão é a Palavra, nosso ritmo é a presença de Deus e nosso alvo é fazer discípulos que fazem discípulos.</p>
-        <p>Somos pastoreados por <strong>Pr. Eliel e Pra. Thamires Ponciano</strong>, que conduzem a igreja com um coração de pai e mãe, cuidando de cada pessoa e formando líderes para servir. Aqui você não é um número: você é família.</p>
-        <p style="color:var(--cinza);font-size:.86rem">✎ Este texto é um rascunho — troque pela história real da igreja e dos pastores.</p>
+        <p>A <strong>Igreja Fonte</strong> é uma comunidade cristã comprometida com as Escrituras Sagradas e com o Evangelho de Jesus Cristo. Cremos que a Palavra de Deus é a base da nossa fé, da nossa missão e de tudo o que fazemos.</p>
+        <p>Somos uma igreja avivada, apaixonada pela presença de Deus e movida pelo propósito de fazer Cristo cada vez mais conhecido. Nossa missão vai além das quatro paredes: desejamos alcançar vidas, restaurar famílias e impactar a nossa comunidade por meio do amor, do serviço e da mensagem transformadora de Cristo.</p>
+        <p>Acreditamos que a igreja é um lugar de <strong>acolhimento, restauração e transformação</strong>. Independentemente da sua história, aqui você encontrará uma família pronta para caminhar ao seu lado.</p>
       </div>
       <div class="pastores">
         <div class="capa">
@@ -631,7 +634,7 @@ const HOJE = new Date('2026-07-06T00:00:00'); // trocar por new Date() em produ�
 const AGENDA = [
   { inicio:'2026-07-11', dow:'Sáb', titulo:'Culto Jovens DN4', tipo:'culto', img:'assets/dn4-jovens.jpg' },
   { inicio:'2026-07-14', dow:'Ter', titulo:'Através de Você', tipo:'culto', img:'assets/atraves-de-voce.jpg' },
-  { inicio:'2026-07-23', fim:'2026-07-26', dow:'Qui–Dom', titulo:'Aniversário da Igreja', tipo:'conferencia', destaque:true },
+  { inicio:'2026-07-23', fim:'2026-07-26', dow:'Qui–Dom', titulo:'Aniversário da Igreja', tipo:'conferencia', destaque:true, img:'assets/firmamento.jpg' },
   { inicio:'2026-07-28', dow:'Ter', titulo:'Discipulado com Líderes de Célula', tipo:'lideranca' },
   { inicio:'2026-08-04', dow:'Ter', titulo:'Culto “À Fonte do Empreendedor”', tipo:'culto' },
   { inicio:'2026-08-08', dow:'Sáb', titulo:'Culto DN4', tipo:'culto' },
@@ -694,6 +697,7 @@ function textoSlide(e){
   if(e.titulo.includes('Peniel'))return 'Encontro com Deus. Três dias que marcam. Faça sua inscrição pelo app.';
   if(/Ceia/.test(e.titulo))return 'Nosso Domingo de Santa Ceia. Venha participar da mesa do Senhor com a família Fonte.';
   if(e.tipo==='culto')return 'Venha adorar com a gente. Todos são bem-vindos à casa da Fonte.';
+  if(e.titulo.includes('Aniversário'))return 'Firmamento · nossos 2 anos. Três dias de louvor e palavra com a família Fonte.';
   if(e.tipo==='conferencia')return 'Dias de imersão, palavra e presença. Marque na agenda e participe.';
   if(e.tipo==='lideranca')return 'Momento de formação e alinhamento com quem lidera na igreja.';
   if(e.tipo==='marco')return 'Uma data especial na vida da nossa comunidade.';
@@ -809,7 +813,7 @@ const CELULAS=[
   {nome:'Essência',lider:'Rafael e Ana Clara',end:'Rua do Mandi, 531b — Gleba B, São Pedro',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4293941,lng:-46.8497347,foto:'assets/celulas/essencia.jpg'},
   {nome:'Jeová Rafah',lider:'Jardel e Tamiris',end:'Rua Cruzeiro do Sul, 430 — Cond. dos Pássaros (Chác. Solar)',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4123946,lng:-46.8990276},
   // BARUERI
-  {nome:'Fonte',lider:'Samuel e Luana',end:'Rua Gabriela, 109 — Parque dos Camargos, Barueri',hora:'20h',cidade:'Barueri',lat:-23.540402,lng:-46.8899412,foto:'assets/celulas/fonte.jpg'},
+  {nome:'Fonte',lider:'Samuel e Luana',end:'Rua Gabriela, 109 — Parque dos Camargos, Barueri',hora:'20h',cidade:'Barueri',lat:-23.540402,lng:-46.8899412,foto:'assets/celulas/fonte.jpg', wpp:'5511965731601'},
 ];
 CELULAS.sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
 
@@ -852,7 +856,7 @@ function renderCel(){
     if(q && !norm(`${c.nome} ${c.lider} ${c.end}`).includes(q))return;
     const it=document.createElement('div');it.className='cel-item';it.dataset.idx=idx;
     it.innerHTML=`<h4>${c.nome}${c.tag?`<span class="cel-badge">${c.tag}</span>`:''}</h4>
-      <div class="lider">${c.lider}</div><div class="end">${c.end}</div>${c.hora?`<div class="hora">${c.hora}</div>`:''}`;
+      <div class="lider">${c.lider}</div><div class="end">${c.end}</div>${c.hora?`<div class="hora">${c.hora}</div>`:''}${c.wpp?`<a class="cel-wpp" href="https://wa.me/${c.wpp}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 16l1-3.4A6.5 6.5 0 1 1 6.4 15L3 16z"/></svg>Falar com o líder</a>`:''}`;
     it.onclick=()=>selecionaCel(idx,true);
     celLista.appendChild(it);
   });
