@@ -238,9 +238,12 @@
     $('#titulo').textContent='Membros';
     let html='<div class="cards">'+card('Total de membros',MEMBROS.length,true)+'</div>';
     if(!MEMBROS.length){ html+='<div class="tabela"><div class="vazio">Nenhum cadastro de membro ainda.</div></div>'; $('#view').innerHTML=html; return; }
-    html+='<div class="tabela membros"><div class="lin cab"><span>Nome</span><span>Telefone</span><span>E-mail</span><span>Célula</span></div>';
+    html+='<div class="tabela membros"><div class="lin cab"><span>Nome</span><span>CPF</span><span>Célula</span><span>Endereço</span></div>';
     MEMBROS.forEach(m=>{
-      html+='<div class="lin"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span></span><span class="col" data-l="Telefone">'+esc(m.telefone)+'</span><span class="col" data-l="E-mail">'+(esc(m.email)||'—')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span></div>';
+      const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
+      const loc=[m.cidade,m.uf].filter(Boolean).join('/');
+      const endereco=[rua,loc].filter(Boolean).join(' — ');
+      html+='<div class="lin"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span></span><span class="col" data-l="CPF">'+(esc(m.cpf)||'—')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
@@ -333,7 +336,7 @@
     const [rb, rc, rm] = await Promise.all([
       sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
       sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false}),
-      sb.from('membros').select('nome,telefone,email,celula,created_at').order('created_at',{ascending:false})
+      sb.from('membros').select('nome,cpf,celula,logradouro,numero,cidade,uf,created_at').order('created_at',{ascending:false})
     ]);
     BATISMO = rb.data || [];
     CONTATOS = rc.data || [];
