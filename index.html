@@ -309,6 +309,10 @@
      font-size:.94rem;transition:border-color .2s}
   .campo input:focus,.campo textarea:focus,.campo select:focus{outline:none;border-color:var(--agua-forte)}
   .campo textarea{resize:vertical;min-height:110px}
+  .chips{display:flex;gap:10px}
+  .chip{flex:0 0 auto;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:11px 22px;color:var(--cinza-claro);font-family:var(--corpo);font-size:.94rem;cursor:pointer;transition:.15s}
+  .chip:hover{border-color:var(--agua-forte)}
+  .chip.on{background:var(--agua);border-color:var(--agua);color:#04211f;font-weight:600}
   .duo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .contato-aside p{color:var(--cinza-claro);margin-bottom:16px}
   .contato-aside .linha{display:flex;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(42,42,49,.5)}
@@ -672,7 +676,18 @@
       <div class="campo"><label for="m-nome">Nome completo</label><input id="m-nome" placeholder="Seu nome completo"></div>
       <div class="duo">
         <div class="campo"><label for="m-cpf">CPF</label><input id="m-cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00"></div>
+        <div class="campo"><label for="m-tel">Telefone</label><input id="m-tel" inputmode="tel" maxlength="16" placeholder="(11) 90000-0000"></div>
+      </div>
+      <div class="duo">
         <div class="campo"><label for="m-celula">Célula</label><select id="m-celula"></select></div>
+        <div class="campo"><label for="m-min">Serve em algum ministério?</label><select id="m-min"></select></div>
+      </div>
+      <div class="campo"><label>Já passou pelo Encontro Peniel?</label>
+        <div class="chips" id="m-peniel-chips">
+          <button type="button" class="chip" data-v="Sim">Sim</button>
+          <button type="button" class="chip" data-v="Não">Não</button>
+        </div>
+        <input type="hidden" id="m-peniel">
       </div>
       <div class="duo">
         <div class="campo"><label for="m-cep">CEP</label><input id="m-cep" inputmode="numeric" maxlength="9" placeholder="00000-000"></div>
@@ -1046,6 +1061,27 @@ document.getElementById('enviaContato').onclick=async()=>{
     CELULAS.map(c=>`<option>${c.nome} — ${c.cidade}</option>`).join('')+
     '<option>Ainda não participo</option>';
 
+  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Louvor','Mídia','Mídia Técnica','Obreiros','Voluntários'];
+  const mMin=el('m-min');
+  if(mMin) mMin.innerHTML='<option value="">Não sirvo em nenhum</option>'+MINISTERIOS.map(x=>`<option>${x}</option>`).join('');
+
+  const tel=el('m-tel');
+  if(tel) tel.addEventListener('input',()=>{
+    let d=tel.value.replace(/\D/g,'').slice(0,11);
+    if(d.length>10)      d=d.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3');
+    else if(d.length>6)  d=d.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');
+    else if(d.length>2)  d=d.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2');
+    else if(d.length>0)  d=d.replace(/^(\d{0,2}).*/,'($1');
+    tel.value=d;
+  });
+
+  document.querySelectorAll('#m-peniel-chips .chip').forEach(c=>{
+    c.onclick=()=>{
+      document.querySelectorAll('#m-peniel-chips .chip').forEach(x=>x.classList.toggle('on',x===c));
+      el('m-peniel').value=c.dataset.v;
+    };
+  });
+
   const cpf=el('m-cpf');
   if(cpf) cpf.addEventListener('input',()=>{
     let v=cpf.value.replace(/\D/g,'').slice(0,11);
@@ -1080,8 +1116,11 @@ document.getElementById('enviaContato').onclick=async()=>{
     if(doc.replace(/\D/g,'').length!==11){ toast('Preencha um CPF válido (11 dígitos).'); return; }
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
     try{
+      const pen=el('m-peniel').value;
       const { error }=await sb.rpc('criar_membro',{
         p_nome:nome, p_cpf:doc, p_celula:g('m-celula'),
+        p_telefone:g('m-tel'), p_ministerio:g('m-min'),
+        p_peniel: pen==='Sim' ? true : pen==='Não' ? false : null,
         p_cep:g('m-cep'), p_logradouro:g('m-log'), p_numero:g('m-num'),
         p_complemento:g('m-comp'), p_bairro:g('m-bairro'), p_cidade:g('m-cidade'), p_uf:g('m-uf')
       });
