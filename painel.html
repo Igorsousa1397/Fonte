@@ -40,6 +40,7 @@
   .nav-item.on{background:var(--agua-fundo);color:var(--agua)}
   .nav-item svg{flex:0 0 auto}
   .nav-item .chev{margin-left:auto;transition:transform .2s}
+  .nav-item .ini,.sair .ini{display:none;flex:0 0 auto;width:22px;text-align:center;font-weight:700}
   .nav-item.aberto .chev{transform:rotate(90deg)}
   .subnav{overflow:hidden;max-height:0;transition:max-height .28s ease}
   .subnav.aberto{max-height:460px}
@@ -70,6 +71,7 @@
     .app.recolhido .nav-item{justify-content:center;padding:12px 0}
     .app.recolhido .nav-item .lbl,.app.recolhido .nav-item .chev,
     .app.recolhido .sb-rodape .quem,.app.recolhido .sair .lbl{display:none}
+    .app.recolhido .nav-item .ini,.app.recolhido .sair .ini{display:block}
     .app.recolhido .subnav{max-height:0 !important}
     .app.recolhido .sb-rodape{text-align:center;padding:14px 0}
     .app.recolhido .sair{border:none;padding:8px;justify-content:center;width:100%}
@@ -134,16 +136,13 @@
     <div class="sb-logo"><img class="marca-logo" src="assets/fonte-logo.png" alt="Igreja Fonte"></div>
     <nav class="sb-nav" id="sbnav">
       <button class="nav-item" data-view="batismo">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 15c2 0 2-1.5 4-1.5S8 15 10 15s2-1.5 4-1.5S16 15 18 15M8 3l2 4M12 3v4"/><path d="M4 15v-3.5C4 8 7 6 9 6h.5"/></svg>
-        <span class="lbl">Batismo</span>
+        <span class="ini">B</span><span class="lbl">Batismo</span>
       </button>
       <button class="nav-item" data-view="membros">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15v-1a3 3 0 0 0-3-3H4a3 3 0 0 0-3 3v1"/><circle cx="6.5" cy="5" r="2.5"/><path d="M13 4.5a2.5 2.5 0 0 1 0 5M17 15v-1a3 3 0 0 0-2-2.8"/></svg>
-        <span class="lbl">Membros</span>
+        <span class="ini">M</span><span class="lbl">Membros</span>
       </button>
       <button class="nav-item" id="btn-fin" data-toggle="fin">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="2"/><circle cx="9" cy="9" r="2"/></svg>
-        <span class="lbl">Financeiro</span>
+        <span class="ini">F</span><span class="lbl">Financeiro</span>
         <svg class="chev" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
       </button>
       <div class="subnav" id="subnav-fin">
@@ -152,15 +151,14 @@
         <button class="sub-item" data-fin="saidas">Saídas</button>
       </div>
       <button class="nav-item" id="btn-contato" data-toggle="contato">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6.5c0 3-2.7 5.5-6 5.5-.7 0-1.4-.1-2-.3L3 13l1-3c-.6-.9-1-1.9-1-3C3 4 5.7 1.5 9 1.5S15 3.5 15 6.5Z"/></svg>
-        <span class="lbl">Fale com a gente</span>
+        <span class="ini">C</span><span class="lbl">Fale com a gente</span>
         <svg class="chev" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
       </button>
       <div class="subnav" id="subnav"></div>
     </nav>
     <div class="sb-rodape">
       <span class="quem" id="quem">…</span>
-      <button class="sair" id="sair"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M11 11l3-3-3-3M14 8H6"/></svg> <span class="lbl">Sair</span></button>
+      <button class="sair" id="sair"><span class="ini">S</span><span class="lbl">Sair</span></button>
     </div>
   </aside>
   <div class="overlay" id="overlay"></div>
