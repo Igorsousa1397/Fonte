@@ -682,7 +682,7 @@
 <section class="sec" id="contato">
   <div class="wrap">
     <div class="sec-head"><span class="eyebrow">Fale com a gente</span><h2>Dúvidas ou pedidos de oração?</h2>
-      <p>Preencha e envie — sua mensagem chega direto no nosso WhatsApp. Estamos aqui por você.</p></div>
+      <p>Preencha e envie — sua mensagem chega à nossa equipe. Estamos aqui por você.</p></div>
     <div class="contato">
       <div class="form">
         <div class="duo">
@@ -695,11 +695,11 @@
             <select id="c-assunto">
               <option>Pedido de oração</option><option>Dúvida geral</option>
               <option>Quero conhecer a igreja</option><option>Células</option>
-              <option>Inscrições / eventos</option><option>Outro</option>
+              <option>Inscrições / eventos</option><option>Gabinete pastoral</option><option>Outro</option>
             </select></div>
         </div>
         <div class="campo"><label for="c-msg">Mensagem</label><textarea id="c-msg" placeholder="Escreva aqui…"></textarea></div>
-        <button class="btn btn-claro" id="enviaContato" style="width:100%;justify-content:center">Enviar pelo WhatsApp</button>
+        <button class="btn btn-claro" id="enviaContato" style="width:100%;justify-content:center">Enviar mensagem</button>
       </div>
     </div>
   </div>
@@ -745,6 +745,8 @@
 </footer>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase.js"></script>
 <script>
 /* ===================== AGENDA (fonte de verdade) ===================== */
 const HOJE = new Date(); HOJE.setHours(0,0,0,0); // data real — atualiza sozinho todo dia
@@ -813,8 +815,8 @@ function textoSlide(e){
   if(e.titulo.includes('Submergidos'))return 'Um retiro de 3 dias pra mergulhar no próximo nível. Inscrições abertas pelo app do encontro.';
   if(e.titulo.includes('Peniel'))return 'Encontro com Deus. Três dias que marcam. Faça sua inscrição pelo app.';
   if(/Ceia/.test(e.titulo))return 'Nosso Domingo de Santa Ceia. Venha participar da mesa do Senhor com a família Fonte.';
-  if(e.tipo==='culto')return 'Venha adorar com a gente. Todas são bem-vindas à casa da Fonte.';
-  if(e.titulo.includes('Aniversário'))return 'Firmamento · nossos 2 anos. Quatro dias de louvor e palavra com a família Fonte.';
+  if(e.tipo==='culto')return 'Venha adorar com a gente. Todos são bem-vindos à casa da Fonte.';
+  if(e.titulo.includes('Aniversário'))return 'Firmamento · nossos 2 anos. Três dias de louvor e palavra com a família Fonte.';
   if(e.tipo==='conferencia')return 'Dias de imersão, palavra e presença. Marque na agenda e participe.';
   if(e.tipo==='lideranca')return 'Momento de formação e alinhamento com quem lidera na igreja.';
   if(e.tipo==='marco')return 'Uma data especial na vida da nossa comunidade.';
@@ -1014,13 +1016,17 @@ document.getElementById('copiaPix').onclick=()=>{
 };
 
 /* ===================== contato → WhatsApp ===================== */
-document.getElementById('enviaContato').onclick=()=>{
+document.getElementById('enviaContato').onclick=async()=>{
   const g=id=>document.getElementById(id).value.trim();
   const nome=g('c-nome'),tel=g('c-tel'),email=g('c-email'),assunto=g('c-assunto'),msg=g('c-msg');
   if(!nome||!msg){toast('Preencha ao menos nome e mensagem.');return;}
-  const raw=`*${assunto}* — Site Fonte\n\n*Nome:* ${nome}\n*Telefone:* ${tel||'—'}\n*E-mail:* ${email||'—'}\n\n${msg}`;
-  window.open('https://wa.me/5511982222149?text='+encodeURIComponent(raw),'_blank');
-  toast('Abrindo o WhatsApp…');
+  const btn=document.getElementById('enviaContato');
+  btn.disabled=true; const label=btn.textContent; btn.textContent='Enviando…';
+  const res=await sb.rpc('criar_contato',{p_nome:nome,p_assunto:assunto,p_mensagem:msg,p_telefone:tel,p_email:email});
+  btn.disabled=false; btn.textContent=label;
+  if(res.error){ toast('Não foi possível enviar: '+res.error.message); return; }
+  ['c-nome','c-tel','c-email','c-msg'].forEach(id=>document.getElementById(id).value='');
+  toast('Mensagem enviada! Em breve entraremos em contato.');
 };
 
 /* ===================== seja membro → cadastro ===================== */
