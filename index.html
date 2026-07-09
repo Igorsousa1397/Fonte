@@ -419,6 +419,9 @@
     #mapa{height:300px}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+  .form-ok{text-align:center;padding:26px 8px}
+  .form-ok h3{font-family:var(--display);font-size:1.5rem;color:var(--agua);margin-bottom:10px}
+  .form-ok p{color:var(--cinza-claro);font-size:.96rem;max-width:42ch;margin:0 auto;line-height:1.5}
 </style>
 
 <!-- ===================== HEADER ===================== -->
@@ -1031,8 +1034,8 @@ document.getElementById('enviaContato').onclick=async()=>{
   const res=await sb.rpc('criar_contato',{p_nome:nome,p_assunto:assunto,p_mensagem:msg,p_telefone:tel,p_email:email});
   btn.disabled=false; btn.textContent=label;
   if(res.error){ toast('Não foi possível enviar: '+res.error.message); return; }
-  ['c-nome','c-tel','c-email','c-msg'].forEach(id=>document.getElementById(id).value='');
-  toast('Mensagem enviada! Em breve entraremos em contato.');
+  const boxC=document.querySelector('#contato .form');
+  if(boxC) boxC.innerHTML='<div class="form-ok"><h3>Formulário enviado com sucesso!</h3><p>Recebemos sua mensagem. Nossa equipe vai entrar em contato com você em breve.</p></div>';
 };
 
 /* ===================== seja membro → cadastro (Supabase) ===================== */
@@ -1072,21 +1075,24 @@ document.getElementById('enviaContato').onclick=async()=>{
   const btn=el('enviaMembro');
   if(btn) btn.onclick=async()=>{
     const g=id=>el(id).value.trim();
-    const nome=g('m-nome');
+    const nome=g('m-nome'), doc=g('m-cpf');
     if(!nome){ toast('Preencha o nome completo.'); return; }
+    if(doc.replace(/\D/g,'').length!==11){ toast('Preencha um CPF válido (11 dígitos).'); return; }
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
     try{
       const { error }=await sb.rpc('criar_membro',{
-        p_nome:nome, p_cpf:g('m-cpf'), p_celula:g('m-celula'),
+        p_nome:nome, p_cpf:doc, p_celula:g('m-celula'),
         p_cep:g('m-cep'), p_logradouro:g('m-log'), p_numero:g('m-num'),
         p_complemento:g('m-comp'), p_bairro:g('m-bairro'), p_cidade:g('m-cidade'), p_uf:g('m-uf')
       });
       if(error) throw error;
-      ['m-nome','m-cpf','m-celula','m-cep','m-log','m-num','m-comp','m-bairro','m-cidade','m-uf'].forEach(id=>{ const e=el(id); if(e) e.value=''; });
-      toast('Cadastro enviado! Nossa equipe vai entrar em contato.');
+      const boxM=document.querySelector('#membro .form');
+      if(boxM) boxM.innerHTML='<div class="form-ok"><h3>Cadastro enviado com sucesso!</h3><p>Recebemos seus dados. Nossa equipe da Fonte vai entrar em contato com você em breve.</p></div>';
     }catch(e){
-      toast('Não foi possível enviar agora. Tente novamente.');
-    }finally{ btn.disabled=false; btn.textContent=txt; }
+      btn.disabled=false; btn.textContent=txt;
+      const dup = e && (e.code==='23505' || /cpf/i.test(e.message||'') || /duplicad|duplicate key|already exists/i.test(e.message||''));
+      toast(dup ? 'Este CPF já está cadastrado.' : 'Não foi possível enviar agora. Tente novamente.');
+    }
   };
 })();
 
