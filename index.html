@@ -671,9 +671,15 @@
         <div class="campo"><label for="m-cpf">CPF</label><input id="m-cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00"></div>
         <div class="campo"><label for="m-celula">Célula</label><select id="m-celula"></select></div>
       </div>
-      <div class="campo"><label for="m-end">Endereço</label><input id="m-end" placeholder="Rua, número, bairro, cidade"></div>
+      <div class="duo">
+        <div class="campo"><label for="m-cep">CEP</label><input id="m-cep" inputmode="numeric" maxlength="9" placeholder="00000-000"></div>
+        <div class="campo"><label for="m-num">Número</label><input id="m-num" inputmode="numeric" placeholder="Nº"></div>
+      </div>
+      <div class="campo"><label for="m-log">Endereço</label><input id="m-log" placeholder="Preenchido pelo CEP" autocomplete="off"></div>
+      <div class="campo"><label for="m-comp">Complemento <span style="color:var(--cinza);font-weight:400">(opcional)</span></label><input id="m-comp" placeholder="Apto, bloco, casa…"></div>
+      <input type="hidden" id="m-bairro"><input type="hidden" id="m-cidade"><input type="hidden" id="m-uf">
       <button class="btn btn-claro" id="enviaMembro" style="width:100%;justify-content:center">Enviar cadastro</button>
-      <p style="color:var(--cinza);font-size:.8rem;margin-top:14px">✎ Em breve os cadastros serão salvos automaticamente no sistema da igreja. Por enquanto, o envio vai pelo WhatsApp.</p>
+      <p style="color:var(--cinza);font-size:.8rem;margin-top:14px">Seus dados vão direto para o cadastro da igreja. Nossa equipe entra em contato com você.</p>
     </div>
   </div>
 </section>
@@ -1029,26 +1035,58 @@ document.getElementById('enviaContato').onclick=async()=>{
   toast('Mensagem enviada! Em breve entraremos em contato.');
 };
 
-/* ===================== seja membro → cadastro ===================== */
+/* ===================== seja membro → cadastro (Supabase) ===================== */
 (function(){
-  const mCel=document.getElementById('m-celula');
+  const el=id=>document.getElementById(id);
+  const mCel=el('m-celula');
   if(mCel) mCel.innerHTML='<option value="">Selecione…</option>'+
     CELULAS.map(c=>`<option>${c.nome} — ${c.cidade}</option>`).join('')+
     '<option>Ainda não participo</option>';
-  const cpf=document.getElementById('m-cpf');
+
+  const cpf=el('m-cpf');
   if(cpf) cpf.addEventListener('input',()=>{
     let v=cpf.value.replace(/\D/g,'').slice(0,11);
     v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
     cpf.value=v;});
-  const btn=document.getElementById('enviaMembro');
-  if(btn) btn.onclick=()=>{
-    const g=id=>document.getElementById(id).value.trim();
-    const nome=g('m-nome'),doc=g('m-cpf'),end=g('m-end'),cel=g('m-celula');
-    if(!nome||!doc){toast('Preencha ao menos nome e CPF.');return;}
-    // TODO: gravar no banco (ex.: Supabase → tabela "membros")
-    const raw=`*Novo membro — Site Fonte*\n\n*Nome:* ${nome}\n*CPF:* ${doc}\n*Endereço:* ${end||'—'}\n*Célula:* ${cel||'—'}`;
-    window.open('https://wa.me/5511982222149?text='+encodeURIComponent(raw),'_blank');
-    toast('Cadastro enviado ✓');
+
+  const cep=el('m-cep'); let ultimoCep='';
+  if(cep) cep.addEventListener('input',async()=>{
+    let d=cep.value.replace(/\D/g,'').slice(0,8);
+    cep.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d;
+    if(d.length===8 && d!==ultimoCep){
+      ultimoCep=d;
+      try{
+        const r=await fetch('https://viacep.com.br/ws/'+d+'/json/');
+        const j=await r.json();
+        if(j && !j.erro){
+          el('m-log').value=j.logradouro||'';
+          el('m-bairro').value=j.bairro||'';
+          el('m-cidade').value=j.localidade||'';
+          el('m-uf').value=j.uf||'';
+          el('m-num').focus();
+        } else { toast('CEP não encontrado. Preencha o endereço manualmente.'); }
+      }catch(e){ toast('Não deu pra buscar o CEP. Preencha manualmente.'); }
+    }
+  });
+
+  const btn=el('enviaMembro');
+  if(btn) btn.onclick=async()=>{
+    const g=id=>el(id).value.trim();
+    const nome=g('m-nome');
+    if(!nome){ toast('Preencha o nome completo.'); return; }
+    btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
+    try{
+      const { error }=await sb.rpc('criar_membro',{
+        p_nome:nome, p_cpf:g('m-cpf'), p_celula:g('m-celula'),
+        p_cep:g('m-cep'), p_logradouro:g('m-log'), p_numero:g('m-num'),
+        p_complemento:g('m-comp'), p_bairro:g('m-bairro'), p_cidade:g('m-cidade'), p_uf:g('m-uf')
+      });
+      if(error) throw error;
+      ['m-nome','m-cpf','m-celula','m-cep','m-log','m-num','m-comp','m-bairro','m-cidade','m-uf'].forEach(id=>{ const e=el(id); if(e) e.value=''; });
+      toast('Cadastro enviado! Nossa equipe vai entrar em contato.');
+    }catch(e){
+      toast('Não foi possível enviar agora. Tente novamente.');
+    }finally{ btn.disabled=false; btn.textContent=txt; }
   };
 })();
 
