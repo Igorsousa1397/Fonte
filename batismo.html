@@ -69,7 +69,7 @@
      border:2px solid var(--neblina);flex:0 0 auto;position:relative;cursor:pointer;margin:0}
   .op input:checked{border-color:var(--agua)}
   .op input:checked::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--agua)}
-  .op span{font-size:.95rem;line-height:1.25}
+  .op span{font-size:.95rem;line-height:1.15;position:relative;top:1px}
   .info{border:var(--borda);border-radius:var(--raio-sm);background:var(--breu);padding:15px 16px;margin-bottom:14px;
         font-size:.9rem;color:var(--cinza-claro)}
   .info b{color:var(--luz)}
@@ -139,11 +139,6 @@
 
     <div class="campo">
       <label>Camiseta do batismo <span class="req">*</span></label>
-      <div class="info">
-        Caso queira comprar a camiseta do batismo para recordação:<br>
-        Valor: <b>R$ 42,00</b> · Chave Pix: <span class="pix">43324289866</span><br>
-        No caso de compra, envie o comprovante para o Nº <b>(11) 99317-4500</b>.
-      </div>
       <div class="opcoes" id="b-opcoes">
         <label class="op"><input type="radio" name="camisa" value="Usar só no batismo (devolver no mesmo dia)"><span>Usar só no batismo (devolver no mesmo dia)</span></label>
         <label class="op"><input type="radio" name="camisa" value="Comprar a camiseta (R$ 42,00)"><span>Comprar a camiseta (R$ 42,00)</span></label>
@@ -153,7 +148,7 @@
     <button class="btn" id="b-enviar">Fazer inscrição
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </button>
-    <p class="aviso">Ao enviar, abre o WhatsApp com sua inscrição já preenchida — é só confirmar o envio.</p>
+    <p class="aviso">Preencha os dados e confirme sua inscrição para o batismo.</p>
   </div>
 </main>
 
@@ -198,10 +193,13 @@
       '*Nº da camiseta:* '+camiseta,
       '*Camiseta:* '+opt.value
     ];
-    // TODO (futuro): gravar inscrição no banco e, se "Comprar a camiseta",
-    // gerar pagamento de R$ 42 via API do Mercado Pago (Checkout Pro) — como no Submergidos.
-    // Por enquanto, a inscrição é encaminhada pela equipe via WhatsApp:
+    // FLUXO FINAL (quando o back estiver pronto):
+    //   1) gravar a inscrição no banco (Supabase);
+    //   2) se "Comprar a camiseta" -> criar pagamento R$ 42 na API do Mercado Pago (Checkout Pro)
+    //      e redirecionar: window.location.href = init_point;   (como no Submergidos)
+    //   3) se "usar só no batismo" -> confirmar inscrição direto (sem pagamento).
+    // PONTE INTERINA (enquanto o MP não entra): encaminha a inscrição pelo WhatsApp da equipe.
     window.open('https://wa.me/'+WPP_INSCRICAO+'?text='+encodeURIComponent(linhas.join('\n')),'_blank');
-    toast('Abrindo o WhatsApp…');
+    toast('Enviando sua inscrição…');
   };
 </script>
