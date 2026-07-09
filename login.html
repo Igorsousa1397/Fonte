@@ -86,22 +86,40 @@
 
     <button class="btn" id="entrar">Entrar</button>
 
-    <div class="nota">
-      <span class="selo"><span class="dot"></span> Painel em construção</span><br>
-      O login será ativado em breve.
-    </div>
   </div>
 </main>
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase.js"></script>
 <script>
   function toast(msg){
     var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
     clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('on');},2800);
   }
-  // Backend ainda não conectado — placeholder até integrarmos a autenticação.
-  document.getElementById('entrar').onclick=function(){
-    toast('O acesso administrativo será ativado em breve.');
-  };
+
+  // Se já estiver logado, vai direto pro painel
+  sb.auth.getSession().then(function(r){ if(r.data.session) location.replace('painel.html'); });
+
+  var emailEl=document.getElementById('email'),
+      senhaEl=document.getElementById('senha'),
+      btn=document.getElementById('entrar');
+
+  async function entrar(){
+    var email=emailEl.value.trim(), senha=senhaEl.value;
+    if(!email||!senha){ toast('Preencha e-mail e senha.'); return; }
+    btn.disabled=true; var label=btn.textContent; btn.textContent='Entrando…';
+    var res=await sb.auth.signInWithPassword({ email:email, password:senha });
+    if(res.error){
+      btn.disabled=false; btn.textContent=label;
+      toast(/invalid|credentials/i.test(res.error.message) ? 'E-mail ou senha inválidos.' : res.error.message);
+      return;
+    }
+    location.replace('painel.html');
+  }
+
+  btn.onclick=entrar;
+  senhaEl.addEventListener('keydown', function(e){ if(e.key==='Enter') entrar(); });
+  emailEl.addEventListener('keydown', function(e){ if(e.key==='Enter') senhaEl.focus(); });
 </script>

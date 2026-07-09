@@ -140,8 +140,8 @@
     <div class="campo">
       <label>Camiseta do batismo <span class="req">*</span></label>
       <div class="opcoes" id="b-opcoes">
-        <label class="op"><input type="radio" name="camisa" value="Usar só no batismo (devolver no mesmo dia)"><span>Usar só no batismo (devolver no mesmo dia)</span></label>
-        <label class="op"><input type="radio" name="camisa" value="Comprar a camiseta (R$ 42,00)"><span>Comprar a camiseta (R$ 42,00)</span></label>
+        <label class="op"><input type="radio" name="camisa" value="usar"><span>Usar só no batismo (devolver no mesmo dia)</span></label>
+        <label class="op"><input type="radio" name="camisa" value="comprar"><span>Comprar a camiseta (R$ 42,00)</span></label>
       </div>
     </div>
 
@@ -161,10 +161,9 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase.js"></script>
 <script>
-  // WhatsApp de destino da inscrição (troque se a equipe do batismo usar outro número)
-  var WPP_INSCRICAO = '5511982222149';
-
   var opcoes = document.getElementById('b-opcoes');
   opcoes.addEventListener('change', function(){
     [].forEach.call(opcoes.querySelectorAll('.op'), function(l){
@@ -177,29 +176,45 @@
     clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('on');},2600);
   }
 
-  document.getElementById('b-enviar').onclick=function(){
+  var btn=document.getElementById('b-enviar');
+
+  function sucesso(comprar){
+    var form=document.querySelector('.form');
+    form.innerHTML =
+      '<div style="text-align:center;padding:26px 4px">'+
+        '<div style="width:56px;height:56px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:var(--agua-fundo);border:1px solid var(--agua-forte)">'+
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7ad4cf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+
+        '</div>'+
+        '<div style="font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:8px">Inscrição recebida!</div>'+
+        '<p style="color:var(--cinza-claro)">Sua inscrição para o batismo foi registrada com sucesso.'+
+          (comprar ? '<br>Em breve você receberá as instruções para o pagamento da camiseta.' : '')+
+        '</p>'+
+      '</div>';
+  }
+
+  btn.onclick=async function(){
     var g=function(id){return document.getElementById(id).value.trim();};
     var nome=g('b-nome'), celula=g('b-celula'), igreja=g('b-igreja'), tel=g('b-tel'), camiseta=g('b-camiseta');
     var opt=opcoes.querySelector('input:checked');
     if(!nome||!celula||!igreja||!tel||!camiseta||!opt){
       toast('Preencha todos os campos obrigatórios.'); return;
     }
-    var linhas=[
-      '*Inscrição de Batismo — Site Fonte*','',
-      '*Nome:* '+nome,
-      '*Célula:* '+celula,
-      '*Igreja Fonte?* '+igreja,
-      '*Telefone:* '+tel,
-      '*Nº da camiseta:* '+camiseta,
-      '*Camiseta:* '+opt.value
-    ];
-    // FLUXO FINAL (quando o back estiver pronto):
-    //   1) gravar a inscrição no banco (Supabase);
-    //   2) se "Comprar a camiseta" -> criar pagamento R$ 42 na API do Mercado Pago (Checkout Pro)
-    //      e redirecionar: window.location.href = init_point;   (como no Submergidos)
-    //   3) se "usar só no batismo" -> confirmar inscrição direto (sem pagamento).
-    // PONTE INTERINA (enquanto o MP não entra): encaminha a inscrição pelo WhatsApp da equipe.
-    window.open('https://wa.me/'+WPP_INSCRICAO+'?text='+encodeURIComponent(linhas.join('\n')),'_blank');
-    toast('Enviando sua inscrição…');
+    var comprar = (opt.value==='comprar');
+    btn.disabled=true; var label=btn.innerHTML; btn.textContent='Enviando…';
+
+    var res = await sb.rpc('criar_inscricao_batismo', {
+      p_nome:nome, p_celula:celula, p_igreja:igreja, p_telefone:tel,
+      p_camiseta_numero:camiseta, p_comprar:comprar
+    });
+
+    if(res.error){
+      btn.disabled=false; btn.innerHTML=label;
+      toast('Não foi possível enviar: '+res.error.message);
+      return;
+    }
+
+    // FUTURO (Mercado Pago): se comprar, criar pagamento e redirecionar:
+    //   window.location.href = init_point;  // vindo de uma edge function
+    sucesso(comprar);
   };
 </script>
