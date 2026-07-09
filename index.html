@@ -747,7 +747,7 @@
 
 <script>
 /* ===================== AGENDA (fonte de verdade) ===================== */
-const HOJE = new Date('2026-07-06T00:00:00'); // trocar por new Date() em produção
+const HOJE = new Date(); HOJE.setHours(0,0,0,0); // data real — atualiza sozinho todo dia
 const AGENDA = [
   { inicio:'2026-07-11', dow:'Sáb', titulo:'Culto Jovens DN4', tipo:'culto', img:'assets/dn4-jovens.jpg' },
   { inicio:'2026-07-14', dow:'Ter', titulo:'Através de Você', tipo:'culto', img:'assets/atraves-de-voce.jpg' },
