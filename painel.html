@@ -32,7 +32,7 @@
   .sidebar{width:var(--sb);flex:0 0 var(--sb);background:var(--breu);border-right:var(--borda);
            display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:30;transition:transform .28s,width .22s,flex-basis .22s}
   .sb-logo{padding:24px 22px 16px;text-align:center;border-bottom:1px solid rgba(42,42,49,.5)}
-  .sb-logo .marca-logo{background:var(--logo) center/contain no-repeat;width:104px;height:48px;margin:0 auto}
+  .sb-logo .marca-logo{display:block;height:50px;width:auto;max-width:150px;margin:0 auto;object-fit:contain}
   .sb-nav{flex:1;overflow-y:auto;padding:8px 12px}
   .nav-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;
             color:var(--cinza-claro);padding:11px 12px;border-radius:var(--raio-sm);font-size:.94rem;cursor:pointer;transition:background .15s,color .15s}
@@ -87,6 +87,7 @@
   .tabela{border:var(--borda);border-radius:var(--raio);overflow:hidden;background:var(--grafite)}
   .tabela .lin{display:grid;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(42,42,49,.6);font-size:.9rem;align-items:center}
   .tabela.batismo .lin{grid-template-columns:1.4fr 1fr .9fr .9fr .8fr}
+  .tabela.membros .lin{grid-template-columns:1.3fr 1fr 1.2fr .9fr}
   .tabela .lin:last-child{border-bottom:none}
   .tabela .cab{background:var(--breu);color:var(--cinza);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
   .tabela .lin .sub{display:block;color:var(--cinza);font-size:.8rem}
@@ -96,6 +97,12 @@
   .pill.na{background:rgba(139,139,149,.14);color:var(--cinza-claro)}
   .vazio,.carregando{padding:30px 16px;text-align:center;color:var(--cinza);font-size:.9rem}
 
+  .cc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+  .cc-bloco{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden}
+  .cc-tit{font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--cinza);font-weight:600;padding:14px 16px 10px}
+  .cc-lin{display:flex;justify-content:space-between;gap:12px;padding:11px 16px;border-top:1px solid rgba(42,42,49,.5);font-size:.92rem}
+  .cc-val{color:var(--cinza-claro)}
+  @media(max-width:680px){.cc-grid{grid-template-columns:1fr}}
   .msgs{display:flex;flex-direction:column;gap:12px}
   .msg{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:16px 18px}
   .msg .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
@@ -115,19 +122,23 @@
     .menu-btn{display:block}
     .colapsar-btn{display:none}
     .overlay.on{display:block}
-    .tabela.batismo .lin{grid-template-columns:1fr;gap:2px}
-    .tabela.batismo .cab{display:none}
-    .tabela.batismo .lin .col::before{content:attr(data-l) ": ";color:var(--cinza);font-size:.74rem}
+    .tabela.batismo .lin,.tabela.membros .lin{grid-template-columns:1fr;gap:2px}
+    .tabela.batismo .cab,.tabela.membros .cab{display:none}
+    .tabela.batismo .lin .col::before,.tabela.membros .lin .col::before{content:attr(data-l) ": ";color:var(--cinza);font-size:.74rem}
   }
 </style>
 
 <div class="app">
   <aside class="sidebar" id="sidebar">
-    <div class="sb-logo"><span class="marca-logo" role="img" aria-label="Igreja Fonte"></span></div>
+    <div class="sb-logo"><img class="marca-logo" src="assets/fonte-logo.png" alt="Igreja Fonte"></div>
     <nav class="sb-nav" id="sbnav">
       <button class="nav-item" data-view="batismo">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 15c2 0 2-1.5 4-1.5S8 15 10 15s2-1.5 4-1.5S16 15 18 15M8 3l2 4M12 3v4"/><path d="M4 15v-3.5C4 8 7 6 9 6h.5"/></svg>
         <span class="lbl">Batismo</span>
+      </button>
+      <button class="nav-item" data-view="membros">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15v-1a3 3 0 0 0-3-3H4a3 3 0 0 0-3 3v1"/><circle cx="6.5" cy="5" r="2.5"/><path d="M13 4.5a2.5 2.5 0 0 1 0 5M17 15v-1a3 3 0 0 0-2-2.8"/></svg>
+        <span class="lbl">Membros</span>
       </button>
       <button class="nav-item" data-view="financeiro">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="10" rx="2"/><circle cx="9" cy="9" r="2"/></svg>
@@ -166,7 +177,7 @@
 
   const ASSUNTOS=['Pedido de oração','Dúvida geral','Quero conhecer a igreja','Células','Inscrições / eventos','Gabinete pastoral','Outro'];
   const VALOR_CAMISETA=42;
-  let BATISMO=[], CONTATOS=[];
+  let BATISMO=[], CONTATOS=[], MEMBROS=[];
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -185,6 +196,7 @@
     if(window.innerWidth<=860) abreSidebar(false);
     marcarAtivo(view, assunto);
     if(view==='batismo')   renderBatismo();
+    if(view==='membros')   renderMembros();
     if(view==='financeiro')renderFinanceiro();
     if(view==='contato')   renderContatos(assunto);
   }
@@ -193,8 +205,16 @@
 
   function renderBatismo(){
     $('#titulo').textContent='Inscrições de Batismo';
-    const comprando=BATISMO.filter(i=>i.camiseta_opcao==='comprar').length;
-    let html='<div class="cards">'+card('Total de inscrições',BATISMO.length,true)+card('Comprando camiseta',comprando)+card('Só no batismo',BATISMO.length-comprando)+'</div>';
+    const comp=BATISMO.filter(i=>i.camiseta_opcao==='comprar');
+    const pagos=comp.filter(i=>i.pagamento_status==='aprovado').length;
+    const brl=v=>'R$ '+v.toFixed(2).replace('.',',');
+    let html='<div class="cards">'+
+      card('Total de inscrições',BATISMO.length,true)+
+      card('Comprando camiseta',comp.length)+
+      card('Só no batismo',BATISMO.length-comp.length)+
+      card('Camisetas · a receber',brl(comp.length*VALOR_CAMISETA))+
+      card('Camisetas · recebido',brl(pagos*VALOR_CAMISETA))+
+    '</div>';
     if(!BATISMO.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição ainda.</div></div>'; $('#view').innerHTML=html; return; }
     html+='<div class="tabela batismo"><div class="lin cab"><span>Nome</span><span>Célula</span><span>Telefone</span><span>Camiseta</span><span>Pagamento</span></div>';
     BATISMO.forEach(i=>{
@@ -206,15 +226,31 @@
     $('#view').innerHTML=html;
   }
 
+  function renderMembros(){
+    $('#titulo').textContent='Membros';
+    let html='<div class="cards">'+card('Total de membros',MEMBROS.length,true)+'</div>';
+    if(!MEMBROS.length){ html+='<div class="tabela"><div class="vazio">Nenhum cadastro de membro ainda.</div></div>'; $('#view').innerHTML=html; return; }
+    html+='<div class="tabela membros"><div class="lin cab"><span>Nome</span><span>Telefone</span><span>E-mail</span><span>Célula</span></div>';
+    MEMBROS.forEach(m=>{
+      html+='<div class="lin"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span></span><span class="col" data-l="Telefone">'+esc(m.telefone)+'</span><span class="col" data-l="E-mail">'+(esc(m.email)||'—')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span></div>';
+    });
+    html+='</div>';
+    $('#view').innerHTML=html;
+  }
+
+  const CENTROS_ENTRADA=['Dízimos','Ofertas','Primícias','Fonte Coffee','Eventos'];
+  const CENTROS_SAIDA=['Insumos','Limpeza','Água','Energia','Aluguel','Internet','Equipamentos'];
   function renderFinanceiro(){
     $('#titulo').textContent='Financeiro';
-    const comprando=BATISMO.filter(i=>i.camiseta_opcao==='comprar');
-    const pagos=comprando.filter(i=>i.pagamento_status==='aprovado').length;
-    const previsto=comprando.length*VALOR_CAMISETA, recebido=pagos*VALOR_CAMISETA;
+    const linha=n=>'<div class="cc-lin"><span>'+n+'</span><span class="cc-val">R$ 0,00</span></div>';
     $('#view').innerHTML=
-      '<p class="view-sub">Resumo dos pagamentos de camiseta do batismo. (O controle financeiro completo entra quando o Mercado Pago for integrado.)</p>'+
-      '<div class="cards">'+card('Camisetas · a receber','R$ '+previsto.toFixed(2).replace('.',','),true)+card('Camisetas · recebido','R$ '+recebido.toFixed(2).replace('.',','))+card('Pedidos de camiseta',comprando.length)+'</div>'+
-      '<div class="aviso-box">Em breve: integração com o Mercado Pago para gerar cobranças e conciliar automaticamente os pagamentos.</div>';
+      '<p class="view-sub">Financeiro da igreja por centro de custo — entradas e saídas. Estrutura inicial; vamos detalhar lançamentos, datas, filtros por período e relatórios em seguida.</p>'+
+      '<div class="cards">'+card('Entradas (mês)','R$ 0,00',true)+card('Saídas (mês)','R$ 0,00')+card('Saldo','R$ 0,00')+'</div>'+
+      '<div class="cc-grid">'+
+        '<div class="cc-bloco"><div class="cc-tit">Entradas</div>'+CENTROS_ENTRADA.map(linha).join('')+'</div>'+
+        '<div class="cc-bloco"><div class="cc-tit">Saídas / Despesas</div>'+CENTROS_SAIDA.map(linha).join('')+'</div>'+
+      '</div>'+
+      '<div class="aviso-box">Em breve: lançamentos manuais, categorias personalizadas (centros de custo), filtro por período e relatórios — além da conciliação automática dos pagamentos online.</div>';
   }
 
   function renderContatos(assunto){
@@ -261,13 +297,15 @@
       await sb.auth.signOut(); setTimeout(()=>location.replace('login.html'),1800); return;
     }
     $('#quem').textContent=user.email;
-    const [rb, rc] = await Promise.all([
+    const [rb, rc, rm] = await Promise.all([
       sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
-      sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false})
+      sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false}),
+      sb.from('membros').select('nome,telefone,email,celula,created_at').order('created_at',{ascending:false})
     ]);
     BATISMO = rb.data || [];
     CONTATOS = rc.data || [];
+    MEMBROS = rm.data || [];
     montaSubnav();
     irPara('batismo');
   })();
-</script> 
+</script>
