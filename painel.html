@@ -90,6 +90,7 @@
   .tabela .lin{display:grid;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(42,42,49,.6);font-size:.9rem;align-items:center}
   .tabela.batismo .lin{grid-template-columns:1.4fr 1fr .9fr .9fr .8fr}
   .tabela.membros .lin{grid-template-columns:1.3fr .9fr 1.1fr 1.3fr 64px}
+  .tabela.itens .lin{grid-template-columns:1.7fr 150px 1fr}
   .tabela.membros .lin.off{opacity:.5}
   .sw{position:relative;display:inline-block;width:40px;height:22px;cursor:pointer}
   .sw input{position:absolute;opacity:0;width:0;height:0}
@@ -97,6 +98,56 @@
   .sw .track::before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
   .sw input:checked + .track{background:var(--agua)}
   .sw input:checked + .track::before{transform:translateX(18px)}
+  .tabela.membros .lin[data-mid]{cursor:pointer}
+  .tabela.membros .lin[data-mid]:hover{background:rgba(255,255,255,.03)}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .modal-bg.on{display:flex}
+  .modal{background:var(--grafite);border:var(--borda);border-radius:var(--raio);max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:26px 26px 20px;position:relative}
+  .modal-x{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--cinza-claro);cursor:pointer;padding:4px;line-height:0}
+  .modal-x:hover{color:var(--luz)}
+  .modal h2{font-family:var(--display);font-size:1.45rem;margin:0 30px 2px 0}
+  .modal .msub{color:var(--cinza);font-size:.84rem;margin-bottom:16px}
+  .mb-pill{display:inline-block;font-size:.72rem;padding:3px 9px;border-radius:20px;margin-left:8px;vertical-align:middle}
+  .mb-pill.ok{background:var(--agua-fundo);color:var(--agua)}
+  .mb-pill.no{background:rgba(139,139,149,.15);color:var(--cinza-claro)}
+  .det-lin{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid rgba(42,42,49,.6);font-size:.92rem}
+  .det-lin .k{color:var(--cinza);flex:0 0 auto}
+  .det-lin .v{color:var(--luz);text-align:right;word-break:break-word}
+  .btn-primary{background:var(--agua);color:#04211f;border:none;border-radius:var(--raio-sm);padding:11px 20px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
+  .btn-primary:hover{background:var(--agua-forte)}
+  .btn-ghost{background:transparent;border:var(--borda);color:var(--cinza-claro);border-radius:var(--raio-sm);padding:11px 18px;cursor:pointer;font-family:inherit;font-size:.9rem}
+  .btn-danger{background:transparent;border:1px solid #7f1d1d;color:#f87171;border-radius:var(--raio-sm);padding:11px 18px;cursor:pointer;font-family:inherit;font-size:.9rem;margin-left:auto}
+  .fld{margin-bottom:14px}
+  .fld label{display:block;font-size:.8rem;color:var(--cinza-claro);margin-bottom:6px}
+  .fld input,.fld select,.fld textarea{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:10px 12px;color:var(--luz);font-family:inherit;font-size:.92rem}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--agua-forte)}
+  .f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .chkline{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.9rem;color:var(--luz);margin-top:4px}
+  .chkline input{width:18px;height:18px;accent-color:var(--agua)}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;align-items:center}
+  .stepper{display:inline-flex;align-items:center;border:var(--borda);border-radius:8px;overflow:hidden}
+  .stepper button{background:var(--breu);border:none;color:var(--luz);width:30px;height:30px;cursor:pointer;font-size:1.05rem;line-height:1}
+  .stepper button:hover{background:var(--neblina)}
+  .stepper .q{min-width:36px;text-align:center;font-variant-numeric:tabular-nums;font-size:.92rem}
+  .tag-nec{display:inline-block;font-size:.66rem;padding:2px 8px;border-radius:20px;background:var(--agua-fundo);color:var(--agua);margin-left:8px;vertical-align:middle}
+  .mini-btn{background:transparent;border:var(--borda);color:var(--cinza-claro);border-radius:8px;padding:7px 12px;font-size:.82rem;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block}
+  .mini-btn:hover{border-color:var(--cinza);color:var(--luz)}
+  .mini-btn.go{border-color:var(--agua-forte);color:var(--agua)}
+  .mini-btn.warn{border-color:#7f1d1d;color:#f87171}
+  .sub2{color:var(--cinza);font-size:.82rem}
+  .res-card{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:16px 18px;margin-bottom:12px}
+  .res-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+  .res-pill{display:inline-block;font-size:.7rem;padding:2px 9px;border-radius:20px;margin-left:6px;text-transform:capitalize}
+  .res-pill.aviso{background:rgba(234,179,8,.15);color:#eab308}
+  .res-pill.mar{background:var(--agua-fundo);color:var(--agua)}
+  .res-pill.ok{background:rgba(74,222,128,.15);color:#4ade80}
+  .res-pill.off2{background:rgba(139,139,149,.15);color:var(--cinza-claro)}
+  .res-itens{margin:10px 0 4px;padding:10px 0;border-top:1px solid rgba(42,42,49,.5);border-bottom:1px solid rgba(42,42,49,.5)}
+  .res-itens .li{display:flex;justify-content:space-between;font-size:.9rem;padding:3px 0;color:var(--cinza-claro)}
+  .res-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .subtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .subtab{background:transparent;border:var(--borda);color:var(--cinza-claro);border-radius:100px;padding:7px 16px;font-size:.85rem;cursor:pointer;font-family:inherit}
+  .subtab.on{background:var(--agua);border-color:var(--agua);color:#04211f;font-weight:600}
   .tabela .lin:last-child{border-bottom:none}
   .tabela .cab{background:var(--breu);color:var(--cinza);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
   .tabela .lin .sub{display:block;color:var(--cinza);font-size:.8rem}
@@ -132,9 +183,9 @@
     .menu-btn{display:block}
     .colapsar-btn{display:none}
     .overlay.on{display:block}
-    .tabela.batismo .lin,.tabela.membros .lin{grid-template-columns:1fr;gap:2px}
-    .tabela.batismo .cab,.tabela.membros .cab{display:none}
-    .tabela.batismo .lin .col::before,.tabela.membros .lin .col::before{content:attr(data-l) ": ";color:var(--cinza);font-size:.74rem}
+    .tabela.batismo .lin,.tabela.membros .lin,.tabela.itens .lin{grid-template-columns:1fr;gap:2px}
+    .tabela.batismo .cab,.tabela.membros .cab,.tabela.itens .cab{display:none}
+    .tabela.batismo .lin .col::before,.tabela.membros .lin .col::before,.tabela.itens .lin .col::before{content:attr(data-l) ": ";color:var(--cinza);font-size:.74rem}
   }
 </style>
 
@@ -157,6 +208,15 @@
         <button class="sub-item" data-fin="entradas">Entradas</button>
         <button class="sub-item" data-fin="saidas">Saídas</button>
       </div>
+      <button class="nav-item" id="btn-acao" data-toggle="acao">
+        <span class="ini">A</span><span class="lbl">Ação Social</span>
+        <svg class="chev" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
+      </button>
+      <div class="subnav" id="subnav-acao">
+        <button class="sub-item" data-acao="estoque">Estoque</button>
+        <button class="sub-item" data-acao="necessidades">Necessidades</button>
+        <button class="sub-item" data-acao="reservas">Reservas</button>
+      </div>
       <button class="nav-item" id="btn-contato" data-toggle="contato">
         <span class="ini">C</span><span class="lbl">Fale com a gente</span>
         <svg class="chev" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
@@ -169,6 +229,18 @@
     </div>
   </aside>
   <div class="overlay" id="overlay"></div>
+  <div class="modal-bg" id="itBg">
+    <div class="modal">
+      <button class="modal-x" id="itX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
+      <div id="itBody"></div>
+    </div>
+  </div>
+  <div class="modal-bg" id="mbBg">
+    <div class="modal">
+      <button class="modal-x" id="mbX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
+      <div id="mbBody"></div>
+    </div>
+  </div>
 
   <section class="conteudo">
     <div class="topbar">
@@ -189,7 +261,7 @@
 
   const ASSUNTOS=['Pedido de oração','Dúvida geral','Quero conhecer a igreja','Células','Inscrições / eventos','Gabinete pastoral','Outro'];
   const VALOR_CAMISETA=42;
-  let BATISMO=[], CONTATOS=[], MEMBROS=[];
+  let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], acaoTab='estoque', acaoResTab='pendente';
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -204,6 +276,8 @@
     $$('.nav-item').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
     const bc=$('#btn-contato'); if(bc) bc.classList.toggle('on', view==='contato');
     const bf=$('#btn-fin'); if(bf) bf.classList.toggle('on', view==='financeiro');
+    const ba=$('#btn-acao'); if(ba) ba.classList.toggle('on', view==='acao');
+    $$('#subnav-acao .sub-item').forEach(b=>b.classList.toggle('on', view==='acao' && b.dataset.acao===(sub||'estoque')));
     $$('#subnav .sub-item').forEach(b=>b.classList.toggle('on', view==='contato' && b.dataset.assunto===(sub||'__todos')));
     $$('#subnav-fin .sub-item').forEach(b=>b.classList.toggle('on', view==='financeiro' && b.dataset.fin===(sub||'geral')));
   }
@@ -213,6 +287,7 @@
     if(view==='batismo')   renderBatismo();
     if(view==='membros')   renderMembros();
     if(view==='financeiro')renderFinanceiro(sub);
+    if(view==='acao')      renderAcao(sub);
     if(view==='contato')   renderContatos(sub);
   }
 
@@ -249,6 +324,30 @@
     const m=MEMBROS.find(x=>x.id===id); if(m) m.ativo=ativo;
     renderMembros();
   }
+  function abreMembro(m){
+    const peniel=m.passou_peniel===true?'Sim':m.passou_peniel===false?'Não':'—';
+    const ativo=m.ativo!==false;
+    const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
+    const linhas=[
+      ['Telefone', m.telefone],
+      ['CPF', m.cpf],
+      ['Célula', m.celula],
+      ['Ministério', m.ministerio || 'Não serve em nenhum'],
+      ['Encontro Peniel', peniel],
+      ['Endereço', rua],
+      ['Complemento', m.complemento],
+      ['Bairro', m.bairro],
+      ['Cidade / UF', [m.cidade,m.uf].filter(Boolean).join(' / ')],
+      ['CEP', m.cep]
+    ];
+    $('#mbBody').innerHTML=
+      '<h2>'+esc(m.nome)+'<span class="mb-pill '+(ativo?'ok':'no')+'">'+(ativo?'Ativo':'Inativo')+'</span></h2>'+
+      '<div class="msub">Cadastrado em '+dataBR(m.created_at)+'</div>'+
+      '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(esc(l[1])||'—')+'</span></div>').join('')+'</div>';
+    $('#mbBg').classList.add('on');
+  }
+  function fechaMembro(){ $('#mbBg').classList.remove('on'); }
+
   function renderMembros(){
     $('#titulo').textContent='Membros';
     const ativos=MEMBROS.filter(m=>m.ativo!==false).length;
@@ -261,11 +360,14 @@
       const loc=[m.cidade,m.uf].filter(Boolean).join('/');
       const endereco=[rua,loc].filter(Boolean).join(' — ');
       const on=m.ativo!==false;
-      html+='<div class="lin'+(on?'':' off')+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span></span><span class="col" data-l="CPF">'+(esc(m.cpf)||'—')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
+      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span></span><span class="col" data-l="CPF">'+(esc(m.cpf)||'—')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
     $$('#view .sw input').forEach(cb=> cb.onchange=()=>setAtivoMembro(cb.dataset.id, cb.checked, cb));
+    $$('#view .tabela.membros .lin[data-mid]').forEach(row=>{
+      row.onclick=e=>{ if(e.target.closest('.sw')) return; const m=MEMBROS.find(x=>x.id===row.dataset.mid); if(m) abreMembro(m); };
+    });
   }
 
   const CENTROS_ENTRADA=['Dízimos','Ofertas','Primícias','Fonte Coffee','Eventos'];
@@ -333,6 +435,170 @@
     this.classList.toggle('aberto',abre);
     if(abre) irPara('contato','__todos');
   };
+  /* ===================== AÇÃO SOCIAL ===================== */
+  async function reloadItens(){ const {data}=await sb.from('acao_itens').select('*').order('nome'); AITENS=data||[]; }
+  async function reloadReservas(){ const {data}=await sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}); ARES=data||[]; }
+
+  const cpfFmt=c=>{ const d=(c||'').replace(/\D/g,''); return d.length===11 ? d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4') : (c||'—'); };
+  const waLink=t=>{ const d=(t||'').replace(/\D/g,''); return d?('https://wa.me/55'+d):null; };
+
+  function renderAcao(sub){
+    acaoTab=sub||'estoque';
+    if(acaoTab==='necessidades') return renderAcaoNec();
+    if(acaoTab==='reservas')     return renderAcaoReservas();
+    return renderAcaoEstoque();
+  }
+
+  function renderAcaoEstoque(){
+    $('#titulo').textContent='Ação Social · Estoque';
+    const total=AITENS.length, comE=AITENS.filter(i=>i.quantidade>0).length, falta=AITENS.filter(i=>i.quantidade<=0).length;
+    let html='<div class="cards">'+card('Itens cadastrados',total,true)+card('Com estoque',comE)+card('Em falta',falta)+'</div>';
+    html+='<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn-primary" id="acaoNovo">Novo item</button></div>';
+    if(!AITENS.length){ html+='<div class="tabela"><div class="vazio">Nenhum item ainda. Clique em “Novo item”.</div></div>'; $('#view').innerHTML=html; $('#acaoNovo').onclick=()=>abreItem(null); return; }
+    html+='<div class="tabela itens"><div class="lin cab"><span>Item</span><span>Estoque</span><span>Ativo</span></div>';
+    AITENS.forEach(i=>{
+      html+='<div class="lin'+(i.ativo?'':' off')+'" data-iid="'+i.id+'">'+
+        '<span class="col" data-l="Item">'+esc(i.nome)+(i.necessidade?'<span class="tag-nec">necessidade</span>':'')+'<span class="sub">'+(esc(i.categoria)||'—')+' · '+esc(i.unidade)+'</span></span>'+
+        '<span class="col" data-l="Estoque"><span class="stepper" data-iid="'+i.id+'"><button data-d="-1">−</button><span class="q">'+i.quantidade+'</span><button data-d="1">+</button></span></span>'+
+        '<span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-aid="'+i.id+'"'+(i.ativo?' checked':'')+'><span class="track"></span></label></span>'+
+        '</div>';
+    });
+    html+='</div>';
+    $('#view').innerHTML=html;
+    $('#acaoNovo').onclick=()=>abreItem(null);
+    $$('#view .stepper[data-iid]').forEach(st=>{
+      st.querySelectorAll('button').forEach(b=> b.onclick=async(e)=>{
+        e.stopPropagation();
+        const id=st.dataset.iid, it=AITENS.find(x=>x.id===id); if(!it) return;
+        const novo=Math.max(0, it.quantidade+parseInt(b.dataset.d,10));
+        b.disabled=true; const {error}=await sb.from('acao_itens').update({quantidade:novo}).eq('id',id); b.disabled=false;
+        if(!error){ it.quantidade=novo; st.querySelector('.q').textContent=novo; }
+      });
+    });
+    $$('#view .sw input[data-aid]').forEach(cb=> cb.onchange=async()=>{
+      const id=cb.dataset.aid; cb.disabled=true;
+      const {error}=await sb.from('acao_itens').update({ativo:cb.checked}).eq('id',id); cb.disabled=false;
+      if(error){ cb.checked=!cb.checked; return; }
+      const it=AITENS.find(x=>x.id===id); if(it) it.ativo=cb.checked;
+      cb.closest('.lin').classList.toggle('off',!cb.checked);
+    });
+    $$('#view .tabela.itens .lin[data-iid]').forEach(row=>{
+      row.onclick=e=>{ if(e.target.closest('.stepper')||e.target.closest('.sw')) return; const it=AITENS.find(x=>x.id===row.dataset.iid); if(it) abreItem(it); };
+    });
+  }
+
+  function abreItem(it){
+    const e=it||{};
+    $('#itBody').innerHTML=
+      '<h2>'+(it?'Editar item':'Novo item')+'</h2><div class="msub">Mercadinho solidário</div>'+
+      '<div class="fld"><label>Nome</label><input id="it-nome" value="'+esc(e.nome||'')+'"></div>'+
+      '<div class="f2"><div class="fld"><label>Categoria</label><input id="it-cat" placeholder="Alimentos, Higiene…" value="'+esc(e.categoria||'')+'"></div>'+
+        '<div class="fld"><label>Unidade</label><input id="it-uni" placeholder="un, kg, pacote" value="'+esc(e.unidade||'un')+'"></div></div>'+
+      '<div class="f2"><div class="fld"><label>Quantidade em estoque</label><input id="it-qtd" type="number" min="0" value="'+(e.quantidade!=null?e.quantidade:0)+'"></div>'+
+        '<div class="fld"><label>Prioridade no carrossel</label><input id="it-prio" type="number" min="0" value="'+(e.prioridade!=null?e.prioridade:0)+'"></div></div>'+
+      '<div class="fld"><label>Foto (URL)</label><input id="it-foto" placeholder="https://…" value="'+esc(e.foto_url||'')+'"></div>'+
+      '<div class="fld"><label>Descrição</label><textarea id="it-desc" rows="2">'+esc(e.descricao||'')+'</textarea></div>'+
+      '<label class="chkline"><input type="checkbox" id="it-nec"'+(e.necessidade?' checked':'')+'> Mostrar no carrossel “Estamos precisando de…”</label>'+
+      '<div class="modal-actions"><button class="btn-primary" id="it-salvar">Salvar</button><button class="btn-ghost" id="it-cancelar">Cancelar</button>'+
+        (it?'<button class="btn-danger" id="it-excluir">Excluir</button>':'')+'</div>';
+    $('#itBg').classList.add('on');
+    $('#it-cancelar').onclick=fechaItem;
+    $('#it-salvar').onclick=()=>salvarItem(it&&it.id);
+    if(it) $('#it-excluir').onclick=()=>excluirItem(it.id);
+  }
+  function fechaItem(){ $('#itBg').classList.remove('on'); }
+  async function salvarItem(id){
+    const v=i=>{const el=$('#'+i);return el?el.value.trim():'';};
+    const nome=v('it-nome'); if(!nome){ alert('Informe o nome do item.'); return; }
+    const payload={ nome, categoria:v('it-cat')||null, unidade:v('it-uni')||'un',
+      quantidade:Math.max(0,parseInt($('#it-qtd').value,10)||0),
+      prioridade:Math.max(0,parseInt($('#it-prio').value,10)||0),
+      foto_url:v('it-foto')||null, descricao:v('it-desc')||null, necessidade:$('#it-nec').checked };
+    const btn=$('#it-salvar'); btn.disabled=true; btn.textContent='Salvando…';
+    let error;
+    if(id){ ({error}=await sb.from('acao_itens').update(payload).eq('id',id)); }
+    else  { ({error}=await sb.from('acao_itens').insert(payload)); }
+    btn.disabled=false; btn.textContent='Salvar';
+    if(error){ alert('Erro ao salvar: '+error.message); return; }
+    await reloadItens(); fechaItem(); renderAcao(acaoTab);
+  }
+  async function excluirItem(id){
+    if(!confirm('Excluir este item? As reservas antigas mantêm o histórico.')) return;
+    const {error}=await sb.from('acao_itens').delete().eq('id',id);
+    if(error){ alert('Erro ao excluir: '+error.message); return; }
+    await reloadItens(); fechaItem(); renderAcao(acaoTab);
+  }
+
+  function renderAcaoNec(){
+    $('#titulo').textContent='Ação Social · Necessidades';
+    const necs=AITENS.filter(i=>i.necessidade).slice().sort((a,b)=> (b.prioridade-a.prioridade) || a.nome.localeCompare(b.nome,'pt'));
+    let html='<p class="view-sub">Itens marcados aqui aparecem no carrossel “Estamos precisando de…” do site. Prioridade maior aparece primeiro.</p>';
+    if(!necs.length){ html+='<div class="tabela"><div class="vazio">Nenhum item no carrossel. Marque “necessidade” ao cadastrar/editar um item no Estoque.</div></div>'; $('#view').innerHTML=html; return; }
+    html+='<div class="tabela itens"><div class="lin cab"><span>Item</span><span>Prioridade</span><span></span></div>';
+    necs.forEach(i=>{
+      const falta=i.quantidade<=0;
+      html+='<div class="lin" data-iid="'+i.id+'">'+
+        '<span class="col" data-l="Item">'+esc(i.nome)+(falta?'<span class="tag-nec" style="background:rgba(248,113,113,.15);color:#f87171">em falta</span>':'')+'<span class="sub">'+(esc(i.categoria)||'—')+'</span></span>'+
+        '<span class="col" data-l="Prioridade"><span class="stepper" data-pid="'+i.id+'"><button data-d="-1">−</button><span class="q">'+i.prioridade+'</span><button data-d="1">+</button></span></span>'+
+        '<span class="col"><button class="mini-btn warn" data-off="'+i.id+'">Tirar do carrossel</button></span>'+
+        '</div>';
+    });
+    html+='</div>';
+    $('#view').innerHTML=html;
+    $$('#view .stepper[data-pid]').forEach(st=>{
+      st.querySelectorAll('button').forEach(b=> b.onclick=async()=>{
+        const id=st.dataset.pid, it=AITENS.find(x=>x.id===id); if(!it) return;
+        const novo=Math.max(0, it.prioridade+parseInt(b.dataset.d,10));
+        b.disabled=true; const {error}=await sb.from('acao_itens').update({prioridade:novo}).eq('id',id); b.disabled=false;
+        if(!error){ it.prioridade=novo; renderAcaoNec(); }
+      });
+    });
+    $$('#view .mini-btn[data-off]').forEach(b=> b.onclick=async()=>{
+      const id=b.dataset.off; b.disabled=true;
+      const {error}=await sb.from('acao_itens').update({necessidade:false}).eq('id',id);
+      if(error){ b.disabled=false; return; }
+      const it=AITENS.find(x=>x.id===id); if(it) it.necessidade=false; renderAcaoNec();
+    });
+  }
+
+  function renderAcaoReservas(){
+    $('#titulo').textContent='Ação Social · Reservas';
+    const cont=s=>ARES.filter(r=>r.status===s).length;
+    const tabs=[['pendente','Pendentes'],['separado','Separados'],['entregue','Entregues'],['cancelado','Cancelados'],['todas','Todas']];
+    let html='<div class="subtabs">'+tabs.map(t=>'<button class="subtab'+(acaoResTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+(t[0]!=='todas'?' ('+cont(t[0])+')':'')+'</button>').join('')+'</div>';
+    const lista=acaoResTab==='todas'?ARES:ARES.filter(r=>r.status===acaoResTab);
+    if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma reserva nesta aba.</div></div>'; }
+    else lista.forEach(r=>{
+      const itens=(r.acao_reserva_itens||[]);
+      const pill=r.status==='pendente'?'aviso':r.status==='separado'?'mar':r.status==='entregue'?'ok':'off2';
+      const wa=waLink(r.membro_telefone);
+      html+='<div class="res-card">'+
+        '<div class="res-head"><div><div style="font-weight:600">'+esc(r.membro_nome||'—')+' <span class="res-pill '+pill+'">'+r.status+'</span></div>'+
+          '<div class="sub2">'+cpfFmt(r.membro_cpf)+' · '+(esc(r.membro_telefone)||'sem telefone')+' · '+dataBR(r.created_at)+'</div></div>'+
+          (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
+        '<div class="res-itens">'+(itens.length?itens.map(li=>'<div class="li"><span>'+esc(li.item_nome)+'</span><span>x'+li.quantidade+'</span></div>').join(''):'<div class="li">—</div>')+'</div>'+
+        (r.obs?'<div class="sub2" style="margin-bottom:10px">Obs: '+esc(r.obs)+'</div>':'')+
+        '<div class="res-actions">'+acoesReserva(r)+'</div>'+
+        '</div>';
+    });
+    $('#view').innerHTML=html;
+    $$('#view .subtab').forEach(b=> b.onclick=()=>{ acaoResTab=b.dataset.tab; renderAcaoReservas(); });
+    $$('#view .mini-btn[data-st]').forEach(b=> b.onclick=()=>mudaStatus(b.dataset.rid, b.dataset.st));
+  }
+  function acoesReserva(r){
+    const btn=(st,txt,cls)=>'<button class="mini-btn '+cls+'" data-rid="'+r.id+'" data-st="'+st+'">'+txt+'</button>';
+    if(r.status==='pendente') return btn('separado','Marcar separado','go')+btn('cancelado','Cancelar','warn');
+    if(r.status==='separado') return btn('entregue','Marcar entregue','go')+btn('cancelado','Cancelar','warn');
+    return '<span class="sub2">Sem ações</span>';
+  }
+  async function mudaStatus(id, st){
+    if(st==='cancelado' && !confirm('Cancelar esta reserva? O estoque reservado será devolvido.')) return;
+    const {error}=await sb.rpc('acao_reserva_set_status',{p_id:id, p_status:st});
+    if(error){ alert('Erro: '+error.message); return; }
+    await Promise.all([reloadReservas(), reloadItens()]);
+    renderAcaoReservas();
+  }
+
   $('#btn-fin').onclick=function(){
     if(app.classList.contains('recolhido')) setRecolhido(false);
     const abre=!$('#subnav-fin').classList.contains('aberto');
@@ -341,7 +607,20 @@
     if(abre) irPara('financeiro','geral');
   };
   $$('#subnav-fin .sub-item').forEach(b=> b.onclick=()=>irPara('financeiro', b.dataset.fin));
+  $('#btn-acao').onclick=function(){
+    if(app.classList.contains('recolhido')) setRecolhido(false);
+    const abre=!$('#subnav-acao').classList.contains('aberto');
+    $('#subnav-acao').classList.toggle('aberto',abre);
+    this.classList.toggle('aberto',abre);
+    if(abre) irPara('acao','estoque');
+  };
+  $$('#subnav-acao .sub-item').forEach(b=> b.onclick=()=>irPara('acao', b.dataset.acao));
   $('#sair').onclick=async()=>{ await sb.auth.signOut(); location.replace('login.html'); };
+  $('#mbX').onclick=fechaMembro;
+  $('#mbBg').onclick=e=>{ if(e.target===$('#mbBg')) fechaMembro(); };
+  $('#itX').onclick=fechaItem;
+  $('#itBg').onclick=e=>{ if(e.target===$('#itBg')) fechaItem(); };
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ fechaMembro(); fechaItem(); } });
 
   (async function(){
     const { data:{ user } } = await sb.auth.getUser();
@@ -352,14 +631,18 @@
       await sb.auth.signOut(); setTimeout(()=>location.replace('login.html'),1800); return;
     }
     $('#quem').textContent=user.email;
-    const [rb, rc, rm] = await Promise.all([
+    const [rb, rc, rm, ai, ar] = await Promise.all([
       sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
       sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false}),
-      sb.from('membros').select('id,nome,cpf,celula,logradouro,numero,cidade,uf,ativo,created_at').order('created_at',{ascending:false})
+      sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at').order('created_at',{ascending:false}),
+      sb.from('acao_itens').select('*').order('nome'),
+      sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false})
     ]);
     BATISMO = rb.data || [];
     CONTATOS = rc.data || [];
     MEMBROS = rm.data || [];
+    AITENS = ai.data || [];
+    ARES = ar.data || [];
     montaSubnav();
     irPara('batismo');
   })();
