@@ -74,8 +74,7 @@
   .env-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
   .dz{font-family:var(--script);font-size:2.6rem;line-height:.9;color:var(--luz)}
   .dz-sub{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.02em;font-size:.82rem;line-height:1.25;margin-top:4px;color:var(--cinza-claro)}
-  .maos{width:66px;height:66px;flex:0 0 auto;color:var(--agua)}
-  .maos svg{width:100%;height:100%}
+  .env-logo{width:110px;height:auto;flex:0 0 auto;opacity:.95}
 
   .dizimista{border:var(--borda);border-radius:var(--raio-sm);padding:9px 12px;font-weight:700;
     text-transform:uppercase;font-size:.8rem;letter-spacing:.04em;margin-bottom:14px;color:var(--cinza-claro)}
@@ -143,19 +142,7 @@
           <div class="dz">Dízimo</div>
           <div class="dz-sub">Compromisso<br>Evangelização<br>Motivação</div>
         </div>
-        <div class="maos" aria-hidden="true">
-          <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="50" y1="5" x2="50" y2="14"/>
-            <line x1="33" y1="9" x2="37" y2="17"/>
-            <line x1="67" y1="9" x2="63" y2="17"/>
-            <line x1="20" y1="20" x2="27" y2="25"/>
-            <line x1="80" y1="20" x2="73" y2="25"/>
-            <path d="M50 22 C41 40, 35 62, 41 85 L59 85 C65 62, 59 40, 50 22 Z"/>
-            <path d="M50 27 L50 83"/>
-            <path d="M41 85 C34 87, 30 91, 30 95"/>
-            <path d="M59 85 C66 87, 70 91, 70 95"/>
-          </svg>
-        </div>
+        <img class="env-logo" src="assets/fonte-logo.png" alt="Igreja Fonte">
       </div>
 
       <div class="dizimista">Dizimista: <span id="dzNome">—</span></div>
@@ -168,8 +155,6 @@
 
       <table class="tab-env" id="gridEnv"></table>
       <div class="tab-cap">valores em R$</div>
-
-      <div id="primiciasBox"></div>
 
       <div class="quote">"O dízimo é partilha generosa que exige a conversão do coração."</div>
     </div>
@@ -260,36 +245,31 @@
 
   function renderGrid(){
     el('anoLbl').textContent = ANO;
-    var rows = '<tr><th style="text-align:left">Mês</th><th style="text-align:right">Dízimo</th><th style="text-align:right">Oferta</th><th>Visto</th></tr>';
+    var rows = '<tr><th style="text-align:left">Mês</th><th style="text-align:right">Dízimo</th><th style="text-align:right">Primícia</th><th style="text-align:right">Oferta</th><th>Visto</th></tr>';
     for(var m=1; m<=12; m++){
       var ent = ALL.filter(c=> doAno(c.competencia)===ANO && doMes(c.competencia)===m);
       var diz = ent.filter(c=>c.tipo==='dizimo');
+      var pri = ent.filter(c=>c.tipo==='primicia');
       var ofe = ent.filter(c=>c.tipo==='oferta');
       var dizV = diz.reduce((s,c)=>s+Number(c.valor||0),0);
+      var priV = pri.reduce((s,c)=>s+Number(c.valor||0),0);
       var ofeV = ofe.reduce((s,c)=>s+Number(c.valor||0),0);
       var dizPend = diz.length && !diz.every(c=>c.status==='confirmado');
+      var priPend = pri.length && !pri.every(c=>c.status==='confirmado');
       var ofePend = ofe.length && !ofe.every(c=>c.status==='confirmado');
       var mesConf = ent.length && ent.every(c=>c.status==='confirmado');
       rows += '<tr>'+
         '<td class="mes">'+MESES_NM[m-1]+'</td>'+
         '<td class="val'+(dizPend?' pend':'')+'">'+(diz.length?fmt(dizV):'')+'</td>'+
+        '<td class="val'+(priPend?' pend':'')+'">'+(pri.length?fmt(priV):'')+'</td>'+
         '<td class="val'+(ofePend?' pend':'')+'">'+(ofe.length?fmt(ofeV):'')+'</td>'+
         '<td class="visto">'+(mesConf?CK:'')+'</td>'+
       '</tr>';
     }
     // 13º (registrar como oferta/dízimo de dezembro fica no mês; linha 13º é reservada)
-    rows += '<tr class="extra"><td class="mes">13º</td><td class="val"></td><td class="val"></td><td class="visto"></td></tr>';
+    rows += '<tr class="extra"><td class="mes">13º</td><td class="val"></td><td class="val"></td><td class="val"></td><td class="visto"></td></tr>';
     el('gridEnv').innerHTML = rows;
 
-    // primícias do ano
-    var prim = ALL.filter(c=> c.tipo==='primicia' && doAno(c.competencia)===ANO);
-    if(prim.length){
-      el('primiciasBox').innerHTML = '<div class="prim"><div class="prim-tit">Primícias '+ANO+'</div>'+
-        prim.sort((a,b)=>doMes(a.competencia)-doMes(b.competencia)).map(c=>
-          '<div class="prim-li"><span>'+MESES_NM[doMes(c.competencia)-1]+'</span>'+
-          '<span>'+fmt(c.valor)+' <span class="st">'+(c.status==='confirmado'?'· confirmado':(c.status==='recusado'?'· não confirmado':'· aguardando'))+'</span></span></div>'
-        ).join('')+'</div>';
-    } else { el('primiciasBox').innerHTML=''; }
   }
 
   async function declarar(){
