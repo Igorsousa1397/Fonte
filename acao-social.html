@@ -80,6 +80,14 @@
   .stepper .q{font-variant-numeric:tabular-nums;font-size:.95rem}
 
   .vazio{color:var(--cinza);padding:22px;border:1px dashed var(--neblina);border-radius:var(--raio);text-align:center;font-size:.92rem}
+  .maintabs{display:flex;gap:18px;margin-bottom:18px;border-bottom:var(--borda)}
+  .mtab{background:none;border:none;color:var(--cinza);font-family:var(--display);font-size:1.2rem;font-weight:700;cursor:pointer;padding:6px 2px 12px;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .mtab:hover{color:var(--cinza-claro)}
+  .mtab.on{color:var(--luz);border-bottom-color:var(--agua)}
+  .subtabs2{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .dtab{background:transparent;border:var(--borda);color:var(--cinza-claro);border-radius:100px;padding:7px 16px;font-size:.85rem;cursor:pointer;font-family:inherit}
+  .dtab:hover{border-color:var(--cinza)}
+  .dtab.on{background:var(--agua);border-color:var(--agua);color:#04211f;font-weight:600}
 
   /* como funciona */
   .passos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -148,7 +156,16 @@
   </section>
 
   <section class="sec">
-    <div class="sec-head"><h2>Mercadinho</h2><p>disponível para reserva</p></div>
+    <div class="maintabs">
+      <button class="mtab on" data-tab="mercadinho">Mercadinho</button>
+      <button class="mtab" data-tab="doacoes">Doações</button>
+    </div>
+    <div class="subtabs2" id="doacaoSub" style="display:none">
+      <button class="dtab on" data-cat="Rouparia">Rouparia</button>
+      <button class="dtab" data-cat="Móveis">Móveis</button>
+      <button class="dtab" data-cat="Eletrodomésticos">Eletrodomésticos</button>
+      <button class="dtab" data-cat="Remédios">Remédios</button>
+    </div>
     <div class="grid" id="grid"><div class="vazio">Carregando itens…</div></div>
   </section>
 
@@ -204,7 +221,7 @@
     const { data, error } = await sb.from('acao_itens').select('*').eq('ativo',true).order('nome');
     ITENS = data || [];
     renderNecessidades();
-    renderMercadinho();
+    renderConteudo();
   }
 
   function renderNecessidades(){
@@ -219,29 +236,45 @@
     ).join('');
   }
 
-  function renderMercadinho(){
-    const disp = ITENS.filter(i=>i.quantidade>0);
-    if(!disp.length){ el('grid').innerHTML='<div class="vazio">No momento não há itens disponíveis no mercadinho. Volte em breve.</div>'; return; }
-    el('grid').innerHTML = disp.map(i=>{
-      const inCart = cart[i.id];
-      const foot = inCart
-        ? '<div class="stepper" data-id="'+i.id+'"><button data-d="-1">−</button><span class="q">'+inCart.qtd+' no carrinho</span><button data-d="1">+</button></div>'
-        : '<button class="btn-reservar" data-add="'+i.id+'">Reservar</button>';
-      return '<div class="item-card"><div class="foto">'+fotoHtml(i)+'</div>'+
-        '<div class="body"><div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
-          '<div class="disp">'+i.quantidade+' '+esc(i.unidade||'un')+' disponível'+(i.quantidade>1?'is':'')+'</div></div>'+
-        '<div class="foot">'+foot+'</div></div>';
-    }).join('');
+  const DOACAO_CATS = ['Rouparia','Móveis','Eletrodomésticos','Remédios'];
+  var mainTab = 'mercadinho', doacaoCat = 'Rouparia';
+  const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+
+  function cardHtml(i){
+    const inCart = cart[i.id];
+    const foot = inCart
+      ? '<div class="stepper" data-id="'+i.id+'"><button data-d="-1">−</button><span class="q">'+inCart.qtd+' no carrinho</span><button data-d="1">+</button></div>'
+      : '<button class="btn-reservar" data-add="'+i.id+'">Reservar</button>';
+    return '<div class="item-card"><div class="foto">'+fotoHtml(i)+'</div>'+
+      '<div class="body"><div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
+        '<div class="disp">'+i.quantidade+' '+esc(i.unidade||'un')+' disponível'+(i.quantidade>1?'is':'')+'</div></div>'+
+      '<div class="foot">'+foot+'</div></div>';
+  }
+  function wireCards(){
     el('grid').querySelectorAll('[data-add]').forEach(b=> b.onclick=()=>addCart(b.dataset.add));
     el('grid').querySelectorAll('.stepper[data-id]').forEach(st=>{
       st.querySelectorAll('button').forEach(b=> b.onclick=()=>mudaQtd(st.dataset.id, parseInt(b.dataset.d,10)));
     });
   }
+  function itensDaAba(){
+    const set = DOACAO_CATS.map(norm);
+    if(mainTab==='doacoes') return ITENS.filter(i=> i.quantidade>0 && norm(i.categoria)===norm(doacaoCat));
+    return ITENS.filter(i=> i.quantidade>0 && !set.includes(norm(i.categoria)));
+  }
+  function renderConteudo(){
+    const lista = itensDaAba();
+    if(!lista.length){
+      const msg = mainTab==='doacoes' ? 'Nenhum item em '+doacaoCat+' no momento.' : 'No momento não há itens no mercadinho. Volte em breve.';
+      el('grid').innerHTML='<div class="vazio">'+msg+'</div>'; return;
+    }
+    el('grid').innerHTML = lista.map(cardHtml).join('');
+    wireCards();
+  }
 
   function addCart(id){
     const it = ITENS.find(x=>x.id===id); if(!it) return;
     cart[id] = { nome:it.nome, unidade:it.unidade, disponivel:it.quantidade, qtd:1 };
-    renderMercadinho(); syncFab();
+    renderConteudo(); syncFab();
   }
   function mudaQtd(id, d){
     const c = cart[id]; if(!c) return;
@@ -249,7 +282,7 @@
     if(novo <= 0){ delete cart[id]; }
     else if(novo > c.disponivel){ toast('Só temos '+c.disponivel+' em estoque.'); return; }
     else { c.qtd = novo; }
-    renderMercadinho(); syncFab();
+    renderConteudo(); syncFab();
     if(el('rBg').classList.contains('on')) renderCart();
   }
   function syncFab(){
@@ -341,6 +374,18 @@
   el('rX').onclick = fecharReserva;
   el('rBg').onclick = e=>{ if(e.target===el('rBg')) fecharReserva(); };
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') fecharReserva(); });
+
+  document.querySelectorAll('.mtab').forEach(b=> b.onclick=()=>{
+    mainTab=b.dataset.tab;
+    document.querySelectorAll('.mtab').forEach(x=>x.classList.toggle('on',x===b));
+    el('doacaoSub').style.display = mainTab==='doacoes' ? 'flex' : 'none';
+    renderConteudo();
+  });
+  document.querySelectorAll('.dtab').forEach(b=> b.onclick=()=>{
+    doacaoCat=b.dataset.cat;
+    document.querySelectorAll('.dtab').forEach(x=>x.classList.toggle('on',x===b));
+    renderConteudo();
+  });
 
   carregar();
 </script>
