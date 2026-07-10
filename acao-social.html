@@ -60,7 +60,11 @@
   .nec-card .body{padding:12px 14px}
   .nec-card .nm{font-weight:600}
   .nec-card .ct{color:var(--cinza);font-size:.82rem}
-  .badge-falta{display:inline-block;margin-top:8px;font-size:.7rem;padding:3px 9px;border-radius:20px;background:rgba(248,113,113,.15);color:#f87171}
+  .badge-falta{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 11px;border-radius:20px;background:rgba(248,113,113,.18);color:#fca5a5;border:1px solid rgba(248,113,113,.5)}
+  .badge-falta .pdot{width:6px;height:6px;border-radius:50%;background:#f87171;box-shadow:0 0 0 0 rgba(248,113,113,.6);animation:pulseFalta 1.5s infinite}
+  @keyframes pulseFalta{0%{box-shadow:0 0 0 0 rgba(248,113,113,.55)}70%{box-shadow:0 0 0 7px rgba(248,113,113,0)}100%{box-shadow:0 0 0 0 rgba(248,113,113,0)}}
+  .nec-card.urg{border-color:rgba(248,113,113,.5);box-shadow:0 0 0 1px rgba(248,113,113,.18),0 14px 34px -18px rgba(248,113,113,.4)}
+  .nec-card.urg .nm{color:#fecaca}
   .badge-ok{display:inline-block;margin-top:8px;font-size:.7rem;padding:3px 9px;border-radius:20px;background:var(--agua-fundo);color:var(--agua)}
 
   /* mercadinho */
@@ -231,9 +235,9 @@
     if(!necs.length){ el('secNecessidades').style.display='none'; return; }
     el('secNecessidades').style.display='';
     el('carrossel').innerHTML = necs.map(i=>
-      '<div class="nec-card"><div class="foto">'+fotoHtml(i)+'</div><div class="body">'+
+      '<div class="nec-card'+(i.quantidade>0?'':' urg')+'"><div class="foto">'+fotoHtml(i)+'</div><div class="body">'+
         '<div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
-        (i.quantidade>0 ? '<span class="badge-ok">temos '+i.quantidade+'</span>' : '<span class="badge-falta">em falta</span>')+
+        (i.quantidade>0 ? '<span class="badge-ok">temos '+i.quantidade+'</span>' : '<span class="badge-falta"><span class="pdot"></span>Em falta</span>')+
       '</div></div>'
     ).join('');
   }
