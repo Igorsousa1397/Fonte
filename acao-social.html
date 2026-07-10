@@ -37,6 +37,7 @@
   .marca-logo{background:var(--logo) center/contain no-repeat;width:100px;height:50px}
 
   .hero{padding:46px 0 6px}
+  .sec-video{margin-top:0}
   .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cinza);font-weight:600}
   h1{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:-.03em;line-height:1.02;margin:14px 0 10px}
   .intro{color:var(--cinza-claro);font-size:1.05rem;max-width:60ch}
@@ -146,13 +147,14 @@
 </header>
 
 <main class="wrap hero">
+  <section class="sec sec-video" id="secVideo" style="display:none">
+    <div class="sec-head"><h2>Assista o vídeo e entenda como funciona</h2></div>
+    <div class="video-wrap" id="videoWrap"></div>
+  </section>
+
   <span class="eyebrow">Ação Social</span>
   <h1>Mercado Solidário</h1>
-  <p class="intro">Um mercadinho onde ninguém paga por nada. A igreja abastece com doações e as famílias que precisam retiram os itens. Veja no vídeo como funciona — e, se você é membro, pode reservar itens aqui para retirar na igreja.</p>
-
-  <div class="video-wrap" id="videoWrap">
-    <div class="video-ph"><span class="pl">Vídeo em breve</span><span>Explicação do projeto de ação social</span></div>
-  </div>
+  <p class="intro">Um mercadinho onde ninguém paga por nada. A igreja abastece com doações e as famílias que precisam retiram os itens. Veja no vídeo como funciona — e você pode reservar itens aqui para retirar na igreja.</p>
 
   <section class="sec" id="secNecessidades" style="display:none">
     <div class="sec-head"><h2>Estamos precisando de…</h2><p>o que ajuda as famílias agora</p></div>
@@ -178,7 +180,7 @@
     <div class="passos">
       <div class="passo"><div class="n">1</div><p>A igreja recebe doações. No carrossel acima você vê o que estamos mais precisando.</p></div>
       <div class="passo"><div class="n">2</div><p>Os itens ficam disponíveis no mercadinho, sem custo nenhum.</p></div>
-      <div class="passo"><div class="n">3</div><p>Membros reservam por aqui e retiram na igreja — a equipe já deixa separado.</p></div>
+      <div class="passo"><div class="n">3</div><p>Membro ou não, você reserva por aqui e retira na igreja — a equipe já deixa separado.</p></div>
     </div>
   </section>
 </main>
@@ -216,8 +218,7 @@
   // vídeo
   if(VIDEO_YOUTUBE_ID){
     el('videoWrap').innerHTML='<iframe src="https://www.youtube.com/embed/'+VIDEO_YOUTUBE_ID+'" title="Ação Social" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-  } else {
-    el('videoWrap').style.display='none';
+    el('secVideo').style.display='';
   }
 
   const ini = n => (n||'?').trim().charAt(0).toUpperCase();
