@@ -1,0 +1,346 @@
+<!--
+  IGREJA FONTE · Cajamar — Ação Social (Mercadinho Solidário)
+  Standalone. Mesmo design system do site. Lê itens do Supabase (acao_itens).
+  Reserva só para membros (checa CPF via RPC acao_verificar_membro / acao_criar_reserva).
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ação Social · Igreja Fonte</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --abismo:#0a0a0b; --breu:#101013; --grafite:#17171b; --grafite-2:#1f1f25;
+    --neblina:#2a2a31; --cinza:#8b8b95; --cinza-claro:#b8b8c0; --luz:#f5f5f6;
+    --agua:#7ad4cf; --agua-forte:#4bb6b0; --agua-fundo:rgba(122,212,207,.10);
+    --display:"Bricolage Grotesque", system-ui, sans-serif;
+    --corpo:"Inter", system-ui, sans-serif;
+    --raio:16px; --raio-sm:11px; --borda:1px solid var(--neblina); --largura:960px;
+    --logo:url('assets/fonte-logo.png');
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--abismo);color:var(--luz);font-family:var(--corpo);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+  ::selection{background:var(--agua);color:#04201f}
+  .wrap{max-width:var(--largura);margin:0 auto;padding:0 22px}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(10,10,11,.78);backdrop-filter:saturate(140%) blur(14px);border-bottom:var(--borda)}
+  .nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:64px;max-width:var(--largura);margin:0 auto;padding:0 22px}
+  .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--cinza-claro);font-weight:500;grid-column:1;justify-self:start}
+  .voltar:hover{color:var(--luz)}
+  .marca{grid-column:2;justify-self:center;display:inline-flex;align-items:center}
+  .marca-logo{background:var(--logo) center/contain no-repeat;width:100px;height:50px}
+
+  .hero{padding:46px 0 6px}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cinza);font-weight:600}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:-.03em;line-height:1.02;margin:14px 0 10px}
+  .intro{color:var(--cinza-claro);font-size:1.05rem;max-width:60ch}
+
+  .video-wrap{position:relative;aspect-ratio:16/9;border-radius:var(--raio);overflow:hidden;border:var(--borda);background:var(--grafite);margin:30px 0 10px}
+  .video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .video-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--cinza)}
+  .video-ph .pl{font-family:var(--display);font-size:1.2rem;color:var(--cinza-claro)}
+
+  .sec{margin:44px 0}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px}
+  .sec-head h2{font-family:var(--display);font-size:1.5rem;font-weight:700}
+  .sec-head p{color:var(--cinza);font-size:.9rem}
+
+  /* carrossel de necessidades */
+  .carrossel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;scrollbar-width:thin}
+  .nec-card{flex:0 0 210px;scroll-snap-align:start;border:var(--borda);border-radius:var(--raio);overflow:hidden;background:var(--grafite)}
+  .nec-card .foto,.item-card .foto{aspect-ratio:4/3;background:var(--breu);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .foto img{width:100%;height:100%;object-fit:cover}
+  .foto-ph{font-family:var(--display);font-size:2.2rem;color:var(--neblina);font-weight:800}
+  .nec-card .body{padding:12px 14px}
+  .nec-card .nm{font-weight:600}
+  .nec-card .ct{color:var(--cinza);font-size:.82rem}
+  .badge-falta{display:inline-block;margin-top:8px;font-size:.7rem;padding:3px 9px;border-radius:20px;background:rgba(248,113,113,.15);color:#f87171}
+  .badge-ok{display:inline-block;margin-top:8px;font-size:.7rem;padding:3px 9px;border-radius:20px;background:var(--agua-fundo);color:var(--agua)}
+
+  /* mercadinho */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .item-card{border:var(--borda);border-radius:var(--raio);overflow:hidden;background:var(--grafite);display:flex;flex-direction:column}
+  .item-card .body{padding:13px 15px;display:flex;flex-direction:column;gap:2px;flex:1}
+  .item-card .nm{font-weight:600}
+  .item-card .ct{color:var(--cinza);font-size:.82rem}
+  .item-card .disp{color:var(--agua);font-size:.82rem;margin-top:2px}
+  .item-card .foot{padding:0 15px 15px}
+  .btn-reservar{width:100%;background:var(--agua);color:#04211f;border:none;border-radius:var(--raio-sm);padding:11px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-reservar:hover{background:var(--agua-forte)}
+
+  .stepper{display:inline-flex;align-items:center;border:var(--borda);border-radius:var(--raio-sm);overflow:hidden;width:100%;justify-content:space-between}
+  .stepper button{background:var(--breu);border:none;color:var(--luz);width:40px;height:40px;cursor:pointer;font-size:1.15rem;line-height:1}
+  .stepper button:hover{background:var(--neblina)}
+  .stepper .q{font-variant-numeric:tabular-nums;font-size:.95rem}
+
+  .vazio{color:var(--cinza);padding:22px;border:1px dashed var(--neblina);border-radius:var(--raio);text-align:center;font-size:.92rem}
+
+  /* como funciona */
+  .passos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .passo{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:18px}
+  .passo .n{font-family:var(--display);font-size:1.4rem;color:var(--agua);font-weight:800}
+  .passo p{color:var(--cinza-claro);font-size:.92rem;margin-top:6px}
+  @media(max-width:640px){.passos{grid-template-columns:1fr}}
+
+  /* fab reserva */
+  .cart-fab{position:fixed;right:20px;bottom:20px;z-index:40;background:var(--agua);color:#04211f;border:none;border-radius:100px;padding:14px 22px;font-weight:700;cursor:pointer;box-shadow:0 12px 34px -10px rgba(122,212,207,.55);display:none}
+  .cart-fab.on{display:inline-flex;align-items:center;gap:8px}
+
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .modal-bg.on{display:flex}
+  .modal{background:var(--grafite);border:var(--borda);border-radius:var(--raio);max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:26px 26px 22px;position:relative}
+  .modal-x{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--cinza-claro);cursor:pointer;padding:4px;line-height:0}
+  .modal-x:hover{color:var(--luz)}
+  .modal h2{font-family:var(--display);font-size:1.4rem;margin:0 30px 4px 0}
+  .modal .msub{color:var(--cinza);font-size:.86rem;margin-bottom:16px}
+  .cart-lin{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(42,42,49,.5)}
+  .cart-lin .info{flex:1}
+  .cart-lin .info .nm{font-weight:600;font-size:.95rem}
+  .cart-lin .info .un{color:var(--cinza);font-size:.8rem}
+  .cart-lin .mini-step{display:inline-flex;align-items:center;border:var(--borda);border-radius:9px;overflow:hidden}
+  .cart-lin .mini-step button{background:var(--breu);border:none;color:var(--luz);width:30px;height:30px;cursor:pointer;font-size:1.05rem}
+  .cart-lin .mini-step .q{min-width:30px;text-align:center;font-size:.9rem}
+  .fld{margin:16px 0 6px}
+  .fld label{display:block;font-size:.85rem;color:var(--cinza-claro);margin-bottom:7px}
+  .fld input,.fld textarea{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:12px 14px;color:var(--luz);font-family:inherit;font-size:.95rem}
+  .fld input:focus,.fld textarea:focus{outline:none;border-color:var(--agua-forte)}
+  .vmsg{font-size:.86rem;margin-top:8px;min-height:1.2em}
+  .vmsg.ok{color:var(--agua)}
+  .vmsg.no{color:#f87171}
+  .vmsg a{color:var(--agua);text-decoration:underline}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;font-weight:600;font-size:1rem;padding:14px 20px;border-radius:100px;cursor:pointer;border:none;background:var(--luz);color:#0a0a0b;transition:background .2s;margin-top:14px}
+  .btn:hover{background:#fff}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  footer{border-top:var(--borda);background:var(--breu);margin-top:20px}
+  .foot{max-width:var(--largura);margin:0 auto;padding:26px 22px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--cinza);font-size:.82rem}
+  .foot .dev-cred{color:var(--agua)}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--grafite-2);border:1px solid var(--agua-forte);color:var(--luz);padding:12px 18px;border-radius:100px;font-size:.9rem;opacity:0;pointer-events:none;transition:all .3s;z-index:70}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+
+<header>
+  <div class="nav">
+    <a class="voltar" href="index.html"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4l-6 5 6 5"/></svg> Voltar ao site</a>
+    <a class="marca" href="index.html"><span class="marca-logo" role="img" aria-label="Igreja Fonte"></span></a>
+  </div>
+</header>
+
+<main class="wrap hero">
+  <span class="eyebrow">Ação Social</span>
+  <h1>Mercadinho Solidário</h1>
+  <p class="intro">Um mercadinho onde ninguém paga por nada. A igreja abastece com doações e as famílias que precisam retiram os itens. Veja no vídeo como funciona — e, se você é membro, pode reservar itens aqui para retirar na igreja.</p>
+
+  <div class="video-wrap" id="videoWrap">
+    <div class="video-ph"><span class="pl">Vídeo em breve</span><span>Explicação do projeto de ação social</span></div>
+  </div>
+
+  <section class="sec" id="secNecessidades" style="display:none">
+    <div class="sec-head"><h2>Estamos precisando de…</h2><p>o que ajuda as famílias agora</p></div>
+    <div class="carrossel" id="carrossel"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-head"><h2>Mercadinho</h2><p>disponível para reserva</p></div>
+    <div class="grid" id="grid"><div class="vazio">Carregando itens…</div></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-head"><h2>Como funciona</h2></div>
+    <div class="passos">
+      <div class="passo"><div class="n">1</div><p>A igreja recebe doações. No carrossel acima você vê o que estamos mais precisando.</p></div>
+      <div class="passo"><div class="n">2</div><p>Os itens ficam disponíveis no mercadinho, sem custo nenhum.</p></div>
+      <div class="passo"><div class="n">3</div><p>Membros reservam por aqui e retiram na igreja — a equipe já deixa separado.</p></div>
+    </div>
+  </section>
+</main>
+
+<button class="cart-fab" id="cartFab" onclick="abrirReserva()">Minha reserva <span id="cartCount">0</span></button>
+
+<div class="modal-bg" id="rBg">
+  <div class="modal">
+    <button class="modal-x" id="rX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
+    <div id="rBody"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="foot">
+    <span>© 2026 Igreja Apostólica Fonte · Desenvolvido por <span class="dev-cred">iOS Tech</span></span>
+    <a href="index.html">Voltar ao site</a>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase.js"></script>
+<script>
+  // >>> Cole aqui o ID do vídeo do YouTube (ex: 'dQw4w9WgXcQ'). Deixe vazio para o placeholder.
+  const VIDEO_YOUTUBE_ID = '';
+
+  var ITENS = [], cart = {}, membroOk = false, membroNome = '', membroCpf = '';
+  const el = id => document.getElementById(id);
+  const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  function toast(msg){ var t=el('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),2800); }
+
+  // vídeo
+  if(VIDEO_YOUTUBE_ID){
+    el('videoWrap').innerHTML='<iframe src="https://www.youtube.com/embed/'+VIDEO_YOUTUBE_ID+'" title="Ação Social" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+  }
+
+  const ini = n => (n||'?').trim().charAt(0).toUpperCase();
+  const fotoHtml = i => i.foto_url ? '<img src="'+esc(i.foto_url)+'" alt="'+esc(i.nome)+'">' : '<span class="foto-ph">'+ini(i.nome)+'</span>';
+
+  async function carregar(){
+    const { data, error } = await sb.from('acao_itens').select('*').eq('ativo',true).order('nome');
+    ITENS = data || [];
+    renderNecessidades();
+    renderMercadinho();
+  }
+
+  function renderNecessidades(){
+    const necs = ITENS.filter(i=>i.necessidade).slice().sort((a,b)=>(b.prioridade-a.prioridade)||a.nome.localeCompare(b.nome,'pt'));
+    if(!necs.length){ el('secNecessidades').style.display='none'; return; }
+    el('secNecessidades').style.display='';
+    el('carrossel').innerHTML = necs.map(i=>
+      '<div class="nec-card"><div class="foto">'+fotoHtml(i)+'</div><div class="body">'+
+        '<div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
+        (i.quantidade>0 ? '<span class="badge-ok">temos '+i.quantidade+'</span>' : '<span class="badge-falta">em falta</span>')+
+      '</div></div>'
+    ).join('');
+  }
+
+  function renderMercadinho(){
+    const disp = ITENS.filter(i=>i.quantidade>0);
+    if(!disp.length){ el('grid').innerHTML='<div class="vazio">No momento não há itens disponíveis no mercadinho. Volte em breve.</div>'; return; }
+    el('grid').innerHTML = disp.map(i=>{
+      const inCart = cart[i.id];
+      const foot = inCart
+        ? '<div class="stepper" data-id="'+i.id+'"><button data-d="-1">−</button><span class="q">'+inCart.qtd+' no carrinho</span><button data-d="1">+</button></div>'
+        : '<button class="btn-reservar" data-add="'+i.id+'">Reservar</button>';
+      return '<div class="item-card"><div class="foto">'+fotoHtml(i)+'</div>'+
+        '<div class="body"><div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
+          '<div class="disp">'+i.quantidade+' '+esc(i.unidade||'un')+' disponível'+(i.quantidade>1?'is':'')+'</div></div>'+
+        '<div class="foot">'+foot+'</div></div>';
+    }).join('');
+    el('grid').querySelectorAll('[data-add]').forEach(b=> b.onclick=()=>addCart(b.dataset.add));
+    el('grid').querySelectorAll('.stepper[data-id]').forEach(st=>{
+      st.querySelectorAll('button').forEach(b=> b.onclick=()=>mudaQtd(st.dataset.id, parseInt(b.dataset.d,10)));
+    });
+  }
+
+  function addCart(id){
+    const it = ITENS.find(x=>x.id===id); if(!it) return;
+    cart[id] = { nome:it.nome, unidade:it.unidade, disponivel:it.quantidade, qtd:1 };
+    renderMercadinho(); syncFab();
+  }
+  function mudaQtd(id, d){
+    const c = cart[id]; if(!c) return;
+    const novo = c.qtd + d;
+    if(novo <= 0){ delete cart[id]; }
+    else if(novo > c.disponivel){ toast('Só temos '+c.disponivel+' em estoque.'); return; }
+    else { c.qtd = novo; }
+    renderMercadinho(); syncFab();
+    if(el('rBg').classList.contains('on')) renderCart();
+  }
+  function syncFab(){
+    const n = Object.values(cart).reduce((s,c)=>s+c.qtd,0);
+    el('cartCount').textContent = n;
+    el('cartFab').classList.toggle('on', n>0);
+  }
+
+  // ---------- reserva ----------
+  function abrirReserva(){
+    el('rBg').classList.add('on');
+    el('rBody').innerHTML =
+      '<h2>Minha reserva</h2><div class="msub">O mercadinho é solidário — você não paga nada. A reserva fica separada para retirar na igreja.</div>'+
+      '<div id="r-cart"></div>'+
+      '<div class="fld"><label>Seu CPF (somente membros podem reservar)</label><input id="r-cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="'+esc(membroCpf)+'"><div class="vmsg" id="r-msg"></div></div>'+
+      '<div class="fld"><label>Observação (opcional)</label><textarea id="r-obs" rows="2" placeholder="Algo que a equipe precise saber"></textarea></div>'+
+      '<button class="btn" id="r-confirmar">Confirmar reserva</button>';
+    renderCart();
+    const cpf = el('r-cpf');
+    cpf.addEventListener('input', ()=>{
+      let v = cpf.value.replace(/\D/g,'').slice(0,11);
+      v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+      cpf.value = v;
+      membroOk=false; membroNome='';
+      const d = cpf.value.replace(/\D/g,'');
+      if(d.length===11) verificarCpf(d); else el('r-msg').textContent='';
+    });
+    el('r-confirmar').onclick = confirmarReserva;
+    if(membroCpf.replace(/\D/g,'').length===11) verificarCpf(membroCpf.replace(/\D/g,''));
+  }
+  function fecharReserva(){ el('rBg').classList.remove('on'); }
+
+  function renderCart(){
+    const box = el('r-cart'); if(!box) return;
+    const ids = Object.keys(cart);
+    if(!ids.length){ box.innerHTML='<div class="vazio" style="padding:14px">Sua reserva está vazia. Adicione itens no mercadinho.</div>'; return; }
+    box.innerHTML = ids.map(id=>{
+      const c = cart[id];
+      return '<div class="cart-lin"><div class="info"><div class="nm">'+esc(c.nome)+'</div><div class="un">até '+c.disponivel+' '+esc(c.unidade||'un')+'</div></div>'+
+        '<div class="mini-step"><button data-id="'+id+'" data-d="-1">−</button><span class="q">'+c.qtd+'</span><button data-id="'+id+'" data-d="1">+</button></div></div>';
+    }).join('');
+    box.querySelectorAll('button').forEach(b=> b.onclick=()=>mudaQtd(b.dataset.id, parseInt(b.dataset.d,10)));
+  }
+
+  async function verificarCpf(cpfDigits){
+    const msg = el('r-msg'); msg.className='vmsg'; msg.textContent='Verificando…';
+    const { data, error } = await sb.rpc('acao_verificar_membro', { p_cpf: cpfDigits });
+    const row = (data && data[0]) || null;
+    if(error){ msg.className='vmsg no'; msg.textContent='Não deu para verificar agora. Tente de novo.'; return; }
+    if(row && row.is_membro){
+      membroOk=true; membroNome=row.nome||''; membroCpf=cpfDigits;
+      msg.className='vmsg ok'; msg.textContent='Olá, '+(membroNome.split(' ')[0]||'membro')+'! Você é membro e pode reservar.';
+    } else {
+      membroOk=false; membroNome='';
+      msg.className='vmsg no'; msg.innerHTML='Esse CPF não está no cadastro de membros. <a href="index.html#membro">Fazer meu cadastro</a>.';
+    }
+  }
+
+  async function confirmarReserva(){
+    const ids = Object.keys(cart);
+    if(!ids.length){ toast('Adicione itens à reserva.'); return; }
+    const d = (el('r-cpf').value||'').replace(/\D/g,'');
+    if(d.length!==11){ toast('Informe seu CPF.'); return; }
+    if(!membroOk){ toast('Só membros podem reservar. Confira seu CPF.'); return; }
+
+    const itens = ids.map(id=>({ item_id:id, quantidade:cart[id].qtd }));
+    const obs = (el('r-obs').value||'').trim();
+    const btn = el('r-confirmar'); btn.disabled=true; btn.textContent='Enviando…';
+    const { data, error } = await sb.rpc('acao_criar_reserva', { p_cpf:d, p_itens:itens, p_obs:obs||null });
+    if(error){
+      btn.disabled=false; btn.textContent='Confirmar reserva';
+      toast('Não foi possível reservar: '+error.message);
+      return;
+    }
+    cart = {};
+    el('rBody').innerHTML =
+      '<div style="text-align:center;padding:20px 4px">'+
+        '<div style="width:56px;height:56px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:var(--agua-fundo);border:1px solid var(--agua-forte)">'+
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7ad4cf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+
+        '</div>'+
+        '<div style="font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:8px">Reserva feita!</div>'+
+        '<p style="color:var(--cinza-claro)">Passe no mercadinho da igreja para retirar — a equipe da ação social vai separar seus itens. Se precisar, falamos com você pelo WhatsApp.</p>'+
+        '<button class="btn" onclick="fecharReserva()">Fechar</button>'+
+      '</div>';
+    syncFab();
+    carregar();
+  }
+
+  el('rX').onclick = fecharReserva;
+  el('rBg').onclick = e=>{ if(e.target===el('rBg')) fecharReserva(); };
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') fecharReserva(); });
+
+  carregar();
+</script>
