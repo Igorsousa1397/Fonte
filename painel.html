@@ -146,6 +146,7 @@
   .sub2{color:var(--cinza);font-size:.82rem}
   .res-card{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:16px 18px;margin-bottom:12px}
   .res-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.c-val{font-family:var(--display);font-weight:700;font-size:1.05rem;flex:0 0 auto;white-space:nowrap}
   .res-pill{display:inline-block;font-size:.7rem;padding:2px 9px;border-radius:20px;margin-left:6px;text-transform:capitalize}
   .res-pill.aviso{background:rgba(234,179,8,.15);color:#eab308}
   .res-pill.mar{background:var(--agua-fundo);color:var(--agua)}
@@ -207,6 +208,9 @@
       </button>
       <button class="nav-item" data-view="membros">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Membros</span>
+      </button>
+      <button class="nav-item" data-view="contribuicoes">
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg><span class="lbl">Contribuições</span>
       </button>
       <button class="nav-item" id="btn-fin" data-toggle="fin">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg><span class="lbl">Financeiro</span>
@@ -271,7 +275,7 @@
 
   const ASSUNTOS=['Pedido de oração','Dúvida geral','Quero conhecer a igreja','Células','Inscrições / eventos','Gabinete pastoral','Outro'];
   const VALOR_CAMISETA=42;
-  let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], acaoTab='estoque', acaoResTab='pendente';
+  let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoResTab='pendente';
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -299,6 +303,7 @@
     if(view==='financeiro')renderFinanceiro(sub);
     if(view==='acao')      renderAcao(sub);
     if(view==='contato')   renderContatos(sub);
+    if(view==='contribuicoes') renderContribuicoes();
   }
 
   const card=(rot,num,agua)=>'<div class="card"><div class="rot">'+rot+'</div><div class="num'+(agua?' agua':'')+'">'+num+'</div></div>';
@@ -380,6 +385,60 @@
     });
   }
 
+  function reloadContrib(){ return sb.from('contribuicoes').select('*').order('created_at',{ascending:false}).then(({data})=>{ CONTRIB=data||[]; }); }
+  async function contribSetStatus(id, st){
+    const {error}=await sb.rpc('contribuicao_set_status',{p_id:id,p_status:st});
+    if(error){ alert('Erro: '+error.message); return; }
+    await reloadContrib(); renderContribuicoes();
+  }
+  function acoesContrib(c){
+    const btn=(st,txt,cls)=>'<button class="mini-btn '+cls+'" data-cid="'+c.id+'" data-cst="'+st+'">'+txt+'</button>';
+    if(c.status==='declarado') return btn('confirmado','Confirmar','go')+btn('recusado','Recusar','warn');
+    if(c.status==='confirmado') return btn('declarado','Reabrir','warn');
+    return btn('declarado','Reabrir','go');
+  }
+  function wireContrib(){
+    $$('#view .subtab[data-st]').forEach(b=> b.onclick=()=>{ contribStatus=b.dataset.st; renderContribuicoes(); });
+    $$('#view .subtab[data-tp]').forEach(b=> b.onclick=()=>{ contribTipo=b.dataset.tp; renderContribuicoes(); });
+    $$('#view .mini-btn[data-cst]').forEach(b=> b.onclick=()=>contribSetStatus(b.dataset.cid, b.dataset.cst));
+  }
+  function renderContribuicoes(){
+    $('#titulo').textContent='Contribuições';
+    const brl=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    const TL={dizimo:'Dízimo',primicia:'Primícia',oferta:'Oferta'};
+    const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    const mesLabel=iso=>{ const d=String(iso||'').slice(0,10).split('-'); return d.length<2?'':MES[parseInt(d[1],10)-1]+'/'+d[0]; };
+    const now=new Date(); const compAtual=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    const confMes=t=>CONTRIB.filter(c=>c.status==='confirmado'&&c.tipo===t&&String(c.competencia).slice(0,7)===compAtual).reduce((s,c)=>s+Number(c.valor||0),0);
+    const dizimistas=new Set(CONTRIB.filter(c=>c.status==='confirmado'&&c.tipo==='dizimo'&&String(c.competencia).slice(0,7)===compAtual).map(c=>c.cpf)).size;
+    const aguardando=CONTRIB.filter(c=>c.status==='declarado').length;
+    let html='<div class="cards">'+
+      card('Dizimistas no mês',dizimistas,true)+
+      card('Dízimos · mês',brl(confMes('dizimo')))+
+      card('Primícias · mês',brl(confMes('primicia')))+
+      card('Ofertas · mês',brl(confMes('oferta')))+
+      card('Aguardando',aguardando)+
+    '</div>';
+    const stTabs=[['declarado','Aguardando'],['confirmado','Confirmadas'],['recusado','Recusadas'],['todas','Todas']];
+    const tpTabs=[['todos','Todos'],['dizimo','Dízimos'],['primicia','Primícias'],['oferta','Ofertas']];
+    html+='<div class="subtabs">'+stTabs.map(t=>'<button class="subtab'+(contribStatus===t[0]?' on':'')+'" data-st="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
+    html+='<div class="subtabs">'+tpTabs.map(t=>'<button class="subtab'+(contribTipo===t[0]?' on':'')+'" data-tp="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
+    let lista=CONTRIB.slice();
+    if(contribStatus!=='todas') lista=lista.filter(c=>c.status===contribStatus);
+    if(contribTipo!=='todos') lista=lista.filter(c=>c.tipo===contribTipo);
+    if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nada nesta seleção.</div></div>'; $('#view').innerHTML=html; wireContrib(); return; }
+    lista.forEach(c=>{
+      const pill=c.status==='confirmado'?'ok':c.status==='recusado'?'off2':'aviso';
+      const lbl=c.status==='confirmado'?'confirmado':c.status==='recusado'?'recusado':'aguardando';
+      html+='<div class="res-card">'+
+        '<div class="res-head"><div><div style="font-weight:600">'+esc(c.membro_nome||'—')+' <span class="res-pill '+pill+'">'+lbl+'</span></div>'+
+          '<div class="sub2">'+cpfFmt(c.cpf)+' · '+TL[c.tipo]+' · '+mesLabel(c.competencia)+(c.forma?' · '+esc(c.forma):'')+' · '+dataBR(c.created_at)+'</div></div>'+
+          '<div class="c-val">'+brl(c.valor)+'</div></div>'+
+        '<div class="res-actions">'+acoesContrib(c)+'</div>'+
+      '</div>';
+    });
+    $('#view').innerHTML=html; wireContrib();
+  }
   function renderFinanceiro(sub){
     sub = sub || 'geral';
     $('#titulo').textContent = sub==='entradas' ? 'Entradas' : sub==='saidas' ? 'Saídas' : 'Financeiro';
@@ -697,13 +756,14 @@
       await sb.auth.signOut(); setTimeout(()=>location.replace('login.html'),1800); return;
     }
     $('#quem').textContent=user.email;
-    const [rb, rc, rm, ai, ar, ap] = await Promise.all([
+    const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
       sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
       sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false}),
       sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at').order('created_at',{ascending:false}),
       sb.from('acao_itens').select('*').order('nome'),
       sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
-      sb.from('acao_pessoas').select('*').order('created_at',{ascending:false})
+      sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),
+      sb.from('contribuicoes').select('*').order('created_at',{ascending:false})
     ]);
     BATISMO = rb.data || [];
     CONTATOS = rc.data || [];
@@ -711,6 +771,7 @@
     AITENS = ai.data || [];
     ARES = ar.data || [];
     APESSOAS = ap.data || [];
+    CONTRIB = co.data || [];
     montaSubnav();
     irPara('batismo');
   })();

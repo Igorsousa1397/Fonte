@@ -1,0 +1,268 @@
+<!--
+  IGREJA FONTE · Cajamar — Envelope Virtual (dízimos, primícias, ofertas)
+  Standalone. Mesmo design system do site.
+  Pessoa abre pelo CPF (envelope_abrir), declara contribuição (contribuicao_declarar).
+  Admin confirma no painel. Só retorna dados do próprio CPF.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Envelope Virtual · Igreja Fonte</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --abismo:#0a0a0b; --breu:#101013; --grafite:#17171b; --grafite-2:#1f1f25;
+    --neblina:#2a2a31; --cinza:#8b8b95; --cinza-claro:#b8b8c0; --luz:#f5f5f6;
+    --agua:#7ad4cf; --agua-forte:#4bb6b0; --agua-fundo:rgba(122,212,207,.10);
+    --display:"Bricolage Grotesque", system-ui, sans-serif;
+    --corpo:"Inter", system-ui, sans-serif;
+    --raio:16px; --raio-sm:11px; --borda:1px solid var(--neblina); --largura:760px;
+    --logo:url('assets/fonte-logo.png');
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--abismo);color:var(--luz);font-family:var(--corpo);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+  ::selection{background:var(--agua);color:#04201f}
+  .wrap{max-width:var(--largura);margin:0 auto;padding:0 22px}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(10,10,11,.78);backdrop-filter:saturate(140%) blur(14px);border-bottom:var(--borda)}
+  .nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:64px;max-width:var(--largura);margin:0 auto;padding:0 22px}
+  .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--cinza-claro);font-weight:500;grid-column:1;justify-self:start}
+  .voltar:hover{color:var(--luz)}
+  .marca{grid-column:2;justify-self:center;display:inline-flex;align-items:center}
+  .marca-logo{background:var(--logo) center/contain no-repeat;width:100px;height:50px}
+
+  .hero{padding:44px 0 6px}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cinza);font-weight:600}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,6vw,2.8rem);letter-spacing:-.03em;line-height:1.04;margin:12px 0 10px}
+  .intro{color:var(--cinza-claro);font-size:1.02rem;max-width:56ch}
+
+  .card{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:22px}
+  .sec{margin:30px 0}
+
+  label{display:block;font-size:.8rem;color:var(--cinza-claro);margin-bottom:7px;font-weight:500}
+  input,select{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:12px 13px;color:var(--luz);font-family:inherit;font-size:1rem}
+  input:focus,select:focus{outline:none;border-color:var(--agua-forte)}
+  .f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:520px){.f2{grid-template-columns:1fr}}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--agua);color:#04211f;border:none;border-radius:var(--raio-sm);padding:14px 16px;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer}
+  .btn:hover{background:var(--agua-forte)}
+  .btn:disabled{opacity:.6;cursor:default}
+  .btn-ghost{background:transparent;border:var(--borda);color:var(--cinza-claro)}
+  .btn-ghost:hover{background:rgba(255,255,255,.04);color:var(--luz)}
+  .vmsg{font-size:.85rem;margin-top:8px;min-height:1em}
+  .vmsg.erro{color:#fca5a5}
+  .vmsg.ok{color:var(--agua)}
+
+  /* envelope */
+  .env{position:relative;border:var(--borda);border-radius:var(--raio);background:linear-gradient(180deg,var(--grafite-2),var(--grafite));overflow:hidden}
+  .env::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--agua-forte),var(--agua))}
+  .env-top{display:flex;align-items:center;gap:12px;padding:20px 22px;border-bottom:var(--borda)}
+  .env-ico{width:42px;height:42px;flex:0 0 auto;border-radius:12px;background:var(--agua-fundo);border:1px solid var(--agua-forte);display:flex;align-items:center;justify-content:center;color:var(--agua)}
+  .env-ola{font-family:var(--display);font-size:1.25rem;font-weight:700;line-height:1.15}
+  .env-sub{font-size:.82rem;color:var(--cinza)}
+  .env-body{padding:22px}
+
+  .totais{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
+  @media(max-width:520px){.totais{grid-template-columns:1fr}}
+  .tot{border:var(--borda);border-radius:var(--raio-sm);background:var(--breu);padding:13px 14px}
+  .tot .r{font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;color:var(--cinza)}
+  .tot .v{font-family:var(--display);font-weight:700;font-size:1.15rem;margin-top:3px}
+
+  .bloco-tit{font-family:var(--display);font-size:1.05rem;font-weight:700;margin:4px 0 12px}
+  .hist{display:flex;flex-direction:column;gap:9px}
+  .h-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border:var(--borda);border-radius:var(--raio-sm);background:var(--breu);padding:12px 14px}
+  .h-esq .t{font-weight:600}
+  .h-esq .m{font-size:.82rem;color:var(--cinza)}
+  .h-dir{text-align:right;flex:0 0 auto}
+  .h-val{font-family:var(--display);font-weight:700}
+  .pill{display:inline-block;margin-top:4px;font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:20px}
+  .pill.aguard{background:rgba(234,179,8,.15);color:#eab308}
+  .pill.conf{background:var(--agua-fundo);color:var(--agua)}
+  .pill.recus{background:rgba(248,113,113,.15);color:#f87171}
+  .vazio{color:var(--cinza);text-align:center;padding:18px}
+
+  .nota{color:var(--cinza);font-size:.82rem;margin:22px 0 60px;text-align:center}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--grafite-2);border:var(--borda);color:var(--luz);padding:12px 18px;border-radius:100px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+
+<header>
+  <div class="nav">
+    <a class="voltar" href="index.html"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4l-6 5 6 5"/></svg> Voltar ao site</a>
+    <a class="marca" href="index.html"><span class="marca-logo" role="img" aria-label="Igreja Fonte"></span></a>
+  </div>
+</header>
+
+<main class="wrap hero">
+  <span class="eyebrow">Contribuições</span>
+  <h1>Envelope Virtual</h1>
+  <p class="intro">Registre suas contribuições — dízimos, primícias e ofertas. Digite seu CPF para abrir seu envelope e marcar a entrega do mês. A tesouraria confirma depois.</p>
+
+  <!-- Portão: CPF -->
+  <section class="sec" id="gate">
+    <div class="card">
+      <label for="cpf">Seu CPF</label>
+      <input id="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" autocomplete="off">
+      <div class="vmsg" id="gateMsg"></div>
+      <button class="btn" id="abrir" style="margin-top:8px">Abrir meu envelope</button>
+    </div>
+  </section>
+
+  <!-- Envelope -->
+  <section class="sec" id="envelope" style="display:none">
+    <div class="env">
+      <div class="env-top">
+        <div class="env-ico">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+        </div>
+        <div>
+          <div class="env-ola" id="ola">Seu envelope</div>
+          <div class="env-sub" id="olaSub"></div>
+        </div>
+      </div>
+      <div class="env-body">
+        <div class="totais" id="totais"></div>
+
+        <div class="bloco-tit">Registrar contribuição</div>
+        <div id="nomeWrap" style="display:none;margin-bottom:12px">
+          <label for="nome">Seu nome completo</label>
+          <input id="nome" placeholder="Como você é conhecido na igreja" autocomplete="off">
+        </div>
+        <div class="f2" style="margin-bottom:12px">
+          <div><label for="tipo">Tipo</label>
+            <select id="tipo">
+              <option value="dizimo">Dízimo</option>
+              <option value="primicia">Primícia</option>
+              <option value="oferta">Oferta</option>
+            </select>
+          </div>
+          <div><label for="comp">Mês de referência</label><input id="comp" type="month"></div>
+        </div>
+        <div class="f2" style="margin-bottom:14px">
+          <div><label for="valor">Valor</label><input id="valor" inputmode="numeric" placeholder="R$ 0,00"></div>
+          <div><label for="forma">Forma (opcional)</label>
+            <select id="forma">
+              <option value="pix">PIX</option>
+              <option value="dinheiro">Dinheiro</option>
+              <option value="cartao">Cartão</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn" id="declarar">Declarar entrega</button>
+        <div class="vmsg" id="formMsg"></div>
+
+        <div class="bloco-tit" style="margin-top:26px">Meu histórico</div>
+        <div class="hist" id="hist"><div class="vazio">Carregando…</div></div>
+
+        <button class="btn btn-ghost" id="trocar" style="margin-top:20px">Abrir outro CPF</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="nota">Seus dados aparecem apenas para você (pelo seu CPF) e para a tesouraria da igreja.</p>
+</main>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase.js"></script>
+<script>
+  const el = id => document.getElementById(id);
+  const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const TIPO_LABEL = { dizimo:'Dízimo', primicia:'Primícia', oferta:'Oferta' };
+  var currentCpf = '', currentNome = '';
+
+  function toast(m){ var t=el('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),2800); }
+
+  function maskCpf(v){ v=(v||'').replace(/\D/g,'').slice(0,11);
+    return v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); }
+  function maskMoney(v){ v=(v||'').replace(/\D/g,''); if(!v) return ''; var n=(parseInt(v,10)/100).toFixed(2);
+    return 'R$ '+n.replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+  function moneyToNumber(s){ s=(s||'').replace(/\D/g,''); return s ? parseInt(s,10)/100 : 0; }
+  function brl(n){ return 'R$ '+Number(n||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+  function compLabel(iso){ var d=String(iso||'').slice(0,10).split('-'); if(d.length<2) return ''; return MESES[parseInt(d[1],10)-1]+'/'+d[0]; }
+
+  el('cpf').addEventListener('input', e=>{ e.target.value=maskCpf(e.target.value); });
+  el('valor').addEventListener('input', e=>{ e.target.value=maskMoney(e.target.value); });
+
+  // mês atual como padrão
+  (function(){ var d=new Date(); el('comp').value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })();
+
+  async function abrirEnvelope(){
+    var d=(el('cpf').value||'').replace(/\D/g,'');
+    var msg=el('gateMsg');
+    if(d.length!==11){ msg.className='vmsg erro'; msg.textContent='Confira seu CPF (11 dígitos).'; return; }
+    var b=el('abrir'); b.disabled=true; b.textContent='Abrindo…'; msg.textContent='';
+    try{
+      const { data, error } = await sb.rpc('envelope_abrir', { p_cpf:d });
+      if(error) throw error;
+      currentCpf = d; currentNome = data.nome || '';
+      el('ola').textContent = data.nome ? ('Olá, '+data.nome.split(' ')[0]+'!') : 'Seu envelope';
+      el('olaSub').textContent = data.eh_membro ? 'Membro da Igreja Fonte' : 'CPF ainda não vinculado a um cadastro de membro';
+      el('nomeWrap').style.display = data.nome ? 'none' : 'block';
+      renderTotais(data.contribuicoes||[]);
+      renderHist(data.contribuicoes||[]);
+      el('gate').style.display='none';
+      el('envelope').style.display='block';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }catch(err){ msg.className='vmsg erro'; msg.textContent = err.message || 'Não deu para abrir agora. Tente de novo.'; }
+    b.disabled=false; b.textContent='Abrir meu envelope';
+  }
+
+  function renderTotais(list){
+    var ano=new Date().getFullYear();
+    var soma={dizimo:0,primicia:0,oferta:0};
+    list.forEach(c=>{ if(c.status==='confirmado' && String(c.competencia).slice(0,4)==String(ano)) soma[c.tipo]+=Number(c.valor||0); });
+    el('totais').innerHTML =
+      ['dizimo','primicia','oferta'].map(t=>
+        '<div class="tot"><div class="r">'+TIPO_LABEL[t]+'</div><div class="v">'+brl(soma[t])+'</div></div>'
+      ).join('');
+  }
+
+  function renderHist(list){
+    if(!list.length){ el('hist').innerHTML='<div class="vazio">Nenhuma contribuição registrada ainda.</div>'; return; }
+    var pill={declarado:['aguard','Aguardando confirmação'],confirmado:['conf','Confirmado'],recusado:['recus','Não confirmado']};
+    el('hist').innerHTML = list.map(c=>{
+      var p=pill[c.status]||pill.declarado;
+      return '<div class="h-item"><div class="h-esq"><div class="t">'+TIPO_LABEL[c.tipo]+'</div>'+
+        '<div class="m">'+compLabel(c.competencia)+'</div></div>'+
+        '<div class="h-dir"><div class="h-val">'+brl(c.valor)+'</div>'+
+        '<span class="pill '+p[0]+'">'+p[1]+'</span></div></div>';
+    }).join('');
+  }
+
+  async function declarar(){
+    var msg=el('formMsg');
+    var comp=el('comp').value; if(!comp){ msg.className='vmsg erro'; msg.textContent='Escolha o mês.'; return; }
+    var valor=moneyToNumber(el('valor').value); if(valor<=0){ msg.className='vmsg erro'; msg.textContent='Informe o valor.'; return; }
+    var nome = currentNome || (el('nome').value||'').trim();
+    if(!currentNome && !nome){ msg.className='vmsg erro'; msg.textContent='Informe seu nome.'; return; }
+    var b=el('declarar'); b.disabled=true; b.textContent='Enviando…'; msg.textContent='';
+    try{
+      const { error } = await sb.rpc('contribuicao_declarar', {
+        p_cpf: currentCpf, p_nome: nome || null, p_tipo: el('tipo').value,
+        p_competencia: comp+'-01', p_valor: valor, p_forma: el('forma').value, p_obs: null });
+      if(error) throw error;
+      el('valor').value='';
+      toast('Contribuição registrada! A tesouraria vai confirmar.');
+      // recarrega histórico
+      const { data } = await sb.rpc('envelope_abrir', { p_cpf: currentCpf });
+      if(data){ renderTotais(data.contribuicoes||[]); renderHist(data.contribuicoes||[]); }
+    }catch(err){ msg.className='vmsg erro'; msg.textContent = err.message || 'Não deu para registrar agora.'; }
+    b.disabled=false; b.textContent='Declarar entrega';
+  }
+
+  el('abrir').onclick = abrirEnvelope;
+  el('cpf').addEventListener('keydown', e=>{ if(e.key==='Enter') abrirEnvelope(); });
+  el('declarar').onclick = declarar;
+  el('trocar').onclick = ()=>{ el('envelope').style.display='none'; el('gate').style.display='block'; el('cpf').value=''; el('gateMsg').textContent=''; window.scrollTo({top:0,behavior:'smooth'}); };
+</script>
