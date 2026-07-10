@@ -56,10 +56,17 @@
   .campo label{display:block;font-size:.92rem;color:var(--luz);margin-bottom:9px;font-weight:500}
   .campo .req{color:var(--agua)}
   .campo .aj{display:block;font-size:.82rem;color:var(--cinza);font-weight:400;margin-top:2px}
-  .campo input{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);
+  .campo input,.campo select{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);
      padding:13px 15px;color:var(--luz);font-family:var(--corpo);font-size:.98rem;transition:border-color .2s}
-  .campo input:focus{outline:none;border-color:var(--agua-forte)}
+  .campo input:focus,.campo select:focus{outline:none;border-color:var(--agua-forte)}
   .campo input::placeholder{color:var(--cinza)}
+  .selrow{display:flex;flex-wrap:wrap;gap:10px}
+  .selbtn{background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:12px 20px;color:var(--cinza-claro);font-family:var(--corpo);font-size:.95rem;cursor:pointer;transition:.15s;min-width:56px}
+  .selbtn:hover{border-color:var(--cinza)}
+  .selbtn.on{background:var(--agua);border-color:var(--agua);color:#04211f;font-weight:700}
+  .op-check{display:flex;align-items:center;gap:11px;cursor:pointer;padding:4px 0}
+  .op-check input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--agua);cursor:pointer;margin:0}
+  .op-check span{font-size:.98rem;color:var(--luz)}
   .opcoes{display:flex;flex-direction:column;gap:10px;margin-top:4px}
   .op{display:flex;align-items:center;gap:12px;line-height:1.25;border:var(--borda);border-radius:var(--raio-sm);
       padding:13px 15px;background:var(--breu);cursor:pointer;transition:border-color .2s,background .2s}
@@ -118,13 +125,18 @@
 
     <div class="campo">
       <label for="b-celula">De qual célula você participa? <span class="req">*</span></label>
-      <input id="b-celula" placeholder="Nome da célula">
+      <select id="b-celula"></select>
     </div>
 
     <div class="campo">
-      <label for="b-igreja">Você faz parte da Igreja Fonte? <span class="req">*</span>
-        <span class="aj">Caso não faça parte, informe o nome da sua igreja.</span></label>
-      <input id="b-igreja" placeholder="Sim / Não — se não, qual igreja">
+      <label>Você faz parte da Igreja Fonte? <span class="req">*</span>
+        <span class="aj">Se não fizer parte, informe o nome da sua igreja.</span></label>
+      <div class="selrow" id="b-fonte-row">
+        <button type="button" class="selbtn" data-v="Sim">Sim</button>
+        <button type="button" class="selbtn" data-v="Não">Não</button>
+      </div>
+      <input type="hidden" id="b-fonte">
+      <input id="b-igreja-nome" placeholder="Qual igreja você congrega?" style="display:none;margin-top:10px">
     </div>
 
     <div class="campo">
@@ -133,15 +145,24 @@
     </div>
 
     <div class="campo">
-      <label for="b-camiseta">Qual o número da sua camiseta? <span class="req">*</span></label>
-      <input id="b-camiseta" placeholder="Ex.: M, G, GG…">
+      <label>Qual o tamanho da sua camiseta? <span class="req">*</span></label>
+      <div class="selrow" id="b-tam">
+        <button type="button" class="selbtn" data-v="P">P</button>
+        <button type="button" class="selbtn" data-v="M">M</button>
+        <button type="button" class="selbtn" data-v="G">G</button>
+        <button type="button" class="selbtn" data-v="GG">GG</button>
+        <button type="button" class="selbtn" data-v="G1">G1</button>
+        <button type="button" class="selbtn" data-v="G2">G2</button>
+        <button type="button" class="selbtn" data-v="G3">G3</button>
+      </div>
+      <input type="hidden" id="b-camiseta">
     </div>
 
     <div class="campo">
       <label>Camiseta do batismo <span class="req">*</span></label>
       <div class="opcoes" id="b-opcoes">
-        <label class="op"><input type="radio" name="camisa" value="usar"><span>Usar só no batismo (devolver no mesmo dia)</span></label>
-        <label class="op"><input type="radio" name="camisa" value="comprar"><span>Comprar a camiseta (R$ 42,00)</span></label>
+        <label class="op-check"><input type="checkbox" class="cbx" value="usar"><span>Usar só no batismo (devolver no mesmo dia)</span></label>
+        <label class="op-check"><input type="checkbox" class="cbx" value="comprar"><span>Comprar a camiseta (R$ 42,00)</span></label>
       </div>
     </div>
 
@@ -164,12 +185,84 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/supabase.js"></script>
 <script>
-  var opcoes = document.getElementById('b-opcoes');
-  opcoes.addEventListener('change', function(){
-    [].forEach.call(opcoes.querySelectorAll('.op'), function(l){
-      l.classList.toggle('on', l.querySelector('input').checked);
+  // lista de células (mesma do cadastro de membros)
+  var CELULAS = [
+    {nome:'A Forja',cidade:'Santana de Parnaíba'},
+    {nome:'Atos 29',cidade:'Cajamar'},
+    {nome:'Baluarte',cidade:'Cajamar'},
+    {nome:'Beraká',cidade:'Cajamar'},
+    {nome:'Betel',cidade:'Cajamar'},
+    {nome:'Betesda',cidade:'Cajamar'},
+    {nome:'Carta Viva',cidade:'Cajamar'},
+    {nome:'Deus Forte',cidade:'Santana de Parnaíba'},
+    {nome:'Ebenézer',cidade:'Cajamar'},
+    {nome:'Ekballo',cidade:'Santana de Parnaíba'},
+    {nome:'Ekklesia',cidade:'Cajamar'},
+    {nome:'Emaús',cidade:'Cajamar'},
+    {nome:'Essência',cidade:'Santana de Parnaíba'},
+    {nome:'Fire',cidade:'Cajamar'},
+    {nome:'Fonte',cidade:'Barueri'},
+    {nome:'Gileade',cidade:'Santana de Parnaíba'},
+    {nome:'Identidade',cidade:'Cajamar'},
+    {nome:'Jeová Rafah',cidade:'Santana de Parnaíba'},
+    {nome:'Kerygma',cidade:'Cajamar'},
+    {nome:'Luz do Mundo',cidade:'Santana de Parnaíba'},
+    {nome:'Nahal',cidade:'Santana de Parnaíba'},
+    {nome:'Pedra Angular',cidade:'Cajamar'},
+    {nome:'Reobote',cidade:'Cajamar'},
+    {nome:'Transbordo',cidade:'Cajamar'}
+  ];
+  (function(){
+    var sel=document.getElementById('b-celula');
+    if(sel) sel.innerHTML='<option value="">Selecione…</option>'+
+      CELULAS.map(function(c){return '<option>'+c.nome+' — '+c.cidade+'</option>';}).join('')+
+      '<option>Não participo de célula</option>';
+  })();
+
+  (function(){
+    var row=document.getElementById('b-fonte-row'), hid=document.getElementById('b-fonte'), nomeIg=document.getElementById('b-igreja-nome');
+    [].forEach.call(row.querySelectorAll('.selbtn'), function(b){
+      b.onclick=function(){
+        [].forEach.call(row.querySelectorAll('.selbtn'), function(x){x.classList.toggle('on',x===b);});
+        hid.value=b.dataset.v;
+        nomeIg.style.display=(b.dataset.v==='Não')?'block':'none';
+        if(b.dataset.v!=='Não') nomeIg.value='';
+      };
     });
-  });
+  })();
+
+  (function(){
+    var row=document.getElementById('b-tam'), hid=document.getElementById('b-camiseta');
+    [].forEach.call(row.querySelectorAll('.selbtn'), function(b){
+      b.onclick=function(){
+        [].forEach.call(row.querySelectorAll('.selbtn'), function(x){x.classList.toggle('on',x===b);});
+        hid.value=b.dataset.v;
+      };
+    });
+  })();
+
+  (function(){
+    var tel=document.getElementById('b-tel'); if(!tel) return;
+    tel.setAttribute('maxlength','16');
+    tel.addEventListener('input', function(){
+      var d=tel.value.replace(/\D/g,'').slice(0,11);
+      if(d.length>10)      d=d.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3');
+      else if(d.length>6)  d=d.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');
+      else if(d.length>2)  d=d.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2');
+      else if(d.length>0)  d=d.replace(/^(\d{0,2}).*/,'($1');
+      tel.value=d;
+    });
+  })();
+
+  (function(){
+    var cbs=document.querySelectorAll('#b-opcoes .cbx');
+    [].forEach.call(cbs, function(cb){
+      cb.addEventListener('change', function(){
+        if(cb.checked) [].forEach.call(cbs, function(o){ if(o!==cb) o.checked=false; });
+      });
+    });
+  })();
+
 
   function toast(msg){
     var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
@@ -193,12 +286,16 @@
   }
 
   btn.onclick=async function(){
-    var g=function(id){return document.getElementById(id).value.trim();};
-    var nome=g('b-nome'), celula=g('b-celula'), igreja=g('b-igreja'), tel=g('b-tel'), camiseta=g('b-camiseta');
-    var opt=opcoes.querySelector('input:checked');
-    if(!nome||!celula||!igreja||!tel||!camiseta||!opt){
+    var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+    var nome=g('b-nome'), celula=g('b-celula'), tel=g('b-tel'), camiseta=g('b-camiseta');
+    var fonte=g('b-fonte'), igrejaNome=g('b-igreja-nome');
+    var opt=document.querySelector('#b-opcoes .cbx:checked');
+    if(!nome||!celula||!fonte||!tel||!camiseta||!opt){
       toast('Preencha todos os campos obrigatórios.'); return;
     }
+    if(fonte==='Não' && !igrejaNome){ toast('Informe o nome da sua igreja.'); return; }
+    if(tel.replace(/\D/g,'').length<10){ toast('Informe um telefone válido com DDD.'); return; }
+    var igreja = (fonte==='Sim') ? 'Igreja Fonte' : igrejaNome;
     var comprar = (opt.value==='comprar');
     btn.disabled=true; var label=btn.innerHTML; btn.textContent='Enviando…';
 
