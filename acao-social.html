@@ -2,6 +2,7 @@
   IGREJA FONTE · Cajamar — Ação Social (Mercadinho Solidário)
   Standalone. Mesmo design system do site. Lê itens do Supabase (acao_itens).
   Reserva aberta a qualquer pessoa: membro ou pré-membro (acao_identificar / acao_registrar_pessoa / acao_criar_reserva).
+  Classificação Mercadinho x Doações pela coluna acao_itens.secao (mercadinho/rouparia/eletrodomesticos/moveis/remedios).
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -167,10 +168,10 @@
       <button class="mtab" data-tab="doacoes">Doações</button>
     </div>
     <div class="subtabs2" id="doacaoSub" style="display:none">
-      <button class="dtab on" data-cat="Rouparia">Rouparia</button>
-      <button class="dtab" data-cat="Móveis">Móveis</button>
-      <button class="dtab" data-cat="Eletrodomésticos">Eletrodomésticos</button>
-      <button class="dtab" data-cat="Remédios">Remédios</button>
+      <button class="dtab on" data-sec="rouparia">Rouparia</button>
+      <button class="dtab" data-sec="eletrodomesticos">Eletrodomésticos</button>
+      <button class="dtab" data-sec="moveis">Móveis</button>
+      <button class="dtab" data-sec="remedios">Remédios</button>
     </div>
     <div class="grid" id="grid"><div class="vazio">Carregando itens…</div></div>
   </section>
@@ -243,9 +244,14 @@
     ).join('');
   }
 
-  const DOACAO_CATS = ['Rouparia','Móveis','Eletrodomésticos','Remédios'];
-  var mainTab = 'mercadinho', doacaoCat = 'Rouparia';
+  const SEC_LABEL = { mercadinho:'Mercadinho', rouparia:'Rouparia', eletrodomesticos:'Eletrodomésticos', moveis:'Móveis', remedios:'Remédios' };
+  var mainTab = 'mercadinho', doacaoSec = 'rouparia';
   const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  function secaoOf(i){
+    var s = norm(i.secao||''); if(SEC_LABEL[s]) return s;
+    var c = norm(i.categoria||''); if(SEC_LABEL[c] && c!=='mercadinho') return c;
+    return 'mercadinho';
+  }
 
   function cardHtml(i){
     const inCart = cart[i.id];
@@ -264,14 +270,13 @@
     });
   }
   function itensDaAba(){
-    const set = DOACAO_CATS.map(norm);
-    if(mainTab==='doacoes') return ITENS.filter(i=> i.quantidade>0 && norm(i.categoria)===norm(doacaoCat));
-    return ITENS.filter(i=> i.quantidade>0 && !set.includes(norm(i.categoria)));
+    if(mainTab==='doacoes') return ITENS.filter(i=> i.quantidade>0 && secaoOf(i)===doacaoSec);
+    return ITENS.filter(i=> i.quantidade>0 && secaoOf(i)==='mercadinho');
   }
   function renderConteudo(){
     const lista = itensDaAba();
     if(!lista.length){
-      const msg = mainTab==='doacoes' ? 'Nenhum item em '+doacaoCat+' no momento.' : 'No momento não há itens no mercadinho. Volte em breve.';
+      const msg = mainTab==='doacoes' ? 'Nenhum item em '+SEC_LABEL[doacaoSec]+' no momento.' : 'No momento não há itens no mercadinho. Volte em breve.';
       el('grid').innerHTML='<div class="vazio">'+msg+'</div>'; return;
     }
     el('grid').innerHTML = lista.map(cardHtml).join('');
@@ -420,7 +425,7 @@
     renderConteudo();
   });
   document.querySelectorAll('.dtab').forEach(b=> b.onclick=()=>{
-    doacaoCat=b.dataset.cat;
+    doacaoSec=b.dataset.sec;
     document.querySelectorAll('.dtab').forEach(x=>x.classList.toggle('on',x===b));
     renderConteudo();
   });

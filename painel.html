@@ -491,13 +491,34 @@
     });
   }
 
+  const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  const SECOES = {
+    mercadinho:      { rot:'Mercadinho',       cats:['Alimento','Higiene','Limpeza','Bebida','Outros'], unis:['un','kg','g','L','ml','pacote','caixa','fardo'] },
+    rouparia:        { rot:'Rouparia',         cats:['Roupa masculina','Roupa feminina','Roupa infantil','Calçado','Cama, mesa e banho','Acessório','Outros'], unis:['un','par','peça','kit'] },
+    eletrodomesticos:{ rot:'Eletrodomésticos', cats:['Cozinha','Lavanderia','Climatização','Pequenos eletros','Outros'], unis:['un'] },
+    moveis:          { rot:'Móveis',           cats:['Sala','Quarto','Cozinha','Escritório','Outros'], unis:['un'] },
+    remedios:        { rot:'Remédios',         cats:['Analgésico','Antitérmico','Gripe e resfriado','Primeiros socorros','Outros'], unis:['un','caixa','cartela','frasco','ml'] }
+  };
+  const SEC_ORDER = ['mercadinho','rouparia','eletrodomesticos','moveis','remedios'];
+  function inferSec(secao, categoria){
+    var s=norm(secao||''); if(SECOES[s]) return s;
+    var c=norm(categoria||''); if(SECOES[c] && c!=='mercadinho') return c;
+    return 'mercadinho';
+  }
+  function optsHtml(list, sel){
+    var has=false, out=list.map(function(x){ var on=norm(x)===norm(sel); if(on)has=true; return '<option'+(on?' selected':'')+'>'+esc(x)+'</option>'; }).join('');
+    if(sel && !has) out='<option selected>'+esc(sel)+'</option>'+out;
+    return out;
+  }
   function abreItem(it){
     const e=it||{};
+    var _sec = inferSec(e.secao, e.categoria), _S = SECOES[_sec];
     $('#itBody').innerHTML=
-      '<h2>'+(it?'Editar item':'Novo item')+'</h2><div class="msub">Mercadinho solidário</div>'+
+      '<h2>'+(it?'Editar item':'Novo item')+'</h2><div class="msub">Item da ação social</div>'+
+      '<div class="fld"><label>Seção</label><select id="it-secao">'+SEC_ORDER.map(function(k){return '<option value="'+k+'"'+(k===_sec?' selected':'')+'>'+SECOES[k].rot+'</option>';}).join('')+'</select></div>'+
       '<div class="fld"><label>Nome</label><input id="it-nome" value="'+esc(e.nome||'')+'"></div>'+
-      '<div class="f2"><div class="fld"><label>Categoria</label><input id="it-cat" placeholder="Alimentos, Higiene…" value="'+esc(e.categoria||'')+'"></div>'+
-        '<div class="fld"><label>Unidade</label><input id="it-uni" placeholder="un, kg, pacote" value="'+esc(e.unidade||'un')+'"></div></div>'+
+      '<div class="f2"><div class="fld"><label>Categoria</label><select id="it-cat">'+optsHtml(_S.cats, e.categoria)+'</select></div>'+
+        '<div class="fld"><label>Unidade</label><select id="it-uni">'+optsHtml(_S.unis, e.unidade||'un')+'</select></div></div>'+
       '<div class="f2"><div class="fld"><label>Quantidade em estoque</label><input id="it-qtd" type="number" min="0" value="'+(e.quantidade!=null?e.quantidade:0)+'"></div>'+
         '<div class="fld"><label>Prioridade no carrossel</label><input id="it-prio" type="number" min="0" value="'+(e.prioridade!=null?e.prioridade:0)+'"></div></div>'+
       '<div class="fld"><label>Limite por CPF · por mês</label><input id="it-lim" type="number" min="0" value="'+(e.limite_mensal_cpf!=null?e.limite_mensal_cpf:0)+'"><div class="ithint">0 = sem limite. Máximo que cada CPF pode reservar deste item por mês.</div></div>'+
@@ -509,13 +530,14 @@
     $('#itBg').classList.add('on');
     $('#it-cancelar').onclick=fechaItem;
     $('#it-salvar').onclick=()=>salvarItem(it&&it.id);
+    $('#it-secao').onchange=function(){ var s=SECOES[$('#it-secao').value]; $('#it-cat').innerHTML=optsHtml(s.cats, s.cats[0]); $('#it-uni').innerHTML=optsHtml(s.unis, s.unis[0]); };
     if(it) $('#it-excluir').onclick=()=>excluirItem(it.id);
   }
   function fechaItem(){ $('#itBg').classList.remove('on'); }
   async function salvarItem(id){
     const v=i=>{const el=$('#'+i);return el?el.value.trim():'';};
     const nome=v('it-nome'); if(!nome){ alert('Informe o nome do item.'); return; }
-    const payload={ nome, categoria:v('it-cat')||null, unidade:v('it-uni')||'un',
+    const payload={ nome, secao:$('#it-secao').value, categoria:v('it-cat')||null, unidade:v('it-uni')||'un',
       quantidade:Math.max(0,parseInt($('#it-qtd').value,10)||0),
       prioridade:Math.max(0,parseInt($('#it-prio').value,10)||0),
       limite_mensal_cpf:Math.max(0,parseInt($('#it-lim').value,10)||0),
