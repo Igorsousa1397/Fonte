@@ -123,6 +123,10 @@
   .fld input,.fld select,.fld textarea{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:10px 12px;color:var(--luz);font-family:inherit;font-size:.92rem}
   .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--agua-forte)}
   .f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fld input[type=file]{padding:8px 10px;font-size:.85rem}
+  .embreve{max-width:540px;margin:48px auto;text-align:center;padding:40px 28px;border:var(--borda);border-radius:var(--raio);background:var(--breu)}
+  .embreve-tag{display:inline-block;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--agua-forte);border:1px solid var(--agua-forte);border-radius:100px;padding:5px 14px;margin-bottom:16px}
+  .embreve p{color:var(--cinza-claro);line-height:1.6;margin:0}
   .ithint{font-size:.72rem;color:var(--cinza);margin-top:5px;line-height:1.4}
   .chkline{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.9rem;color:var(--luz);margin-top:4px}
   .chkline input{width:18px;height:18px;accent-color:var(--agua)}
@@ -373,36 +377,14 @@
     });
   }
 
-  const CENTROS_ENTRADA=['Dízimos','Ofertas','Primícias','Fonte Coffee','Eventos'];
-  const CENTROS_SAIDA=['Insumos','Limpeza','Água','Energia','Aluguel','Internet','Equipamentos'];
   function renderFinanceiro(sub){
     sub = sub || 'geral';
-    const linha=n=>'<div class="cc-lin"><span>'+n+'</span><span class="cc-val">R$ 0,00</span></div>';
-    if(sub==='entradas'){
-      $('#titulo').textContent='Entradas';
-      $('#view').innerHTML=
-        '<p class="view-sub">Entradas por centro de custo. Estrutura inicial — lançamentos, datas e filtro por período entram em seguida.</p>'+
-        '<div class="cards">'+card('Total de entradas (mês)','R$ 0,00',true)+'</div>'+
-        '<div class="cc-bloco full"><div class="cc-tit">Entradas</div>'+CENTROS_ENTRADA.map(linha).join('')+'</div>';
-      return;
-    }
-    if(sub==='saidas'){
-      $('#titulo').textContent='Saídas';
-      $('#view').innerHTML=
-        '<p class="view-sub">Saídas / despesas por centro de custo. Estrutura inicial — lançamentos, datas e filtro por período entram em seguida.</p>'+
-        '<div class="cards">'+card('Total de saídas (mês)','R$ 0,00',true)+'</div>'+
-        '<div class="cc-bloco full"><div class="cc-tit">Saídas / Despesas</div>'+CENTROS_SAIDA.map(linha).join('')+'</div>';
-      return;
-    }
-    $('#titulo').textContent='Financeiro';
+    $('#titulo').textContent = sub==='entradas' ? 'Entradas' : sub==='saidas' ? 'Saídas' : 'Financeiro';
     $('#view').innerHTML=
-      '<p class="view-sub">Visão geral do financeiro da igreja. Abra <b>Entradas</b> ou <b>Saídas</b> no menu para detalhar cada centro de custo.</p>'+
-      '<div class="cards">'+card('Entradas (mês)','R$ 0,00',true)+card('Saídas (mês)','R$ 0,00')+card('Saldo','R$ 0,00')+'</div>'+
-      '<div class="cc-grid">'+
-        '<div class="cc-bloco"><div class="cc-tit">Entradas</div>'+CENTROS_ENTRADA.map(linha).join('')+'</div>'+
-        '<div class="cc-bloco"><div class="cc-tit">Saídas / Despesas</div>'+CENTROS_SAIDA.map(linha).join('')+'</div>'+
-      '</div>'+
-      '<div class="aviso-box">Em breve: lançamentos manuais, categorias personalizadas (centros de custo), filtro por período e relatórios — além da conciliação automática dos pagamentos online.</div>';
+      '<div class="embreve">'+
+        '<div class="embreve-tag">Em breve</div>'+
+        '<p>O módulo financeiro está em construção. Em breve você poderá registrar entradas e saídas, criar centros de custo, filtrar por período e gerar relatórios.</p>'+
+      '</div>';
   }
 
   function renderContatos(assunto){
@@ -523,6 +505,7 @@
         '<div class="fld"><label>Prioridade no carrossel</label><input id="it-prio" type="number" min="0" value="'+(e.prioridade!=null?e.prioridade:0)+'"></div></div>'+
       '<div class="fld"><label>Limite por CPF · por mês</label><input id="it-lim" type="number" min="0" value="'+(e.limite_mensal_cpf!=null?e.limite_mensal_cpf:0)+'"><div class="ithint">0 = sem limite. Máximo que cada CPF pode reservar deste item por mês.</div></div>'+
       '<div class="fld"><label>Foto (URL)</label><input id="it-foto" placeholder="https://…" value="'+esc(e.foto_url||'')+'"></div>'+
+      '<div class="fld" id="it-foto-upload" style="display:none"><label>Ou envie uma foto do item</label><input type="file" id="it-fotofile" accept="image/*"><div class="ithint" id="it-foto-status">A foto é enviada e o link acima é preenchido sozinho.</div></div>'+
       '<div class="fld"><label>Descrição</label><textarea id="it-desc" rows="2">'+esc(e.descricao||'')+'</textarea></div>'+
       '<label class="chkline"><input type="checkbox" id="it-nec"'+(e.necessidade?' checked':'')+'> Mostrar no carrossel “Estamos precisando de…”</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="it-salvar">Salvar</button><button class="btn-ghost" id="it-cancelar">Cancelar</button>'+
@@ -530,7 +513,26 @@
     $('#itBg').classList.add('on');
     $('#it-cancelar').onclick=fechaItem;
     $('#it-salvar').onclick=()=>salvarItem(it&&it.id);
-    $('#it-secao').onchange=function(){ var s=SECOES[$('#it-secao').value]; $('#it-cat').innerHTML=optsHtml(s.cats, s.cats[0]); $('#it-uni').innerHTML=optsHtml(s.unis, s.unis[0]); };
+    function _podeSubirFoto(){ var sec=$('#it-secao').value, cat=norm($('#it-cat').value); return !(sec==='remedios' || cat==='alimento'); }
+    function _atualizaUpload(){ var u=$('#it-foto-upload'); if(u) u.style.display=_podeSubirFoto()?'':'none'; }
+    $('#it-secao').onchange=function(){ var s=SECOES[$('#it-secao').value]; $('#it-cat').innerHTML=optsHtml(s.cats, s.cats[0]); $('#it-uni').innerHTML=optsHtml(s.unis, s.unis[0]); _atualizaUpload(); };
+    $('#it-cat').addEventListener('change', _atualizaUpload);
+    _atualizaUpload();
+    var _ff=$('#it-fotofile'); if(_ff) _ff.onchange=async function(){
+      var f=this.files&&this.files[0]; if(!f) return;
+      var st=$('#it-foto-status');
+      if(f.size > 10*1024*1024){ st.textContent='Foto muito grande (máx. 10MB). Tente uma menor.'; this.value=''; return; }
+      st.textContent='Enviando foto…';
+      try{
+        var ext=((f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,''))||'jpg';
+        var path='itens/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+        var up=await sb.storage.from('acao-fotos').upload(path,f,{contentType:f.type||'image/jpeg',upsert:false});
+        if(up.error) throw up.error;
+        var pub=sb.storage.from('acao-fotos').getPublicUrl(path);
+        $('#it-foto').value=pub.data.publicUrl;
+        st.textContent='Foto enviada. Link preenchido acima.';
+      }catch(err){ st.textContent='Não deu para enviar: '+(err.message||err); }
+    };
     if(it) $('#it-excluir').onclick=()=>excluirItem(it.id);
   }
   function fechaItem(){ $('#itBg').classList.remove('on'); }
