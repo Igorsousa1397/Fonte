@@ -96,10 +96,11 @@
       radial-gradient(90% 120% at 10% 90%, rgba(255,255,255,.04), transparent 60%),
       linear-gradient(180deg,#0c0c0e 0%, #0a0a0b 100%)}
   .slide-foto{align-items:stretch}
-  .slide-foto .slide-inner{display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
+  .slide-foto .slide-inner{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:48px}
   .foto-topo{flex:0 0 auto;align-self:center;height:clamp(300px,calc(90vh - 400px),430px);width:auto;max-width:100%;
      display:block;border-radius:var(--raio);border:var(--borda);box-shadow:0 24px 60px -28px #000}
   .slide-txt{width:100%}
+  .slide-foto .slide-txt{width:auto;flex:1;min-width:0;max-width:600px}
   .slide-inner{position:relative;width:100%;max-width:var(--largura);margin:0 auto;
                padding:60px 22px 64px}
   .slide-tag{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--neblina);
@@ -399,7 +400,8 @@
     #mapa{height:360px}
     .hero-track{min-height:0}
     .slide.on{position:relative}
-    .slide-foto .slide-inner{justify-content:flex-start;gap:20px}
+    .slide-foto .slide-inner{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:20px}
+    .slide-foto .slide-txt{max-width:100%}
   }
   /* celular pequeno */
   @media(max-width:560px){
