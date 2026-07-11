@@ -199,10 +199,12 @@
   .templo{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden;
           display:flex;flex-direction:column;transition:border-color .25s,transform .25s}
   .templo:hover{border-color:var(--agua-forte);transform:translateY(-3px)}
-  .templo-foto{position:relative;height:190px;background-size:cover;background-position:center;
+  .templo-foto{position:relative;height:200px;
        background:radial-gradient(90% 120% at 70% 10%,rgba(122,212,207,.18),transparent 60%),linear-gradient(135deg,#1a1a1f,#0d0d10);
+       background-size:cover;background-position:center;background-repeat:no-repeat;
        display:flex;align-items:center;justify-content:center}
   .templo-foto .marca-logo{width:96px;height:50px;opacity:.4;animation:none}
+  .templo-foto.com-foto{background-size:cover;background-position:center;background-repeat:no-repeat}
   .templo-foto.com-foto .marca-logo{display:none}
   .templo-corpo{padding:22px;display:flex;flex-direction:column;gap:13px;flex:1}
   .templo h3{font-family:var(--display);font-size:1.3rem;font-weight:700}
