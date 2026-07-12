@@ -688,6 +688,16 @@
         <div class="campo"><label for="m-tel">Telefone</label><input id="m-tel" inputmode="tel" maxlength="16" placeholder="(11) 90000-0000"></div>
       </div>
       <div class="duo">
+        <div class="campo"><label for="m-nasc">Data de nascimento</label><input id="m-nasc" type="date"></div>
+        <div class="campo"><label for="m-foto-file">Foto do rosto <span style="color:var(--cinza);font-weight:400">(opcional)</span></label>
+          <input id="m-foto-file" type="file" accept="image/*" style="display:none">
+          <div style="display:flex;align-items:center;gap:12px">
+            <img id="m-foto-prev" alt="" style="display:none;width:52px;height:52px;border-radius:50%;object-fit:cover;border:1px solid var(--neblina)">
+            <button type="button" class="btn" id="m-foto-btn" style="background:var(--grafite-2);border:1px solid var(--neblina);color:var(--luz)">Adicionar foto</button>
+          </div>
+        </div>
+      </div>
+      <div class="duo">
         <div class="campo"><label for="m-celula">Célula</label><select id="m-celula"></select></div>
         <div class="campo"><label for="m-min">Serve em algum ministério?</label><select id="m-min"></select></div>
       </div>
@@ -967,7 +977,7 @@ const CELULAS=[
   // BARUERI
   {nome:'Fonte',lider:'Samuel e Luana',end:'Rua Laura, 47 — Parque dos Camargos, Barueri',hora:'20h',cidade:'Barueri',lat:-23.5403764,lng:-46.8909511,foto:'assets/celulas/fonte.jpg', wpp:'5511965731601'},
   // ITAJAÍ / SC
-  {nome:'Peniel',lider:'Alex Sandro e Tati',end:'Rua Fermino Vieira Cordeiro, 1200 — Espinheiro (Bloco G / Apto 202), Itajaí/SC',hora:'Sex 20h',cidade:'Itajaí/SC',lat:-26.89586808748668,lng:-48.7307609691978, foto: 'assets/celulas/peniel.jpg', wpp:'5517992325979'},
+  {nome:'Peniel',lider:'Alex Sandro e Tati',end:'Rua Fermino Vieira Cordeiro, 1200 — Espinheiro (Bloco G / Apto 202), Itajaí/SC',hora:'Sex 20h',cidade:'Itajaí/SC',lat:-26.89586808748668,lng:-48.7307609691978, wpp:'5517992325979'},
 ];
 CELULAS.sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
 
@@ -1121,21 +1131,48 @@ document.getElementById('enviaContato').onclick=async()=>{
     }
   });
 
+  let fotoFile=null;
+  const fBtn=el('m-foto-btn'), fInput=el('m-foto-file'), fPrev=el('m-foto-prev');
+  if(fBtn && fInput){
+    fBtn.onclick=()=>fInput.click();
+    fInput.onchange=()=>{
+      const f=fInput.files&&fInput.files[0];
+      if(!f) return;
+      if(!/^image\//.test(f.type)){ toast('Selecione uma imagem.'); fInput.value=''; return; }
+      if(f.size>10*1024*1024){ toast('Imagem muito grande (máx 10MB).'); fInput.value=''; return; }
+      fotoFile=f;
+      if(fPrev){ fPrev.src=URL.createObjectURL(f); fPrev.style.display='block'; }
+      fBtn.textContent='Trocar foto';
+    };
+  }
+
   const btn=el('enviaMembro');
   if(btn) btn.onclick=async()=>{
     const g=id=>el(id).value.trim();
-    const nome=g('m-nome'), doc=g('m-cpf');
+    const nome=g('m-nome'), doc=g('m-cpf'), nasc=g('m-nasc');
     if(!nome){ toast('Preencha o nome completo.'); return; }
     if(doc.replace(/\D/g,'').length!==11){ toast('Preencha um CPF válido (11 dígitos).'); return; }
+    if(!nasc){ toast('Preencha a data de nascimento.'); return; }
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
     try{
+      let fotoUrl=null;
+      if(fotoFile){
+        btn.textContent='Enviando foto…';
+        const ext=(fotoFile.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+        const path='membros/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+        const up=await sb.storage.from('membros-fotos').upload(path, fotoFile, {upsert:false, contentType:fotoFile.type});
+        if(up.error) throw up.error;
+        fotoUrl=sb.storage.from('membros-fotos').getPublicUrl(path).data.publicUrl;
+        btn.textContent='Enviando…';
+      }
       const pen=el('m-peniel').value;
       const { error }=await sb.rpc('criar_membro',{
         p_nome:nome, p_cpf:doc, p_celula:g('m-celula'),
         p_telefone:g('m-tel'), p_ministerio:g('m-min'),
         p_peniel: pen==='Sim' ? true : pen==='Não' ? false : null,
         p_cep:g('m-cep'), p_logradouro:g('m-log'), p_numero:g('m-num'),
-        p_complemento:g('m-comp'), p_bairro:g('m-bairro'), p_cidade:g('m-cidade'), p_uf:g('m-uf')
+        p_complemento:g('m-comp'), p_bairro:g('m-bairro'), p_cidade:g('m-cidade'), p_uf:g('m-uf'),
+        p_nascimento:nasc, p_foto_url:fotoUrl
       });
       if(error) throw error;
       const boxM=document.querySelector('#membro .form');
