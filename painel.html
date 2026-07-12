@@ -485,7 +485,8 @@
     </div>
   </div>
   <div class="btns">
-    <button class="b1" id="sendBtn">Enviar para o membro</button>
+    <button class="b1" id="sendBtn">Enviar no WhatsApp</button>
+    <button class="b2" id="dlBtn">Baixar imagem</button>
     <button class="b2" onclick="window.print()">Imprimir / Salvar PDF</button>
     <button class="b2" onclick="window.close()">Fechar</button>
   </div>
@@ -497,25 +498,33 @@
         .then(function(cv){ return new Promise(function(res){ cv.toBlob(res,'image/png'); }); })
         .catch(function(){ return null; });
     }
+    function abrirWhats(texto){
+      if(CARD.wa){ window.open('https://wa.me/'+CARD.wa+'?text='+encodeURIComponent(texto),'_blank'); }
+      else { alert('Este membro não tem telefone cadastrado.'); }
+    }
     function enviarWhats(){
-      var btn=document.getElementById('sendBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
       var texto='Olá'+(CARD.nome?(' '+CARD.nome):'')+'! Segue sua carteirinha de membro da Igreja Apostólica Fonte.';
+      var btn=document.getElementById('sendBtn'); var t=btn.textContent;
+      if(navigator.canShare){
+        btn.disabled=true; btn.textContent='Gerando…';
+        gerarPng().then(function(blob){
+          var file=blob?new File([blob],'carteirinha.png',{type:'image/png'}):null;
+          if(file && navigator.canShare({files:[file]})){
+            navigator.share({files:[file], text:texto}).catch(function(){}).then(function(){ btn.disabled=false; btn.textContent=t; });
+          } else { abrirWhats(texto); btn.disabled=false; btn.textContent=t; }
+        });
+      } else { abrirWhats(texto); }
+    }
+    function baixarImg(){
+      var btn=document.getElementById('dlBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
       gerarPng().then(function(blob){
-        var file=blob ? new File([blob],'carteirinha.png',{type:'image/png'}) : null;
-        if(file && navigator.canShare && navigator.canShare({files:[file]})){
-          navigator.share({files:[file], text:texto}).then(function(){ btn.disabled=false; btn.textContent=t; })
-            .catch(function(){ fallback(blob,texto); btn.disabled=false; btn.textContent=t; });
-          return;
-        }
-        fallback(blob,texto); btn.disabled=false; btn.textContent=t;
+        if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.png'; a.click(); }
+        else { alert('Não foi possível gerar a imagem.'); }
+        btn.disabled=false; btn.textContent=t;
       });
     }
-    function fallback(blob,texto){
-      if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.png'; a.click(); }
-      if(CARD.wa){ window.open('https://wa.me/'+CARD.wa+'?text='+encodeURIComponent(texto),'_blank'); }
-      else { alert('Este membro não tem telefone cadastrado. A imagem foi baixada; envie manualmente.'); }
-    }
     document.getElementById('sendBtn').addEventListener('click', enviarWhats);
+    document.getElementById('dlBtn').addEventListener('click', baixarImg);
   <\/script>
 </body></html>`;
     const w=window.open('','_blank');
