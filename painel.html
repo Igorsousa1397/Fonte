@@ -92,7 +92,7 @@
   .tabela{border:var(--borda);border-radius:var(--raio);overflow:hidden;background:var(--grafite)}
   .tabela .lin{display:grid;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(42,42,49,.6);font-size:.9rem;align-items:center}
   .tabela.batismo .lin{grid-template-columns:1.4fr 1fr .9fr .9fr .8fr}
-  .tabela.membros .lin{grid-template-columns:1.3fr .9fr 1.1fr 1.3fr 64px}
+  .tabela.membros .lin{grid-template-columns:1.5fr .9fr 1.1fr .8fr 64px}
   .tabela.itens .lin{grid-template-columns:1.7fr 150px 1fr}
   .tabela.pessoas .lin{grid-template-columns:1.5fr 1fr 1fr 1.1fr}
   .tabela.membros .lin.off{opacity:.5}
@@ -467,13 +467,13 @@
     const inativos=MEMBROS.length-ativos;
     let html='<div class="cards">'+card('Membros ativos',ativos,true)+(inativos?card('Inativos',inativos):'')+'</div>';
     if(!MEMBROS.length){ html+='<div class="tabela"><div class="vazio">Nenhum cadastro de membro ainda.</div></div>'; $('#view').innerHTML=html; return; }
-    html+='<div class="tabela membros"><div class="lin cab"><span>Nome</span><span>Célula</span><span>Telefone</span><span>Endereço</span><span>Ativo</span></div>';
+    html+='<div class="tabela membros"><div class="lin cab"><span>Nome</span><span>Célula</span><span>Telefone</span><span>Ministério</span><span>Ativo</span></div>';
     MEMBROS.forEach(m=>{
       const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
       const loc=[m.cidade,m.uf].filter(Boolean).join('/');
       const endereco=[rua,loc].filter(Boolean).join(' — ');
       const on=m.ativo!==false;
-      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Telefone">'+(telWa(m.telefone)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
+      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Telefone">'+(telWa(m.telefone)||'—')+'</span><span class="col" data-l="Ministério">'+(esc(m.ministerio)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
