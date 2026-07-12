@@ -505,7 +505,8 @@
     function enviarWhats(){
       var texto='Olá'+(CARD.nome?(' '+CARD.nome):'')+'! Segue sua carteirinha de membro da Igreja Apostólica Fonte.';
       var btn=document.getElementById('sendBtn'); var t=btn.textContent;
-      if(navigator.canShare){
+      var isMobile=/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent||'');
+      if(isMobile && navigator.canShare){
         btn.disabled=true; btn.textContent='Gerando…';
         gerarPng().then(function(blob){
           var file=blob?new File([blob],'carteirinha.png',{type:'image/png'}):null;
@@ -513,7 +514,14 @@
             navigator.share({files:[file], text:texto}).catch(function(){}).then(function(){ btn.disabled=false; btn.textContent=t; });
           } else { abrirWhats(texto); btn.disabled=false; btn.textContent=t; }
         });
-      } else { abrirWhats(texto); }
+      } else {
+        abrirWhats(texto);
+        btn.disabled=true; btn.textContent='Gerando imagem…';
+        gerarPng().then(function(blob){
+          if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.png'; a.click(); }
+          btn.disabled=false; btn.textContent=t;
+        });
+      }
     }
     function baixarImg(){
       var btn=document.getElementById('dlBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
