@@ -442,10 +442,12 @@
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '—';
     let desde='—'; try{ desde=m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'; }catch(e){}
     const cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
-    const avatar=m.foto_url ? '<img class="av" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
+    let waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
+    const avatar=m.foto_url ? '<img class="av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
     const linhas=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
     const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
   body{background:#0a0a0b;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:28px;color:#f5f5f6}
@@ -463,14 +465,14 @@
   .row b{color:#f5f5f6;font-weight:600;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cod{font-size:.68rem;color:#4bb6b0;letter-spacing:.1em;font-weight:700;margin-top:8px}
   .cnpj{font-size:.6rem;color:#8b8b95;margin-top:2px}
-  .btns{display:flex;gap:10px}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .btns button{padding:10px 18px;border-radius:10px;border:none;font-weight:600;cursor:pointer;font-size:.9rem}
   .b1{background:#7ad4cf;color:#06201e} .b2{background:transparent;border:1px solid #2a2a31;color:#b8b8c0}
   @media print{html,body{background:#fff;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.btns{display:none}.card{box-shadow:none;margin:24px auto}}
 </style></head><body>
-  <div class="card">
+  <div class="card" id="card">
     <div class="left">
-      <img class="logo" src="${logo}" alt="Fonte">
+      <img class="logo" crossorigin="anonymous" src="${logo}" alt="Fonte">
       ${avatar}
       <div class="memb">MEMBRO</div>
     </div>
@@ -482,7 +484,39 @@
       <div class="cnpj">CNPJ 52.268.825/0001-95</div>
     </div>
   </div>
-  <div class="btns"><button class="b1" onclick="window.print()">Imprimir / Salvar PDF</button><button class="b2" onclick="window.close()">Fechar</button></div>
+  <div class="btns">
+    <button class="b1" id="sendBtn">Enviar para o membro</button>
+    <button class="b2" onclick="window.print()">Imprimir / Salvar PDF</button>
+    <button class="b2" onclick="window.close()">Fechar</button>
+  </div>
+  <script>
+    var CARD={nome:${JSON.stringify(m.nome||'')}, wa:${JSON.stringify(waNumber)}};
+    function gerarPng(){
+      if(typeof html2canvas==='undefined') return Promise.resolve(null);
+      return html2canvas(document.getElementById('card'),{backgroundColor:null,scale:3,useCORS:true})
+        .then(function(cv){ return new Promise(function(res){ cv.toBlob(res,'image/png'); }); })
+        .catch(function(){ return null; });
+    }
+    function enviarWhats(){
+      var btn=document.getElementById('sendBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
+      var texto='Olá'+(CARD.nome?(' '+CARD.nome):'')+'! Segue sua carteirinha de membro da Igreja Apostólica Fonte.';
+      gerarPng().then(function(blob){
+        var file=blob ? new File([blob],'carteirinha.png',{type:'image/png'}) : null;
+        if(file && navigator.canShare && navigator.canShare({files:[file]})){
+          navigator.share({files:[file], text:texto}).then(function(){ btn.disabled=false; btn.textContent=t; })
+            .catch(function(){ fallback(blob,texto); btn.disabled=false; btn.textContent=t; });
+          return;
+        }
+        fallback(blob,texto); btn.disabled=false; btn.textContent=t;
+      });
+    }
+    function fallback(blob,texto){
+      if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.png'; a.click(); }
+      if(CARD.wa){ window.open('https://wa.me/'+CARD.wa+'?text='+encodeURIComponent(texto),'_blank'); }
+      else { alert('Este membro não tem telefone cadastrado. A imagem foi baixada; envie manualmente.'); }
+    }
+    document.getElementById('sendBtn').addEventListener('click', enviarWhats);
+  <\/script>
 </body></html>`;
     const w=window.open('','_blank');
     if(!w){ alert('Permita pop-ups para gerar a carteirinha.'); return; }
