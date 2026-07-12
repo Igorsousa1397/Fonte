@@ -118,7 +118,9 @@
   #mbBody h2 .mb-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #mbBody h2 .mb-pill{flex-shrink:0;margin-left:0}
   .mb-foto{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--neblina);margin:6px 0 14px;cursor:zoom-in;display:block}
-  .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end}
+  .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end;gap:10px}
+  .btn-del{background:transparent;border:1px solid rgba(224,80,80,.5);color:#e57373;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
+  .btn-del:hover{background:rgba(224,80,80,.12)}
   .btn-val{background:var(--agua);color:#06201e;border:none;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-val:hover{background:var(--agua-forte)}
   .btn-val.off{background:transparent;border:1px solid var(--neblina);color:var(--cinza-claro)}
@@ -382,10 +384,12 @@
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
       '<div class="mb-acoes">'+(validado
-        ? '<button class="btn-val off" data-val="0">Remover validação</button>'
+        ? '<button class="btn-del" data-act="del">Excluir membro</button><button class="btn-val" data-act="cart">Criar carteirinha virtual</button>'
         : '<button class="btn-val" data-val="1">Validar dados / OK</button>')+'</div>';
-    const vb=$('#mbBody .btn-val');
-    if(vb) vb.onclick=()=>setValidadoMembro(m.id, vb.dataset.val==='1');
+    const vb=$('#mbBody .btn-val[data-val]');
+    if(vb) vb.onclick=()=>setValidadoMembro(m.id, true);
+    const bDel=$('#mbBody .btn-del'); if(bDel) bDel.onclick=()=>excluirMembro(m);
+    const bCart=$('#mbBody [data-act="cart"]'); if(bCart) bCart.onclick=()=>abrirCarteirinha(m);
     $('#mbBg').classList.add('on');
   }
   async function setValidadoMembro(id, val){
@@ -396,6 +400,65 @@
     if(m){ m.validado=val; m.validado_em=val?new Date().toISOString():null; abreMembro(m); }
     if($('#titulo') && $('#titulo').textContent==='Membros') renderMembros();
   }
+  async function excluirMembro(m){
+    if(!confirm('Excluir o membro "'+(m.nome||'')+'"? Esta ação não pode ser desfeita.')) return;
+    const bDel=$('#mbBody .btn-del'); if(bDel){ bDel.disabled=true; bDel.textContent='Excluindo…'; }
+    const {error}=await sb.rpc('membro_excluir',{p_id:m.id});
+    if(error){ if(bDel){ bDel.disabled=false; bDel.textContent='Excluir membro'; } alert('Não foi possível excluir: '+(error.message||error)); return; }
+    MEMBROS=MEMBROS.filter(x=>x.id!==m.id);
+    fechaMembro();
+    if($('#titulo') && $('#titulo').textContent==='Membros') renderMembros();
+  }
+  function abrirCarteirinha(m){
+    const logo=location.origin+'/assets/fonte-logo.png';
+    const nome=esc(m.nome||'');
+    const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '—';
+    let desde='—'; try{ desde=m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'; }catch(e){}
+    const cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
+    const fotoHtml=m.foto_url ? '<img class="ct-foto" src="'+esc(m.foto_url)+'" alt="">' : '<div class="ct-foto ct-ini">'+esc(iniciais)+'</div>';
+    const linhas=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
+      .map(l=>'<div class="ct-lin"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
+    const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,sans-serif}
+  body{background:#0a0a0b;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:28px;color:#f5f5f6}
+  .card{width:340px;border-radius:18px;overflow:hidden;background:linear-gradient(180deg,#17171b,#101013);border:1px solid #2a2a31;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .card-top{background:linear-gradient(135deg,#4bb6b0,#7ad4cf);padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
+  .card-top img{height:26px;filter:brightness(0);opacity:.82}
+  .card-top span{font-size:.66rem;letter-spacing:.14em;font-weight:700;color:#06201e}
+  .card-body{padding:0 20px 22px;text-align:center;margin-top:-42px}
+  .ct-foto{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid #17171b;background:#2a2a31;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#7ad4cf}
+  .ct-nome{font-size:1.18rem;font-weight:700;margin:14px 0 2px;line-height:1.2}
+  .ct-sub{color:#8b8b95;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px}
+  .ct-lins{text-align:left;border-top:1px solid #2a2a31;padding-top:14px;display:flex;flex-direction:column;gap:9px}
+  .ct-lin{display:flex;justify-content:space-between;gap:12px;font-size:.86rem}
+  .ct-lin span{color:#8b8b95} .ct-lin b{color:#f5f5f6;font-weight:600;text-align:right}
+  .ct-cod{margin-top:16px;font-size:.72rem;color:#7ad4cf;letter-spacing:.12em;font-weight:600}
+  .ct-org{font-size:.64rem;color:#8b8b95;margin-top:3px}
+  .btns{display:flex;gap:10px}
+  .btns button{padding:10px 18px;border-radius:10px;border:none;font-weight:600;cursor:pointer;font-size:.9rem}
+  .b1{background:#7ad4cf;color:#06201e} .b2{background:transparent;border:1px solid #2a2a31;color:#b8b8c0}
+  @media print{body{background:#fff}.btns{display:none}.card{box-shadow:none}}
+</style></head><body>
+  <div class="card">
+    <div class="card-top"><img src="${logo}" alt="Fonte"><span>MEMBRO</span></div>
+    <div class="card-body">
+      ${fotoHtml}
+      <div class="ct-nome">${nome}</div>
+      <div class="ct-sub">Igreja Apostólica Fonte</div>
+      <div class="ct-lins">${linhas}</div>
+      <div class="ct-cod">${cod}</div>
+      <div class="ct-org">CNPJ 52.268.825/0001-95</div>
+    </div>
+  </div>
+  <div class="btns"><button class="b1" onclick="window.print()">Imprimir / Salvar PDF</button><button class="b2" onclick="window.close()">Fechar</button></div>
+</body></html>`;
+    const w=window.open('','_blank');
+    if(!w){ alert('Permita pop-ups para gerar a carteirinha.'); return; }
+    w.document.open(); w.document.write(doc); w.document.close();
+  }
+
   function fechaMembro(){ $('#mbBg').classList.remove('on'); }
 
   function renderMembros(){
