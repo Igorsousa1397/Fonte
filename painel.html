@@ -438,6 +438,7 @@
   function abrirCarteirinha(m){
     const logo=location.origin+'/assets/fonte-logo.png';
     const nome=esc(m.nome||'');
+    const _p=(m.nome||'').trim().split(/\s+/); const nomeCurto=_p.length>1?esc(_p[0]+' '+_p[_p.length-1]):nome;
     const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '—';
     let desde='—'; try{ desde=m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'; }catch(e){}
@@ -448,7 +449,7 @@
     const avCracha=m.foto_url ? '<img class="cr-av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
     const rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
-    const rowsCracha=[['Célula',m.celula],['Nascimento',nasc],['Membro desde',desde]]
+    const rowsCracha=[['Célula',m.celula],['Membro desde',desde]]
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
     const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
@@ -478,7 +479,7 @@
   .cod{font-size:.68rem;color:#4bb6b0;letter-spacing:.1em;font-weight:700;margin-top:8px}
   .cnpj{font-size:.6rem;color:#8b8b95;margin-top:2px}
   /* ---- CRACHÁ (vertical) ---- */
-  .cracha{width:360px;height:540px;position:relative;border-radius:16px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;text-align:center}
+  .cracha{width:396px;height:540px;position:relative;border-radius:16px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;text-align:center}
   .cr-hole{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:66px;height:10px;border-radius:6px;background:#0a0a0b;border:1px solid #2a2a31;z-index:3}
   .cr-top{width:100%;background:linear-gradient(135deg,#4bb6b0,#7ad4cf);padding:28px 0 40px;display:flex;flex-direction:column;align-items:center;gap:5px}
   .cr-logo{height:28px;filter:brightness(0);opacity:.82}
@@ -489,6 +490,7 @@
   .cr-cat{margin:14px 0;background:#7ad4cf;color:#06201e;font-weight:800;letter-spacing:.06em;font-size:.88rem;padding:7px 22px;border-radius:20px;text-transform:uppercase;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cr-rows{width:calc(100% - 56px);border-top:1px solid #2a2a31;padding-top:14px;display:flex;flex-direction:column;gap:10px}
   .cr-rows .row{justify-content:space-between}
+  .cr-cred{text-align:center;color:#8b8b95;font-size:.62rem;letter-spacing:.24em;font-weight:700;margin:16px 0 4px}
   .cr-code{margin-top:auto;width:100%;background:#0d0d0f;border-top:1px solid #2a2a31;padding:12px;font-size:.72rem;color:#4bb6b0;letter-spacing:.12em;font-weight:700}
   .cr-code small{display:block;color:#8b8b95;letter-spacing:normal;font-weight:400;margin-top:2px}
   /* ---- botões ---- */
@@ -517,12 +519,13 @@
 
   <div id="fmt-cracha" class="formato cracha hidden">
     <div class="cr-hole"></div>
-    <div class="cr-top"><img class="cr-logo" crossorigin="anonymous" src="${logo}" alt="Fonte"><span>CREDENCIAL</span></div>
+    <div class="cr-top"><img class="cr-logo" crossorigin="anonymous" src="${logo}" alt="Fonte"></div>
     ${avCracha}
-    <div class="cr-nome">${nome}</div>
+    <div class="cr-nome">${nomeCurto}</div>
     <div class="cr-org">Igreja Apostólica Fonte</div>
     <div class="cr-cat">${esc(cat)}</div>
     <div class="cr-rows">${rowsCracha}</div>
+    <div class="cr-cred">CREDENCIAL</div>
     <div class="cr-code">${cod}<small>CNPJ 52.268.825/0001-95</small></div>
   </div>
 
@@ -539,7 +542,7 @@
       document.getElementById('fmt-cartao').classList.toggle('hidden', f!=='cartao');
       document.getElementById('fmt-cracha').classList.toggle('hidden', f!=='cracha');
       var tgs=document.querySelectorAll('.tg'); for(var i=0;i<tgs.length;i++){ tgs[i].classList.toggle('on', tgs[i].getAttribute('data-f')===f); }
-      document.getElementById('pg').textContent = (f==='cartao') ? '@page{size:85.6mm 54mm;margin:0}' : '@page{size:100mm 150mm;margin:0}';
+      document.getElementById('pg').textContent = (f==='cartao') ? '@page{size:85.6mm 54mm;margin:0}' : '@page{size:110mm 150mm;margin:0}';
     }
     function ativo(){ return document.querySelector('.formato:not(.hidden)'); }
     function gerarPng(){
@@ -551,7 +554,7 @@
     function gerarPdfBlob(){
       if(typeof html2canvas==='undefined') return Promise.resolve(null);
       var el=ativo(); el.classList.add('norad');
-      var f=document.body.className.replace('fmt-',''); var sizes={cartao:[85.6,54], cracha:[100,150]}; var dim=sizes[f]||[85.6,54];
+      var f=document.body.className.replace('fmt-',''); var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
       return html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
         el.classList.remove('norad');
         var img=cv.toDataURL('image/png');
@@ -598,7 +601,7 @@
       var btn=document.getElementById('pdfBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
       var el=ativo(); el.classList.add('norad');
       var f=document.body.className.replace('fmt-','');
-      var sizes={cartao:[85.6,54], cracha:[100,150]}; var dim=sizes[f]||[85.6,54];
+      var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
       html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
         el.classList.remove('norad');
         try{
