@@ -117,7 +117,11 @@
   #mbBody h2{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:nowrap}
   #mbBody h2 .mb-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #mbBody h2 .mb-pill{flex-shrink:0;margin-left:0}
-  .mb-foto{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--neblina);margin:6px 0 14px;cursor:zoom-in;display:block}
+  .mb-foto{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--neblina);margin:6px 0 8px;cursor:zoom-in;display:block}
+  .mb-foto-ph{display:flex;align-items:center;justify-content:center;background:var(--grafite-2);color:var(--agua);font-size:1.8rem;font-weight:700;cursor:default}
+  .mb-foto-acao{margin:0 0 14px}
+  .mb-foto-btn{background:var(--grafite-2);border:1px solid var(--neblina);color:var(--luz);border-radius:var(--raio-sm);padding:7px 14px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.82rem}
+  .mb-foto-btn:hover{border-color:var(--agua)}
   .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end;gap:10px}
   .btn-del{background:transparent;border:1px solid rgba(224,80,80,.5);color:#e57373;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-del:hover{background:rgba(224,80,80,.12)}
@@ -360,6 +364,7 @@
     const peniel=m.passou_peniel===true?'Sim':m.passou_peniel===false?'Não':'—';
     const ativo=m.ativo!==false;
     const validado=m.validado===true;
+    const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '';
     const telHtml = telWa(m.telefone) || null;
@@ -376,7 +381,10 @@
       ['Cidade / UF', [m.cidade,m.uf].filter(Boolean).join(' / ')],
       ['CEP', m.cep]
     ];
-    const foto = m.foto_url ? '<img class="mb-foto" src="'+esc(m.foto_url)+'" alt="Foto de '+esc(m.nome)+'" onclick="window.open(this.src,\'_blank\')">' : '';
+    const fotoImg = m.foto_url
+      ? '<img class="mb-foto" src="'+esc(m.foto_url)+'" alt="Foto de '+esc(m.nome)+'" onclick="window.open(this.src,\'_blank\')">'
+      : '<div class="mb-foto mb-foto-ph">'+esc(iniciais)+'</div>';
+    const foto = fotoImg+'<div class="mb-foto-acao"><input type="file" id="mbFotoFile" accept="image/*" style="display:none"><button class="mb-foto-btn" id="mbFotoBtn">'+(m.foto_url?'Trocar foto':'Adicionar foto')+'</button></div>';
     const valPill = validado ? '<span class="mb-pill ok">Validado</span>' : '<span class="mb-pill no">A validar</span>';
     $('#mbBody').innerHTML=
       '<h2><span class="mb-nome">'+esc(m.nome)+'</span><span class="mb-pill '+(ativo?'ok':'no')+'">'+(ativo?'Ativo':'Inativo')+'</span>'+valPill+'</h2>'+
@@ -390,7 +398,25 @@
     if(vb) vb.onclick=()=>setValidadoMembro(m.id, true);
     const bDel=$('#mbBody .btn-del'); if(bDel) bDel.onclick=()=>excluirMembro(m);
     const bCart=$('#mbBody [data-act="cart"]'); if(bCart) bCart.onclick=()=>abrirCarteirinha(m);
+    const fBtn=$('#mbFotoBtn'), fFile=$('#mbFotoFile');
+    if(fBtn && fFile){ fBtn.onclick=()=>fFile.click(); fFile.onchange=()=>{ const f=fFile.files&&fFile.files[0]; if(f) uploadFotoMembro(m,f); }; }
     $('#mbBg').classList.add('on');
+  }
+  async function uploadFotoMembro(m, file){
+    if(!/^image\//.test(file.type)){ alert('Selecione uma imagem.'); return; }
+    if(file.size>10*1024*1024){ alert('Imagem muito grande (máx 10MB).'); return; }
+    const fBtn=$('#mbFotoBtn'); if(fBtn){ fBtn.disabled=true; fBtn.textContent='Enviando…'; }
+    try{
+      const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+      const path='membros/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+      const up=await sb.storage.from('membros-fotos').upload(path, file, {upsert:false, contentType:file.type});
+      if(up.error) throw up.error;
+      const url=sb.storage.from('membros-fotos').getPublicUrl(path).data.publicUrl;
+      const {error}=await sb.from('membros').update({foto_url:url}).eq('id',m.id);
+      if(error) throw error;
+      m.foto_url=url; const mm=MEMBROS.find(x=>x.id===m.id); if(mm) mm.foto_url=url;
+      abreMembro(m);
+    }catch(e){ if(fBtn){ fBtn.disabled=false; fBtn.textContent='Adicionar foto'; } alert('Não foi possível enviar a foto: '+(e.message||e)); }
   }
   async function setValidadoMembro(id, val){
     const vb=$('#mbBody .btn-val'); if(vb){ vb.disabled=true; vb.textContent='Salvando…'; }
