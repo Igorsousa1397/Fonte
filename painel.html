@@ -580,7 +580,7 @@ ${serve ? `
     }
     function gerarPdfBlob(){
       if(typeof html2canvas==='undefined') return Promise.resolve(null);
-      var el=ativo(); el.classList.add('norad');
+      var el=ativo(); if(document.body.className.replace('fmt-','')==='cartao') el.classList.add('norad');
       var f=document.body.className.replace('fmt-',''); var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
       return html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
         el.classList.remove('norad');
@@ -626,7 +626,7 @@ ${serve ? `
     }
     function baixarPdf(){
       var btn=document.getElementById('pdfBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
-      var el=ativo(); el.classList.add('norad');
+      var el=ativo(); if(document.body.className.replace('fmt-','')==='cartao') el.classList.add('norad');
       var f=document.body.className.replace('fmt-','');
       var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
       html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
