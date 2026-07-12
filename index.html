@@ -966,6 +966,8 @@ const CELULAS=[
   {nome:'Jeová Rafah',lider:'Jardel e Tamiris',end:'Rua Cruzeiro do Sul, 430 — Cond. dos Pássaros (Chác. Solar)',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4123946,lng:-46.8990276, wpp:'5511947851715'},
   // BARUERI
   {nome:'Fonte',lider:'Samuel e Luana',end:'Rua Laura, 47 — Parque dos Camargos, Barueri',hora:'20h',cidade:'Barueri',lat:-23.5403764,lng:-46.8909511,foto:'assets/celulas/fonte.jpg', wpp:'5511965731601'},
+  // ITAJAÍ / SC
+  {nome:'Peniel',lider:'Alex Sandro e Tati',end:'Rua Fermino Vieira Cordeiro, 1200 — Espinheiro (Bloco G / Apto 202), Itajaí/SC',hora:'Sex 20h',cidade:'Itajaí/SC',lat:-26.89586808748668,lng:-48.7307609691978, wpp:'5517992325979'},
 ];
 CELULAS.sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
 
@@ -983,7 +985,9 @@ function initMapa(){
       .addTo(mapa).bindPopup(popupHtml(c));
     m.on('click',()=>selecionaCel(idx,false));markers[idx]=m;
   });
-  const pts=[ANCHOR.igreja,...CELULAS.map(c=>[c.lat,c.lng])];
+  // enquadra na região principal; células distantes (ex.: Itajaí/SC) seguem no marcador e no filtro
+  const perto=CELULAS.filter(c=>Math.abs(c.lat-ANCHOR.igreja[0])<1.6 && Math.abs(c.lng-ANCHOR.igreja[1])<1.6);
+  const pts=[ANCHOR.igreja,...(perto.length?perto:CELULAS).map(c=>[c.lat,c.lng])];
   mapa.fitBounds(L.latLngBounds(pts).pad(0.12));
 }
 function popupHtml(c){return `${c.foto?`<img class="p-foto" src="${c.foto}" alt="Célula ${c.nome}" loading="lazy">`:''}<b>${c.nome}</b>${c.tag?` · <span style="color:var(--agua);font-size:.75rem">${c.tag}</span>`:''}<br>${c.lider}<br><span style="color:var(--cinza)">${c.end}</span>${c.hora?`<br><span class="p-hora">${c.hora}</span>`:''}`;}
