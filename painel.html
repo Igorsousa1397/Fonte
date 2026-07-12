@@ -443,20 +443,30 @@
     let desde='—'; try{ desde=m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'; }catch(e){}
     const cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
     let waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
-    const avatar=m.foto_url ? '<img class="av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
-    const linhas=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
+    const cat=(m.ministerio && m.ministerio!=='Não serve em nenhum') ? m.ministerio : 'MEMBRO';
+    const avCard=m.foto_url ? '<img class="av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
+    const avCracha=m.foto_url ? '<img class="cr-av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
+    const rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
+      .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
+    const rowsCracha=[['Célula',m.celula],['Nascimento',nasc],['Membro desde',desde]]
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
     const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<style id="pg">@page{size:85.6mm 54mm;margin:0}</style>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
-  body{background:#0a0a0b;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:28px;color:#f5f5f6}
+  body{background:#0a0a0b;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:28px;color:#f5f5f6}
+  .toggle{display:flex;gap:6px;background:#17171b;border:1px solid #2a2a31;border-radius:12px;padding:4px}
+  .tg{padding:8px 20px;border:none;background:transparent;color:#b8b8c0;border-radius:9px;font-weight:600;cursor:pointer;font-size:.88rem}
+  .tg.on{background:#7ad4cf;color:#06201e}
+  .hidden{display:none}
+  /* ---- CARTÃO (horizontal) ---- */
   .card{width:520px;max-width:100%;height:328px;display:flex;border-radius:18px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55)}
-  .left{width:188px;flex-shrink:0;background:linear-gradient(160deg,#4bb6b0,#7ad4cf);display:flex;flex-direction:column;align-items:center;padding:18px 14px}
-  .left .logo{height:22px;filter:brightness(0);opacity:.82;align-self:flex-start}
+  .card .left{width:188px;flex-shrink:0;background:linear-gradient(160deg,#4bb6b0,#7ad4cf);display:flex;flex-direction:column;align-items:center;padding:18px 14px}
+  .card .logo{height:22px;filter:brightness(0);opacity:.82;align-self:flex-start}
   .av{width:108px;height:108px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.55);margin:auto 0;background:#17171b;display:flex;align-items:center;justify-content:center;font-size:2.1rem;font-weight:700;color:#7ad4cf}
   .memb{font-size:.62rem;letter-spacing:.2em;font-weight:800;color:#06201e;background:rgba(255,255,255,.4);padding:5px 14px;border-radius:20px}
-  .right{flex:1;padding:22px 24px;display:flex;flex-direction:column;min-width:0}
+  .card .right{flex:1;padding:22px 24px;display:flex;flex-direction:column;min-width:0}
   .nome{font-size:1.02rem;font-weight:700;line-height:1.18;max-height:2.36em;overflow:hidden}
   .org{color:#8b8b95;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;margin:5px 0 12px}
   .rows{border-top:1px solid #2a2a31;padding-top:12px;display:flex;flex-direction:column;gap:8px;flex:1}
@@ -465,37 +475,74 @@
   .row b{color:#f5f5f6;font-weight:600;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cod{font-size:.68rem;color:#4bb6b0;letter-spacing:.1em;font-weight:700;margin-top:8px}
   .cnpj{font-size:.6rem;color:#8b8b95;margin-top:2px}
+  /* ---- CRACHÁ (vertical) ---- */
+  .cracha{width:360px;height:540px;position:relative;border-radius:16px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;text-align:center}
+  .cr-hole{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:66px;height:10px;border-radius:6px;background:#0a0a0b;border:1px solid #2a2a31;z-index:3}
+  .cr-top{width:100%;background:linear-gradient(135deg,#4bb6b0,#7ad4cf);padding:28px 0 40px;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .cr-logo{height:28px;filter:brightness(0);opacity:.82}
+  .cr-top span{font-size:.6rem;letter-spacing:.24em;font-weight:800;color:#06201e}
+  .cr-av{width:132px;height:132px;border-radius:50%;object-fit:cover;border:5px solid #101013;margin-top:-46px;background:#17171b;display:flex;align-items:center;justify-content:center;font-size:2.6rem;font-weight:700;color:#7ad4cf;z-index:2}
+  .cr-nome{font-size:1.2rem;font-weight:700;line-height:1.15;margin:14px 22px 0;max-height:2.4em;overflow:hidden}
+  .cr-org{color:#8b8b95;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+  .cr-cat{margin:14px 0;background:#7ad4cf;color:#06201e;font-weight:800;letter-spacing:.06em;font-size:.88rem;padding:7px 22px;border-radius:20px;text-transform:uppercase;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cr-rows{width:calc(100% - 56px);border-top:1px solid #2a2a31;padding-top:14px;display:flex;flex-direction:column;gap:10px}
+  .cr-rows .row{justify-content:space-between}
+  .cr-code{margin-top:auto;width:100%;background:#0d0d0f;border-top:1px solid #2a2a31;padding:12px;font-size:.72rem;color:#4bb6b0;letter-spacing:.12em;font-weight:700}
+  .cr-code small{display:block;color:#8b8b95;letter-spacing:normal;font-weight:400;margin-top:2px}
+  /* ---- botões ---- */
   .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .btns button{padding:10px 18px;border-radius:10px;border:none;font-weight:600;cursor:pointer;font-size:.9rem}
   .b1{background:#7ad4cf;color:#06201e} .b2{background:transparent;border:1px solid #2a2a31;color:#b8b8c0}
-  @page{size:85.6mm 54mm;margin:0}
-  @media print{html,body{background:#fff;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.btns{display:none}.card{box-shadow:none;margin:0;border:none;border-radius:3mm;zoom:.6215}}
-</style></head><body>
-  <div class="card" id="card">
-    <div class="left">
-      <img class="logo" crossorigin="anonymous" src="${logo}" alt="Fonte">
-      ${avatar}
-      <div class="memb">MEMBRO</div>
-    </div>
+  @media print{
+    html,body{background:#fff;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .toggle,.btns{display:none}
+    body.fmt-cartao #fmt-cartao{zoom:.6215;box-shadow:none;border:none;border-radius:3mm;margin:0}
+    body.fmt-cracha #fmt-cracha{zoom:1.05;box-shadow:none;margin:0}
+  }
+</style></head><body class="fmt-cartao">
+  <div class="toggle"><button class="tg on" data-f="cartao">Cartão</button><button class="tg" data-f="cracha">Crachá</button></div>
+
+  <div id="fmt-cartao" class="formato card">
+    <div class="left"><img class="logo" crossorigin="anonymous" src="${logo}" alt="Fonte">${avCard}<div class="memb">MEMBRO</div></div>
     <div class="right">
       <div class="nome">${nome}</div>
       <div class="org">Igreja Apostólica Fonte</div>
-      <div class="rows">${linhas}</div>
+      <div class="rows">${rowsCartao}</div>
       <div class="cod">${cod}</div>
       <div class="cnpj">CNPJ 52.268.825/0001-95</div>
     </div>
   </div>
+
+  <div id="fmt-cracha" class="formato cracha hidden">
+    <div class="cr-hole"></div>
+    <div class="cr-top"><img class="cr-logo" crossorigin="anonymous" src="${logo}" alt="Fonte"><span>CREDENCIAL</span></div>
+    ${avCracha}
+    <div class="cr-nome">${nome}</div>
+    <div class="cr-org">Igreja Apostólica Fonte</div>
+    <div class="cr-cat">${esc(cat)}</div>
+    <div class="cr-rows">${rowsCracha}</div>
+    <div class="cr-code">${cod}<small>CNPJ 52.268.825/0001-95</small></div>
+  </div>
+
   <div class="btns">
     <button class="b1" id="sendBtn">Enviar no WhatsApp</button>
     <button class="b2" id="dlBtn">Baixar imagem</button>
-    <button class="b2" onclick="window.print()">Imprimir / Salvar PDF</button>
+    <button class="b2" onclick="window.print()">Imprimir / PDF</button>
     <button class="b2" onclick="window.close()">Fechar</button>
   </div>
   <script>
     var CARD={nome:${JSON.stringify(m.nome||'')}, wa:${JSON.stringify(waNumber)}};
+    function setFmt(f){
+      document.body.className='fmt-'+f;
+      document.getElementById('fmt-cartao').classList.toggle('hidden', f!=='cartao');
+      document.getElementById('fmt-cracha').classList.toggle('hidden', f!=='cracha');
+      var tgs=document.querySelectorAll('.tg'); for(var i=0;i<tgs.length;i++){ tgs[i].classList.toggle('on', tgs[i].getAttribute('data-f')===f); }
+      document.getElementById('pg').textContent = (f==='cartao') ? '@page{size:85.6mm 54mm;margin:0}' : '@page{size:100mm 150mm;margin:0}';
+    }
+    function ativo(){ return document.querySelector('.formato:not(.hidden)'); }
     function gerarPng(){
       if(typeof html2canvas==='undefined') return Promise.resolve(null);
-      return html2canvas(document.getElementById('card'),{backgroundColor:null,scale:3,useCORS:true})
+      return html2canvas(ativo(),{backgroundColor:null,scale:3,useCORS:true})
         .then(function(cv){ return new Promise(function(res){ cv.toBlob(res,'image/png'); }); })
         .catch(function(){ return null; });
     }
@@ -532,6 +579,8 @@
         btn.disabled=false; btn.textContent=t;
       });
     }
+    var tgs=document.querySelectorAll('.tg');
+    for(var i=0;i<tgs.length;i++){ tgs[i].addEventListener('click', function(){ setFmt(this.getAttribute('data-f')); }); }
     document.getElementById('sendBtn').addEventListener('click', enviarWhats);
     document.getElementById('dlBtn').addEventListener('click', baixarImg);
   <\/script>
