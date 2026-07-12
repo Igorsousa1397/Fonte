@@ -445,6 +445,7 @@
     const cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
     let waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
     const cat=(m.ministerio && m.ministerio!=='Não serve em nenhum') ? m.ministerio : 'MEMBRO';
+    const serve=!!(m.ministerio && m.ministerio!=='Não serve em nenhum');
     const avCard=m.foto_url ? '<img class="av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
     const avCracha=m.foto_url ? '<img class="cr-av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
     const rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
@@ -509,7 +510,7 @@
     body.fmt-cracha #fmt-cracha{zoom:1.05;box-shadow:none;margin:0}
   }
 </style></head><body class="fmt-cartao">
-  <div class="toggle"><button class="tg on" data-f="cartao">Cartão</button><button class="tg" data-f="cracha">Crachá</button></div>
+${serve ? '<div class="toggle"><button class="tg on" data-f="cartao">Cartão</button><button class="tg" data-f="cracha">Crachá</button></div>' : ''}
 
   <div id="fmt-cartao" class="formato card">
     <div class="left"><img class="logo" crossorigin="anonymous" src="${logo}" alt="Fonte">${avCard}<div class="memb">MEMBRO</div></div>
@@ -524,6 +525,7 @@
     </div>
   </div>
 
+${serve ? `
   <div id="fmt-cracha" class="formato cracha hidden">
     <div class="cr-top"><img class="cr-logo" crossorigin="anonymous" src="${logo}" alt="Fonte"></div>
     ${avCracha}
@@ -534,7 +536,7 @@
     <div class="cr-cred">CREDENCIAL</div>
     <img class="qr qr-cracha" id="qr-cracha" alt="QR">
     <div class="cr-code">${cod}<small>CNPJ 52.268.825/0001-95</small></div>
-  </div>
+  </div>` : ''}
 
   <div class="btns">
     <button class="b1" id="sendBtn">Enviar no WhatsApp</button>
