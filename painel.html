@@ -554,6 +554,12 @@
       });
     }
     window.addEventListener('load', fillQR);
+    function nomeArquivo(ext){
+      var f=document.body.className.replace('fmt-','');
+      var base=(f==='cracha')?'cracha':'carteirinha';
+      var pr=((CARD.nome||'').trim().split(/\s+/)[0]||'membro').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+      return base+'-'+(pr||'membro')+'.'+ext;
+    }
     function setFmt(f){
       document.body.className='fmt-'+f;
       document.getElementById('fmt-cartao').classList.toggle('hidden', f!=='cartao');
@@ -592,7 +598,7 @@
       if(isMobile && navigator.canShare){
         btn.disabled=true; btn.textContent='Gerando…';
         gerarPdfBlob().then(function(blob){
-          var file=blob?new File([blob],'carteirinha.pdf',{type:'application/pdf'}):null;
+          var file=blob?new File([blob],nomeArquivo('pdf'),{type:'application/pdf'}):null;
           if(file && navigator.canShare({files:[file]})){
             navigator.share({files:[file], text:texto}).catch(function(){}).then(function(){ btn.disabled=false; btn.textContent=t; });
           } else { abrirWhats(texto); btn.disabled=false; btn.textContent=t; }
@@ -601,7 +607,7 @@
         abrirWhats(texto);
         btn.disabled=true; btn.textContent='Gerando PDF…';
         gerarPdfBlob().then(function(blob){
-          if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.pdf'; a.click(); }
+          if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nomeArquivo('pdf'); a.click(); }
           btn.disabled=false; btn.textContent=t;
         });
       }
@@ -609,7 +615,7 @@
     function baixarImg(){
       var btn=document.getElementById('dlBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
       gerarPng().then(function(blob){
-        if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.png'; a.click(); }
+        if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nomeArquivo('png'); a.click(); }
         else { alert('Não foi possível gerar a imagem.'); }
         btn.disabled=false; btn.textContent=t;
       });
@@ -626,7 +632,7 @@
           var JsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
           var pdf=new JsPDF({orientation: dim[0]>dim[1]?'l':'p', unit:'mm', format:[dim[0],dim[1]]});
           pdf.addImage(img,'PNG',0,0,dim[0],dim[1]);
-          pdf.save('carteirinha.pdf');
+          pdf.save(nomeArquivo('pdf'));
         }catch(e){ alert('Não foi possível gerar o PDF: '+(e.message||e)); }
         btn.disabled=false; btn.textContent=t;
       }).catch(function(){ el.classList.remove('norad'); btn.disabled=false; btn.textContent=t; alert('Não foi possível gerar o PDF.'); });
