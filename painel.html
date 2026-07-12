@@ -548,6 +548,19 @@
         .then(function(cv){ return new Promise(function(res){ cv.toBlob(res,'image/png'); }); })
         .catch(function(){ return null; });
     }
+    function gerarPdfBlob(){
+      if(typeof html2canvas==='undefined') return Promise.resolve(null);
+      var el=ativo(); el.classList.add('norad');
+      var f=document.body.className.replace('fmt-',''); var sizes={cartao:[85.6,54], cracha:[100,150]}; var dim=sizes[f]||[85.6,54];
+      return html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
+        el.classList.remove('norad');
+        var img=cv.toDataURL('image/png');
+        var JsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+        var pdf=new JsPDF({orientation: dim[0]>dim[1]?'l':'p', unit:'mm', format:[dim[0],dim[1]]});
+        pdf.addImage(img,'PNG',0,0,dim[0],dim[1]);
+        return pdf.output('blob');
+      }).catch(function(){ el.classList.remove('norad'); return null; });
+    }
     function abrirWhats(texto){
       if(CARD.wa){ window.open('https://wa.me/'+CARD.wa+'?text='+encodeURIComponent(texto),'_blank'); }
       else { alert('Este membro não tem telefone cadastrado.'); }
@@ -558,17 +571,17 @@
       var isMobile=/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent||'');
       if(isMobile && navigator.canShare){
         btn.disabled=true; btn.textContent='Gerando…';
-        gerarPng().then(function(blob){
-          var file=blob?new File([blob],'carteirinha.png',{type:'image/png'}):null;
+        gerarPdfBlob().then(function(blob){
+          var file=blob?new File([blob],'carteirinha.pdf',{type:'application/pdf'}):null;
           if(file && navigator.canShare({files:[file]})){
             navigator.share({files:[file], text:texto}).catch(function(){}).then(function(){ btn.disabled=false; btn.textContent=t; });
           } else { abrirWhats(texto); btn.disabled=false; btn.textContent=t; }
         });
       } else {
         abrirWhats(texto);
-        btn.disabled=true; btn.textContent='Gerando imagem…';
-        gerarPng().then(function(blob){
-          if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.png'; a.click(); }
+        btn.disabled=true; btn.textContent='Gerando PDF…';
+        gerarPdfBlob().then(function(blob){
+          if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='carteirinha.pdf'; a.click(); }
           btn.disabled=false; btn.textContent=t;
         });
       }
