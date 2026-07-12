@@ -114,6 +114,15 @@
   .mb-pill{display:inline-block;font-size:.72rem;padding:3px 9px;border-radius:20px;margin-left:8px;vertical-align:middle}
   .mb-pill.ok{background:var(--agua-fundo);color:var(--agua)}
   .mb-pill.no{background:rgba(139,139,149,.15);color:var(--cinza-claro)}
+  #mbBody h2{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:nowrap}
+  #mbBody h2 .mb-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #mbBody h2 .mb-pill{flex-shrink:0;margin-left:0}
+  .mb-foto{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--neblina);margin:6px 0 14px;cursor:zoom-in;display:block}
+  .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end}
+  .btn-val{background:var(--agua);color:#06201e;border:none;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
+  .btn-val:hover{background:var(--agua-forte)}
+  .btn-val.off{background:transparent;border:1px solid var(--neblina);color:var(--cinza-claro)}
+  .tabela.membros .tag-val{display:inline-block;margin-left:8px;font-size:.68rem;color:#e0b341;border:1px solid rgba(224,179,65,.35);border-radius:999px;padding:1px 7px;vertical-align:middle}
   .det-lin{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid rgba(42,42,49,.6);font-size:.92rem}
   .det-lin .k{color:var(--cinza);flex:0 0 auto}
   .det-lin .v{color:var(--luz);text-align:right;word-break:break-word}
@@ -342,10 +351,15 @@
   function abreMembro(m){
     const peniel=m.passou_peniel===true?'Sim':m.passou_peniel===false?'Não':'—';
     const ativo=m.ativo!==false;
+    const validado=m.validado===true;
     const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
+    const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '';
+    let telDig=(m.telefone||'').replace(/\D/g,''); let wa=telDig; if(wa && wa.length<=11) wa='55'+wa;
+    const telHtml = telDig ? '<a href="https://wa.me/'+wa+'" target="_blank" rel="noopener" style="color:var(--agua);text-decoration:none">'+esc(m.telefone)+'</a>' : null;
     const linhas=[
-      ['Telefone', m.telefone],
+      ['Telefone', m.telefone, telHtml],
       ['CPF', m.cpf],
+      ['Nascimento', nasc],
       ['Célula', m.celula],
       ['Ministério', m.ministerio || 'Não serve em nenhum'],
       ['Encontro Peniel', peniel],
@@ -355,11 +369,27 @@
       ['Cidade / UF', [m.cidade,m.uf].filter(Boolean).join(' / ')],
       ['CEP', m.cep]
     ];
+    const foto = m.foto_url ? '<img class="mb-foto" src="'+esc(m.foto_url)+'" alt="Foto de '+esc(m.nome)+'" onclick="window.open(this.src,\'_blank\')">' : '';
+    const valPill = validado ? '<span class="mb-pill ok">Validado</span>' : '<span class="mb-pill no">A validar</span>';
     $('#mbBody').innerHTML=
-      '<h2>'+esc(m.nome)+'<span class="mb-pill '+(ativo?'ok':'no')+'">'+(ativo?'Ativo':'Inativo')+'</span></h2>'+
+      '<h2><span class="mb-nome">'+esc(m.nome)+'</span><span class="mb-pill '+(ativo?'ok':'no')+'">'+(ativo?'Ativo':'Inativo')+'</span>'+valPill+'</h2>'+
       '<div class="msub">Cadastrado em '+dataBR(m.created_at)+'</div>'+
-      '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(esc(l[1])||'—')+'</span></div>').join('')+'</div>';
+      foto+
+      '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
+      '<div class="mb-acoes">'+(validado
+        ? '<button class="btn-val off" data-val="0">Remover validação</button>'
+        : '<button class="btn-val" data-val="1">Validar dados / OK</button>')+'</div>';
+    const vb=$('#mbBody .btn-val');
+    if(vb) vb.onclick=()=>setValidadoMembro(m.id, vb.dataset.val==='1');
     $('#mbBg').classList.add('on');
+  }
+  async function setValidadoMembro(id, val){
+    const vb=$('#mbBody .btn-val'); if(vb){ vb.disabled=true; vb.textContent='Salvando…'; }
+    const {error}=await sb.from('membros').update({validado:val, validado_em: val?new Date().toISOString():null}).eq('id',id);
+    if(error){ if(vb){ vb.disabled=false; } alert('Não foi possível salvar a validação: '+(error.message||error)); return; }
+    const m=MEMBROS.find(x=>x.id===id);
+    if(m){ m.validado=val; m.validado_em=val?new Date().toISOString():null; abreMembro(m); }
+    if($('#titulo') && $('#titulo').textContent==='Membros') renderMembros();
   }
   function fechaMembro(){ $('#mbBg').classList.remove('on'); }
 
@@ -375,7 +405,7 @@
       const loc=[m.cidade,m.uf].filter(Boolean).join('/');
       const endereco=[rua,loc].filter(Boolean).join(' — ');
       const on=m.ativo!==false;
-      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span></span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Telefone">'+(esc(m.telefone)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
+      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Telefone">'+(esc(m.telefone)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
@@ -692,7 +722,7 @@
   }
 
   async function reloadPessoas(){ const {data}=await sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}); APESSOAS=data||[]; }
-  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at').order('created_at',{ascending:false}); MEMBROS=data||[]; }
+  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em').order('created_at',{ascending:false}); MEMBROS=data||[]; }
 
   function renderAcaoPessoas(){
     $('#titulo').textContent='Ação Social · Pessoas';
@@ -759,7 +789,7 @@
     const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
       sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
       sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false}),
-      sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at').order('created_at',{ascending:false}),
+      sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em').order('created_at',{ascending:false}),
       sb.from('acao_itens').select('*').order('nome'),
       sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
       sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),
