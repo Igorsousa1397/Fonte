@@ -123,6 +123,9 @@
   .btn-val:hover{background:var(--agua-forte)}
   .btn-val.off{background:transparent;border:1px solid var(--neblina);color:var(--cinza-claro)}
   .tabela.membros .tag-val{display:inline-block;margin-left:8px;font-size:.68rem;color:#e0b341;border:1px solid rgba(224,179,65,.35);border-radius:999px;padding:1px 7px;vertical-align:middle}
+  .tel-wpp{display:inline-flex;align-items:center;gap:6px;color:var(--agua);text-decoration:none}
+  .tel-wpp:hover{text-decoration:underline}
+  .tel-wpp .wa-ic{flex-shrink:0}
   .det-lin{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid rgba(42,42,49,.6);font-size:.92rem}
   .det-lin .k{color:var(--cinza);flex:0 0 auto}
   .det-lin .v{color:var(--luz);text-align:right;word-break:break-word}
@@ -348,14 +351,16 @@
     const m=MEMBROS.find(x=>x.id===id); if(m) m.ativo=ativo;
     renderMembros();
   }
+  const WA_SVG='<svg class="wa-ic" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.1.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4z"/><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-2.9.9.9-2.8-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>';
+  function waNum(tel){ let d=(tel||'').replace(/\D/g,''); if(!d) return ''; if(d.length<=11) d='55'+d; return d; }
+  function telWa(tel){ const n=waNum(tel); return n ? '<a class="tel-wpp" href="https://wa.me/'+n+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+WA_SVG+esc(tel)+'</a>' : ''; }
   function abreMembro(m){
     const peniel=m.passou_peniel===true?'Sim':m.passou_peniel===false?'Não':'—';
     const ativo=m.ativo!==false;
     const validado=m.validado===true;
     const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '';
-    let telDig=(m.telefone||'').replace(/\D/g,''); let wa=telDig; if(wa && wa.length<=11) wa='55'+wa;
-    const telHtml = telDig ? '<a href="https://wa.me/'+wa+'" target="_blank" rel="noopener" style="color:var(--agua);text-decoration:none">'+esc(m.telefone)+'</a>' : null;
+    const telHtml = telWa(m.telefone) || null;
     const linhas=[
       ['Telefone', m.telefone, telHtml],
       ['CPF', m.cpf],
@@ -405,7 +410,7 @@
       const loc=[m.cidade,m.uf].filter(Boolean).join('/');
       const endereco=[rua,loc].filter(Boolean).join(' — ');
       const on=m.ativo!==false;
-      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Telefone">'+(esc(m.telefone)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
+      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Telefone">'+(telWa(m.telefone)||'—')+'</span><span class="col" data-l="Endereço">'+(esc(endereco)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
