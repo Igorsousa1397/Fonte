@@ -469,7 +469,8 @@
     $('#titulo').textContent='Membros';
     const ativos=MEMBROS.filter(m=>m.ativo!==false).length;
     const inativos=MEMBROS.length-ativos;
-    let html='<div class="cards">'+card('Membros ativos',ativos,true)+(inativos?card('Inativos',inativos):'')+'</div>';
+    const pendentes=MEMBROS.filter(m=>m.validado!==true).length;
+    let html='<div class="cards">'+card('Ativos',ativos,true)+card('Inativos',inativos)+card('Pendente de aprovação',pendentes)+'</div>';
     if(!MEMBROS.length){ html+='<div class="tabela"><div class="vazio">Nenhum cadastro de membro ainda.</div></div>'; $('#view').innerHTML=html; return; }
     html+='<div class="tabela membros"><div class="lin cab"><span>Nome</span><span>Célula</span><span>Telefone</span><span>Ministério</span><span>Ativo</span></div>';
     MEMBROS.forEach(m=>{
