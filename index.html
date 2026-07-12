@@ -1107,7 +1107,7 @@ document.getElementById('enviaContato').onclick=async()=>{
     CELULAS.map(c=>`<option>${c.nome}</option>`).join('')+
     '<option>Ainda não participo</option>';
 
-  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Louvor','Mídia','Mídia Técnica','Obreiros','Voluntários'];
+  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Louvor','Mídia Social','Mídia Técnica','Obreiros','Voluntários'];
   const mMin=el('m-min');
   if(mMin) mMin.innerHTML='<option value="">Não sirvo em nenhum</option>'+MINISTERIOS.map(x=>`<option>${x}</option>`).join('');
 
