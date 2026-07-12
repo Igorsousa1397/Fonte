@@ -454,6 +454,7 @@
     const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"><\/script>
 <style id="pg">@page{size:85.6mm 54mm;margin:0}</style>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
@@ -491,6 +492,10 @@
   .cr-rows{width:calc(100% - 56px);border-top:1px solid #2a2a31;padding-top:14px;display:flex;flex-direction:column;gap:10px}
   .cr-rows .row{justify-content:space-between}
   .cr-cred{text-align:center;color:#8b8b95;font-size:.62rem;letter-spacing:.24em;font-weight:700;margin:16px 0 4px}
+  .qr{background:#fff;border-radius:6px;padding:4px;display:block}
+  .card-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:auto}
+  .card .qr{width:54px;height:54px}
+  .qr-cracha{width:94px;height:94px;margin:12px auto 0}
   .cr-code{margin-top:auto;width:100%;background:#0d0d0f;border-top:1px solid #2a2a31;padding:12px;font-size:.72rem;color:#4bb6b0;letter-spacing:.12em;font-weight:700}
   .cr-code small{display:block;color:#8b8b95;letter-spacing:normal;font-weight:400;margin-top:2px}
   /* ---- botões ---- */
@@ -512,8 +517,10 @@
       <div class="nome">${nome}</div>
       <div class="org">Igreja Apostólica Fonte</div>
       <div class="rows">${rowsCartao}</div>
-      <div class="cod">${cod}</div>
-      <div class="cnpj">CNPJ 52.268.825/0001-95</div>
+      <div class="card-foot">
+        <div><div class="cod">${cod}</div><div class="cnpj">CNPJ 52.268.825/0001-95</div></div>
+        <img class="qr" id="qr-cartao" alt="QR">
+      </div>
     </div>
   </div>
 
@@ -525,6 +532,7 @@
     <div class="cr-cat">${esc(cat)}</div>
     <div class="cr-rows">${rowsCracha}</div>
     <div class="cr-cred">CREDENCIAL</div>
+    <img class="qr qr-cracha" id="qr-cracha" alt="QR">
     <div class="cr-code">${cod}<small>CNPJ 52.268.825/0001-95</small></div>
   </div>
 
@@ -535,7 +543,17 @@
     <button class="b2" onclick="window.close()">Fechar</button>
   </div>
   <script>
-    var CARD={nome:${JSON.stringify(m.nome||'')}, wa:${JSON.stringify(waNumber)}};
+    var CARD={nome:${JSON.stringify(m.nome||'')}, wa:${JSON.stringify(waNumber)}, cod:${JSON.stringify(cod)}};
+    function fillQR(){
+      if(typeof QRCode==='undefined') return;
+      var txt=location.origin+'/?membro='+encodeURIComponent(CARD.cod||'');
+      QRCode.toDataURL(txt, {margin:1, width:220, color:{dark:'#0a0a0b', light:'#ffffff'}}, function(err,url){
+        if(err) return;
+        var a=document.getElementById('qr-cartao'); if(a) a.src=url;
+        var b=document.getElementById('qr-cracha'); if(b) b.src=url;
+      });
+    }
+    window.addEventListener('load', fillQR);
     function setFmt(f){
       document.body.className='fmt-'+f;
       document.getElementById('fmt-cartao').classList.toggle('hidden', f!=='cartao');
