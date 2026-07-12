@@ -452,6 +452,7 @@
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
     const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <style id="pg">@page{size:85.6mm 54mm;margin:0}</style>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
@@ -460,6 +461,7 @@
   .tg{padding:8px 20px;border:none;background:transparent;color:#b8b8c0;border-radius:9px;font-weight:600;cursor:pointer;font-size:.88rem}
   .tg.on{background:#7ad4cf;color:#06201e}
   .hidden{display:none!important}
+  .norad{border-radius:0!important}
   /* ---- CARTÃO (horizontal) ---- */
   .card{width:520px;max-width:100%;height:328px;display:flex;border-radius:18px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55)}
   .card .left{width:188px;flex-shrink:0;background:linear-gradient(160deg,#4bb6b0,#7ad4cf);display:flex;flex-direction:column;align-items:center;padding:18px 14px}
@@ -527,7 +529,7 @@
   <div class="btns">
     <button class="b1" id="sendBtn">Enviar no WhatsApp</button>
     <button class="b2" id="dlBtn">Baixar imagem</button>
-    <button class="b2" onclick="window.print()">Imprimir / PDF</button>
+    <button class="b2" id="pdfBtn">Baixar PDF</button>
     <button class="b2" onclick="window.close()">Fechar</button>
   </div>
   <script>
@@ -579,10 +581,28 @@
         btn.disabled=false; btn.textContent=t;
       });
     }
+    function baixarPdf(){
+      var btn=document.getElementById('pdfBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
+      var el=ativo(); el.classList.add('norad');
+      var f=document.body.className.replace('fmt-','');
+      var sizes={cartao:[85.6,54], cracha:[100,150]}; var dim=sizes[f]||[85.6,54];
+      html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
+        el.classList.remove('norad');
+        try{
+          var img=cv.toDataURL('image/png');
+          var JsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+          var pdf=new JsPDF({orientation: dim[0]>dim[1]?'l':'p', unit:'mm', format:[dim[0],dim[1]]});
+          pdf.addImage(img,'PNG',0,0,dim[0],dim[1]);
+          pdf.save('carteirinha.pdf');
+        }catch(e){ alert('Não foi possível gerar o PDF: '+(e.message||e)); }
+        btn.disabled=false; btn.textContent=t;
+      }).catch(function(){ el.classList.remove('norad'); btn.disabled=false; btn.textContent=t; alert('Não foi possível gerar o PDF.'); });
+    }
     var tgs=document.querySelectorAll('.tg');
     for(var i=0;i<tgs.length;i++){ tgs[i].addEventListener('click', function(){ setFmt(this.getAttribute('data-f')); }); }
     document.getElementById('sendBtn').addEventListener('click', enviarWhats);
     document.getElementById('dlBtn').addEventListener('click', baixarImg);
+    document.getElementById('pdfBtn').addEventListener('click', baixarPdf);
   <\/script>
 </body></html>`;
     const w=window.open('','_blank');
