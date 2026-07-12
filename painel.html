@@ -467,6 +467,7 @@
   .tg.on{background:#7ad4cf;color:#06201e}
   .hidden{display:none!important}
   .norad{border-radius:0!important}
+  body.capturing .scene-cartao{transform:none!important;margin:0!important}
   /* ---- CARTÃO (horizontal) ---- */
   .card{width:520px;max-width:100%;height:328px;display:flex;border-radius:18px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55)}
   .card .left{width:188px;flex-shrink:0;background:linear-gradient(160deg,#4bb6b0,#7ad4cf);display:flex;flex-direction:column;align-items:center;padding:18px 14px}
@@ -508,7 +509,6 @@
   @media (max-width:560px){
     body{overflow-x:hidden}
     body.fmt-cartao .scene-cartao{transform:rotate(90deg);transform-origin:center;margin:96px 0}
-    #fmt-cracha{width:341px;height:465px}
   }
   @media print{
     html,body{background:#fff;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -579,9 +579,14 @@ ${serve ? `
       document.getElementById('pg').textContent = (f==='cartao') ? '@page{size:85.6mm 54mm;margin:0}' : '@page{size:110mm 150mm;margin:0}';
     }
     function ativo(){ return document.querySelector('.formato:not(.hidden)'); }
+    function snap(el,opts){
+      document.body.classList.add('capturing');
+      return html2canvas(el,opts).then(function(cv){ document.body.classList.remove('capturing'); return cv; })
+        .catch(function(e){ document.body.classList.remove('capturing'); throw e; });
+    }
     function gerarPng(){
       if(typeof html2canvas==='undefined') return Promise.resolve(null);
-      return html2canvas(ativo(),{backgroundColor:null,scale:3,useCORS:true})
+      return snap(ativo(),{backgroundColor:null,scale:3,useCORS:true})
         .then(function(cv){ return new Promise(function(res){ cv.toBlob(res,'image/png'); }); })
         .catch(function(){ return null; });
     }
@@ -589,7 +594,7 @@ ${serve ? `
       if(typeof html2canvas==='undefined') return Promise.resolve(null);
       var el=ativo(); if(document.body.className.replace('fmt-','')==='cartao') el.classList.add('norad');
       var f=document.body.className.replace('fmt-',''); var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
-      return html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
+      return snap(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
         el.classList.remove('norad');
         var img=cv.toDataURL('image/png');
         var JsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
@@ -636,7 +641,7 @@ ${serve ? `
       var el=ativo(); if(document.body.className.replace('fmt-','')==='cartao') el.classList.add('norad');
       var f=document.body.className.replace('fmt-','');
       var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
-      html2canvas(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
+      snap(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
         el.classList.remove('norad');
         try{
           var img=cv.toDataURL('image/png');
