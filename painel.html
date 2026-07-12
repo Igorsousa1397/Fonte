@@ -392,7 +392,7 @@
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
       '<div class="mb-acoes">'+(validado
-        ? '<button class="btn-del" data-act="del">Excluir membro</button><button class="btn-val" data-act="cart">Criar carteirinha virtual</button>'
+        ? ((ativo?'':'<button class="btn-del" data-act="del">Excluir membro</button>')+'<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>')
         : '<button class="btn-val" data-val="1">Validar dados / OK</button>')+'</div>';
     const vb=$('#mbBody .btn-val[data-val]');
     if(vb) vb.onclick=()=>setValidadoMembro(m.id, true);
@@ -427,6 +427,7 @@
     if($('#titulo') && $('#titulo').textContent==='Membros') renderMembros();
   }
   async function excluirMembro(m){
+    if(m.ativo!==false){ alert('Só é possível excluir um membro inativo. Desative-o primeiro.'); return; }
     if(!confirm('Excluir o membro "'+(m.nome||'')+'"? Esta ação não pode ser desfeita.')) return;
     const bDel=$('#mbBody .btn-del'); if(bDel){ bDel.disabled=true; bDel.textContent='Excluindo…'; }
     const {error}=await sb.rpc('membro_excluir',{p_id:m.id});
