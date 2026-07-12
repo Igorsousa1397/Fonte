@@ -1104,7 +1104,7 @@ document.getElementById('enviaContato').onclick=async()=>{
   const el=id=>document.getElementById(id);
   const mCel=el('m-celula');
   if(mCel) mCel.innerHTML='<option value="">Selecione…</option>'+
-    CELULAS.map(c=>`<option>${c.nome} — ${c.cidade}</option>`).join('')+
+    CELULAS.map(c=>`<option>${c.nome}</option>`).join('')+
     '<option>Ainda não participo</option>';
 
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Louvor','Mídia','Mídia Técnica','Obreiros','Voluntários'];
