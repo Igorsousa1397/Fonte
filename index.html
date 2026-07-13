@@ -780,7 +780,7 @@
               <option>Inscrições / eventos</option><option>Gabinete pastoral</option><option>Outro</option>
             </select></div>
         </div>
-        <div class="campo"><label for="c-msg">Mensagem</label><textarea id="c-msg" placeholder="Escreva aqui…"></textarea></div>
+        <div class="campo"><label for="c-msg">Mensagem <span id="c-msg-count" style="color:var(--cinza);font-weight:400;font-size:.8rem">0/500</span></label><textarea id="c-msg" maxlength="500" placeholder="Escreva aqui…"></textarea></div>
         <button class="btn btn-claro" id="enviaContato" style="width:100%;justify-content:center">Enviar mensagem</button>
       </div>
     </div>
@@ -1120,6 +1120,7 @@ document.getElementById('copiaPix').onclick=()=>{
 };
 
 /* ===================== contato → WhatsApp ===================== */
+(function(){ const t=document.getElementById('c-msg'), c=document.getElementById('c-msg-count'); if(t&&c){ const upd=()=>{ c.textContent=t.value.length+'/500'; }; t.addEventListener('input',upd); upd(); } })();
 document.getElementById('enviaContato').onclick=async()=>{
   const g=id=>document.getElementById(id).value.trim();
   const nome=g('c-nome'),tel=g('c-tel'),email=g('c-email'),assunto=g('c-assunto'),msg=g('c-msg');
@@ -1237,6 +1238,7 @@ document.getElementById('enviaContato').onclick=async()=>{
     if(!nome){ toast('Preencha o nome completo.'); return; }
     if(doc.replace(/\D/g,'').length!==11){ toast('Preencha um CPF válido (11 dígitos).'); return; }
     if(!nascIso){ toast('Preencha a data de nascimento no formato DD/MM/AAAA.'); return; }
+    if(!el('m-peniel').value){ toast('Informe se você já passou pelo Encontro Peniel.'); return; }
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
     try{
       let fotoUrl=null;
