@@ -447,7 +447,7 @@
   function abreMembroEdit(m){
     const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '';
-    const MIN=['Não serve em nenhum','Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
+    const MIN=['Não serve em nenhum','Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
     const minAtual = m.ministerio || 'Não serve em nenhum';
     const minOpts = MIN.map(x=>'<option'+(x===minAtual?' selected':'')+'>'+esc(x)+'</option>').join('');
     const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
