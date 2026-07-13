@@ -67,6 +67,12 @@
   .btn:active{transform:translateY(1px)}
   .btn-claro{background:var(--luz);color:#0a0a0b}
   .btn-claro:hover{background:#fff}
+  .emitir-cta{max-width:760px;margin:16px auto 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:var(--agua-fundo);border:1px solid var(--agua-forte);border-radius:var(--raio);padding:18px 22px}
+  .emitir-cta strong{display:block;font-family:var(--display);font-size:1.02rem}
+  .emitir-cta span{color:var(--cinza-claro);font-size:.9rem}
+  .emitir-cta .btn{background:var(--agua);color:#04201f;border:none;white-space:nowrap}
+  .emitir-cta .btn:hover{background:var(--agua-forte)}
+  @media(max-width:560px){ .emitir-cta{flex-direction:column;align-items:stretch;text-align:center} .emitir-cta .btn{justify-content:center;width:100%} }
   .btn-fantasma{background:transparent;color:var(--luz);border-color:var(--neblina)}
   .btn-fantasma:hover{border-color:var(--cinza);background:rgba(255,255,255,.03)}
   .btn-live{background:#dc2626;border-color:#dc2626;position:relative;animation:liveGlow 2.4s ease-in-out infinite}
@@ -743,6 +749,13 @@
       <input type="hidden" id="m-bairro"><input type="hidden" id="m-cidade"><input type="hidden" id="m-uf">
       <button class="btn btn-claro" id="enviaMembro" style="width:100%;justify-content:center">Enviar cadastro</button>
       <p style="color:var(--cinza);font-size:.8rem;margin-top:14px">Seus dados vão direto para o cadastro da igreja. Nossa equipe entra em contato com você.</p>
+    </div>
+    <div class="emitir-cta">
+      <div>
+        <strong>Já preencheu o formulário?</strong>
+        <span>Emita sua carteirinha digital de membro aqui.</span>
+      </div>
+      <a class="btn" href="carteirinha.html">Emitir carteirinha</a>
     </div>
   </div>
 </section>
