@@ -697,7 +697,7 @@
         <div class="campo"><label for="m-tel">Telefone</label><input id="m-tel" inputmode="tel" maxlength="16" placeholder="(11) 90000-0000"></div>
       </div>
       <div class="duo">
-        <div class="campo"><label for="m-nasc">Data de nascimento</label><input id="m-nasc" type="date"></div>
+        <div class="campo"><label for="m-nasc">Data de nascimento</label><input id="m-nasc" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" autocomplete="bday"></div>
         <div class="campo"><label for="m-foto-file">Foto do rosto <span style="color:var(--cinza);font-weight:400">(opcional)</span></label>
           <input id="m-foto-file" type="file" accept="image/*" style="display:none">
           <div style="display:flex;align-items:center;gap:12px">
@@ -1173,13 +1173,31 @@ document.getElementById('enviaContato').onclick=async()=>{
     };
   }
 
+  function maskData(v){
+    v=(v||'').replace(/\D/g,'').slice(0,8);
+    if(v.length>=5) return v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+    if(v.length>=3) return v.slice(0,2)+'/'+v.slice(2);
+    return v;
+  }
+  function dataBrParaIso(br){
+    const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec((br||'').trim());
+    if(!m) return null;
+    const dd=+m[1], mm=+m[2], yy=+m[3];
+    if(mm<1||mm>12||dd<1||dd>31||yy<1900||yy>2100) return null;
+    const iso=m[3]+'-'+m[2]+'-'+m[1];
+    const dt=new Date(iso+'T00:00:00');
+    if(dt.getFullYear()!==yy||dt.getMonth()+1!==mm||dt.getDate()!==dd) return null;
+    return iso;
+  }
+  (function(){ const n=el('m-nasc'); if(n) n.addEventListener('input',()=>{ n.value=maskData(n.value); }); })();
   const btn=el('enviaMembro');
   if(btn) btn.onclick=async()=>{
     const g=id=>el(id).value.trim();
     const nome=g('m-nome'), doc=g('m-cpf'), nasc=g('m-nasc');
+    const nascIso=dataBrParaIso(nasc);
     if(!nome){ toast('Preencha o nome completo.'); return; }
     if(doc.replace(/\D/g,'').length!==11){ toast('Preencha um CPF válido (11 dígitos).'); return; }
-    if(!nasc){ toast('Preencha a data de nascimento.'); return; }
+    if(!nascIso){ toast('Preencha a data de nascimento no formato DD/MM/AAAA.'); return; }
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
     try{
       let fotoUrl=null;
@@ -1199,7 +1217,7 @@ document.getElementById('enviaContato').onclick=async()=>{
         p_peniel: pen==='Sim' ? true : pen==='Não' ? false : null,
         p_cep:g('m-cep'), p_logradouro:g('m-log'), p_numero:g('m-num'),
         p_complemento:g('m-comp'), p_bairro:g('m-bairro'), p_cidade:g('m-cidade'), p_uf:g('m-uf'),
-        p_nascimento:nasc, p_foto_url:fotoUrl
+        p_nascimento:nascIso, p_foto_url:fotoUrl
       });
       if(error) throw error;
       const boxM=document.querySelector('#membro .form');
