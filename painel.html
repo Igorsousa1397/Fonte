@@ -1078,6 +1078,6 @@ ${serve ? `
     APESSOAS = ap.data || [];
     CONTRIB = co.data || [];
     montaSubnav();
-    irPara('batismo');
+    irPara(window.innerWidth<=860 ? 'membros' : 'batismo');
   })();
 </script>
