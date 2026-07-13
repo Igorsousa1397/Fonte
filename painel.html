@@ -387,13 +387,17 @@
     const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '';
+    let desdeTxt='';
+    if(m.membro_desde){ const _M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']; const _d=String(m.membro_desde).split('-'); desdeTxt=(_M[parseInt(_d[1],10)-1]||'')+' de '+_d[0]; }
     const telHtml = telWa(m.telefone) || null;
     const linhas=[
       ['Telefone', m.telefone, telHtml],
       ['CPF', m.cpf],
       ['Nascimento', nasc],
+      ['Estado civil', m.estado_civil],
       ['Célula', m.celula],
       ['Ministério', m.ministerio || 'Não serve em nenhum'],
+      ['Membro desde', desdeTxt],
       ['Encontro Peniel', peniel],
       ['Endereço', rua],
       ['Complemento', m.complemento],
@@ -463,7 +467,12 @@
     const _p=(m.nome||'').trim().split(/\s+/); const nomeCurto=_p.length>1?esc(_p[0]+' '+_p[_p.length-1]):nome;
     const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '—';
-    let desde='—'; try{ desde=m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'; }catch(e){}
+    let desde='—';
+    try{
+      var _MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+      if(m.membro_desde){ var _md=String(m.membro_desde).split('-'); desde=(_MES[parseInt(_md[1],10)-1]||'')+' de '+_md[0]; }
+      else if(m.created_at){ desde=new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}); }
+    }catch(e){}
     const cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
     let waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
     const cat=(m.ministerio && m.ministerio!=='Não serve em nenhum') ? m.ministerio : 'MEMBRO';
@@ -1047,7 +1056,7 @@ ${serve ? `
   }
 
   async function reloadPessoas(){ const {data}=await sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}); APESSOAS=data||[]; }
-  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em').order('created_at',{ascending:false}); MEMBROS=data||[]; }
+  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}); MEMBROS=data||[]; }
 
   function renderAcaoPessoas(){
     $('#titulo').textContent='Ação Social · Pessoas';
@@ -1114,7 +1123,7 @@ ${serve ? `
     const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
       sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
       sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false}),
-      sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em').order('created_at',{ascending:false}),
+      sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
       sb.from('acao_itens').select('*').order('nome'),
       sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
       sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),

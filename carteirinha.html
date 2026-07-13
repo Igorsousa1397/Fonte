@@ -61,7 +61,12 @@
     var _p=(m.nome||'').trim().split(/\s+/); var nomeCurto=_p.length>1?esc(_p[0]+' '+_p[_p.length-1]):nome;
     var iniciais=(m.nome||'?').trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
     var nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '—';
-    var desde='—'; try{ desde=m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'; }catch(e){}
+    var desde='—';
+    try{
+      var _MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+      if(m.membro_desde){ var _md=String(m.membro_desde).split('-'); desde=(_MES[parseInt(_md[1],10)-1]||'')+' de '+_md[0]; }
+      else if(m.created_at){ desde=new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}); }
+    }catch(e){}
     var cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
     var waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
     var cat=(m.ministerio && m.ministerio!=='Não serve em nenhum') ? m.ministerio : 'MEMBRO';

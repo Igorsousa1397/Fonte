@@ -709,6 +709,24 @@
         <div class="campo"><label for="m-celula">Célula</label><select id="m-celula"></select></div>
         <div class="campo"><label for="m-min">Serve em algum ministério?</label><select id="m-min"></select></div>
       </div>
+      <div class="duo">
+        <div class="campo"><label for="m-estado">Estado civil</label>
+          <select id="m-estado">
+            <option value="">Selecione…</option>
+            <option>Solteiro(a)</option>
+            <option>Casado(a)</option>
+            <option>União estável</option>
+            <option>Divorciado(a)</option>
+            <option>Viúvo(a)</option>
+          </select>
+        </div>
+        <div class="campo"><label>Membro desde <span style="color:var(--cinza);font-weight:400">(opcional)</span></label>
+          <div style="display:flex;gap:10px">
+            <select id="m-desde-mes" style="flex:1"></select>
+            <select id="m-desde-ano" style="flex:1"></select>
+          </div>
+        </div>
+      </div>
       <div class="campo"><label>Já passou pelo Encontro Peniel?</label>
         <div class="chips" id="m-peniel-chips">
           <button type="button" class="chip" data-v="Sim">Sim</button>
@@ -1113,6 +1131,12 @@ document.getElementById('enviaContato').onclick=async()=>{
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
   const mMin=el('m-min');
   if(mMin) mMin.innerHTML='<option value="">Não sirvo em nenhum</option>'+MINISTERIOS.map(x=>`<option>${x}</option>`).join('');
+  (function(){
+    const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const mm=el('m-desde-mes'), ma=el('m-desde-ano');
+    if(mm) mm.innerHTML='<option value="">Mês</option>'+MESES.map((x,i)=>`<option value="${String(i+1).padStart(2,'0')}">${x}</option>`).join('');
+    if(ma){ const anoAtual=new Date().getFullYear(); let o='<option value="">Ano</option>'; for(let y=anoAtual; y>=1980; y--) o+=`<option>${y}</option>`; ma.innerHTML=o; }
+  })();
 
   const tel=el('m-tel');
   if(tel) tel.addEventListener('input',()=>{
@@ -1194,6 +1218,9 @@ document.getElementById('enviaContato').onclick=async()=>{
     const g=id=>el(id).value.trim();
     const nome=g('m-nome'), doc=g('m-cpf'), nasc=g('m-nasc');
     const nascIso=dataBrParaIso(nasc);
+    const estadoCivil=g('m-estado')||null;
+    const mdMes=g('m-desde-mes'), mdAno=g('m-desde-ano');
+    const membroDesde=(mdMes&&mdAno)?(mdAno+'-'+mdMes+'-01'):null;
     if(!nome){ toast('Preencha o nome completo.'); return; }
     if(doc.replace(/\D/g,'').length!==11){ toast('Preencha um CPF válido (11 dígitos).'); return; }
     if(!nascIso){ toast('Preencha a data de nascimento no formato DD/MM/AAAA.'); return; }
@@ -1219,6 +1246,9 @@ document.getElementById('enviaContato').onclick=async()=>{
         p_nascimento:nascIso, p_foto_url:fotoUrl
       });
       if(error) throw error;
+      if(estadoCivil||membroDesde){
+        try{ await sb.rpc('membro_set_extras',{p_cpf:doc, p_estado_civil:estadoCivil, p_membro_desde:membroDesde}); }catch(e){}
+      }
       const boxM=document.querySelector('#membro .form');
       if(boxM) boxM.innerHTML='<div class="form-ok"><h3>Cadastro enviado com sucesso!</h3><p>Recebemos seus dados. Nossa equipe da Fonte vai entrar em contato com você em breve.</p></div>';
     }catch(e){
