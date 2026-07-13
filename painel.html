@@ -142,7 +142,7 @@
   .mb-foto-acao{margin:0 0 14px}
   .mb-foto-btn{background:var(--grafite-2);border:1px solid var(--neblina);color:var(--luz);border-radius:var(--raio-sm);padding:7px 14px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.82rem}
   .mb-foto-btn:hover{border-color:var(--agua)}
-  .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end;gap:10px}
+  .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
   .btn-del{background:transparent;border:1px solid rgba(224,80,80,.5);color:#e57373;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-del:hover{background:rgba(224,80,80,.12)}
   .btn-val{background:var(--agua);color:#06201e;border:none;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
@@ -416,10 +416,11 @@
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
       '<div class="mb-acoes">'+(validado
-        ? (ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>' : '<button class="btn-del" data-act="del">Excluir membro</button>')
+        ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>' : '<button class="btn-del" data-act="del">Excluir membro</button>'))
         : '<button class="btn-val" data-val="1">Validar dados / OK</button>')+'</div>';
     const vb=$('#mbBody .btn-val[data-val]');
     if(vb) vb.onclick=()=>setValidadoMembro(m.id, true);
+    const vr=$('#mbBody .btn-ghost[data-val="0"]'); if(vr) vr.onclick=()=>setValidadoMembro(m.id, false);
     const bDel=$('#mbBody .btn-del'); if(bDel) bDel.onclick=()=>excluirMembro(m);
     const bCart=$('#mbBody [data-act="cart"]'); if(bCart) bCart.onclick=()=>abrirCarteirinha(m);
     const fBtn=$('#mbFotoBtn'), fFile=$('#mbFotoFile');
@@ -477,8 +478,8 @@
     let waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
     const cat=(m.ministerio && m.ministerio!=='Não serve em nenhum') ? m.ministerio : 'MEMBRO';
     const serve=!!(m.ministerio && m.ministerio!=='Não serve em nenhum');
-    const avCard=m.foto_url ? '<img class="av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
-    const avCracha=m.foto_url ? '<img class="cr-av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
+    const avCard=m.foto_url ? '<div class="av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="av ini">'+esc(iniciais)+'</div>';
+    const avCracha=m.foto_url ? '<div class="cr-av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
     const rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
     const rowsCracha=[['Célula',m.celula],['Membro desde',desde]]
@@ -502,7 +503,7 @@
   .card{width:520px;max-width:100%;height:328px;display:flex;border-radius:18px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55)}
   .card .left{width:188px;flex-shrink:0;background:linear-gradient(160deg,#4bb6b0,#7ad4cf);display:flex;flex-direction:column;align-items:center;padding:18px 14px}
   .card .logo{height:22px;filter:brightness(0);opacity:.82;align-self:flex-start}
-  .av{width:108px;height:108px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.55);margin:auto 0;background:#17171b;display:flex;align-items:center;justify-content:center;font-size:2.1rem;font-weight:700;color:#7ad4cf}
+  .av{width:108px;height:108px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.55);margin:auto 0;background:#17171b center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:2.1rem;font-weight:700;color:#7ad4cf}
   .memb{font-size:.62rem;letter-spacing:.2em;font-weight:800;color:#06201e;background:rgba(255,255,255,.4);padding:5px 14px;border-radius:20px}
   .card .right{flex:1;padding:22px 24px;display:flex;flex-direction:column;min-width:0}
   .nome{font-size:1.02rem;font-weight:700;line-height:1.18;max-height:2.36em;overflow:hidden}
@@ -519,7 +520,7 @@
   .cr-top{width:100%;background:linear-gradient(135deg,#4bb6b0,#7ad4cf);padding:22px 0 34px;display:flex;flex-direction:column;align-items:center;gap:5px}
   .cr-logo{height:44px;filter:brightness(0);opacity:.85}
   .cr-top span{font-size:.6rem;letter-spacing:.24em;font-weight:800;color:#06201e}
-  .cr-av{width:118px;height:118px;border-radius:50%;object-fit:cover;border:4px solid #101013;margin-top:-12px;background:#17171b;display:flex;align-items:center;justify-content:center;font-size:2.3rem;font-weight:700;color:#7ad4cf;z-index:2}
+  .cr-av{width:118px;height:118px;border-radius:50%;object-fit:cover;border:4px solid #101013;margin-top:-12px;background:#17171b center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:2.3rem;font-weight:700;color:#7ad4cf;z-index:2}
   .cr-nome{font-size:1.2rem;font-weight:700;line-height:1.15;margin:14px 22px 0;max-height:2.4em;overflow:hidden}
   .cr-org{color:#8b8b95;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
   .cr-cat{margin:10px 0;background:#7ad4cf;color:#06201e;font-weight:800;letter-spacing:.06em;font-size:.88rem;padding:7px 22px;border-radius:20px;text-transform:uppercase;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
