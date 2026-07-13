@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minha carteirinha · Igreja Fonte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--abismo:#0a0a0b;--grafite:#17171b;--linha:#2a2a31;--agua:#7ad4cf;--agua-forte:#4bb6b0;--luz:#f5f5f6;--sub:#8b8b95;
+    --display:"Bricolage Grotesque",system-ui,sans-serif;--corpo:"Inter",system-ui,sans-serif}
+  body{background:var(--abismo);color:var(--luz);font-family:var(--corpo);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased}
+  .gate{width:100%;max-width:420px;background:var(--grafite);border:1px solid var(--linha);border-radius:18px;padding:30px 26px;text-align:center}
+  .logo{height:34px;margin-bottom:20px;filter:brightness(0) invert(1)}
+  h1{font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:6px}
+  p.desc{color:var(--sub);font-size:.92rem;margin-bottom:22px;line-height:1.5}
+  label{display:block;text-align:left;font-size:.82rem;color:var(--sub);margin-bottom:7px}
+  input{width:100%;background:var(--abismo);border:1px solid var(--linha);border-radius:12px;padding:14px 16px;color:var(--luz);font-size:1rem;font-family:var(--corpo)}
+  input:focus{outline:none;border-color:var(--agua)}
+  button.go{width:100%;margin-top:16px;background:var(--agua);color:#06201e;border:none;border-radius:12px;padding:14px;font-weight:700;font-size:1rem;cursor:pointer}
+  button.go:disabled{opacity:.6;cursor:default}
+  .msg{margin-top:18px;font-size:.92rem;line-height:1.5;padding:14px;border-radius:12px;display:none;text-align:left}
+  .msg.show{display:block}
+  .msg.info{background:rgba(122,212,207,.10);border:1px solid var(--agua-forte);color:var(--luz)}
+  .msg.err{background:rgba(255,120,120,.07);border:1px solid #4a2a2a;color:#f0c9c9}
+  .msg a{color:var(--agua);font-weight:600}
+  .voltar{display:inline-block;margin-top:18px;color:var(--sub);font-size:.85rem;text-decoration:none}
+  .voltar:hover{color:var(--luz)}
+</style>
+</head>
+<body>
+  <div class="gate">
+    <img class="logo" src="assets/fonte-logo.png" alt="Fonte">
+    <h1>Minha carteirinha</h1>
+    <p class="desc">Digite seu CPF para acessar sua carteirinha de membro.</p>
+    <label for="cpf">CPF</label>
+    <input id="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
+    <button class="go" id="go">Ver minha carteirinha</button>
+    <div class="msg" id="msg"></div>
+    <a class="voltar" href="index.html">← Voltar ao site</a>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase.js"></script>
+<script>
+  var cpfEl=document.getElementById('cpf'), goEl=document.getElementById('go'), msgEl=document.getElementById('msg');
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function maskCpf(v){ v=(v||'').replace(/\D/g,'').slice(0,11);
+    if(v.length>9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
+    if(v.length>6) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
+    if(v.length>3) return v.slice(0,3)+'.'+v.slice(3);
+    return v; }
+  cpfEl.addEventListener('input',function(){ cpfEl.value=maskCpf(cpfEl.value); });
+  function showMsg(html,cls){ msgEl.className='msg show '+cls; msgEl.innerHTML=html; }
+
+  function abrir(m){
+    var logo=location.origin+'/assets/fonte-logo.png';
+    var nome=esc(m.nome||'');
+    var _p=(m.nome||'').trim().split(/\s+/); var nomeCurto=_p.length>1?esc(_p[0]+' '+_p[_p.length-1]):nome;
+    var iniciais=(m.nome||'?').trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '—';
+    var desde='—'; try{ desde=m.created_at ? new Date(m.created_at).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : '—'; }catch(e){}
+    var cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
+    var waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
+    var cat=(m.ministerio && m.ministerio!=='Não serve em nenhum') ? m.ministerio : 'MEMBRO';
+    var serve=!!(m.ministerio && m.ministerio!=='Não serve em nenhum');
+    var avCard=m.foto_url ? '<img class="av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
+    var avCracha=m.foto_url ? '<img class="cr-av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
+    var rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
+      .map(function(l){return '<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>';}).join('');
+    var rowsCracha=[['Célula',m.celula],['Membro desde',desde]]
+      .map(function(l){return '<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>';}).join('');
+
+    var doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"><\/script>
+<style id="pg">@page{size:85.6mm 54mm;margin:0}</style>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+  body{background:#0a0a0b;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:28px;color:#f5f5f6}
+  .toggle{display:flex;gap:6px;background:#17171b;border:1px solid #2a2a31;border-radius:12px;padding:4px}
+  .tg{padding:8px 20px;border:none;background:transparent;color:#b8b8c0;border-radius:9px;font-weight:600;cursor:pointer;font-size:.88rem}
+  .tg.on{background:#7ad4cf;color:#06201e}
+  .hidden{display:none!important}
+  .norad{border-radius:0!important}
+  body.capturing .scene-cartao{transform:none!important;margin:0!important}
+  body.capturing #fmt-cartao{width:520px!important;max-width:none!important}
+  .card{width:520px;max-width:100%;height:328px;display:flex;border-radius:18px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55)}
+  .card .left{width:188px;flex-shrink:0;background:linear-gradient(160deg,#4bb6b0,#7ad4cf);display:flex;flex-direction:column;align-items:center;padding:18px 14px}
+  .card .logo{height:22px;filter:brightness(0);opacity:.82;align-self:flex-start}
+  .av{width:108px;height:108px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.55);margin:auto 0;background:#17171b;display:flex;align-items:center;justify-content:center;font-size:2.1rem;font-weight:700;color:#7ad4cf}
+  .memb{font-size:.62rem;letter-spacing:.2em;font-weight:800;color:#06201e;background:rgba(255,255,255,.4);padding:5px 14px;border-radius:20px}
+  .card .right{flex:1;padding:22px 24px;display:flex;flex-direction:column;min-width:0}
+  .nome{font-size:1.02rem;font-weight:700;line-height:1.18;max-height:2.36em;overflow:hidden}
+  .org{color:#8b8b95;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;margin:5px 0 12px}
+  .rows{border-top:1px solid #2a2a31;padding-top:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .row{display:flex;justify-content:space-between;gap:14px;font-size:.82rem;align-items:baseline}
+  .row span{color:#8b8b95;flex-shrink:0}
+  .row b{color:#f5f5f6;font-weight:600;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cod{font-size:.68rem;color:#4bb6b0;letter-spacing:.1em;font-weight:700;margin-top:8px}
+  .cnpj{font-size:.6rem;color:#8b8b95;margin-top:2px}
+  .cracha{width:418px;height:570px;position:relative;border-radius:16px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;text-align:center}
+  .cr-top{width:100%;background:linear-gradient(135deg,#4bb6b0,#7ad4cf);padding:22px 0 34px;display:flex;flex-direction:column;align-items:center;gap:5px}
+  .cr-logo{height:44px;filter:brightness(0);opacity:.85}
+  .cr-av{width:118px;height:118px;border-radius:50%;object-fit:cover;border:4px solid #101013;margin-top:-12px;background:#17171b;display:flex;align-items:center;justify-content:center;font-size:2.3rem;font-weight:700;color:#7ad4cf;z-index:2}
+  .cr-nome{font-size:1.2rem;font-weight:700;line-height:1.15;margin:14px 22px 0;max-height:2.4em;overflow:hidden}
+  .cr-org{color:#8b8b95;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+  .cr-cat{margin:10px 0;background:#7ad4cf;color:#06201e;font-weight:800;letter-spacing:.06em;font-size:.88rem;padding:7px 22px;border-radius:20px;text-transform:uppercase;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cr-rows{width:calc(100% - 56px);border-top:1px solid #2a2a31;padding-top:12px;display:flex;flex-direction:column;gap:7px}
+  .cr-rows .row{justify-content:space-between}
+  .cr-cred{text-align:center;color:#8b8b95;font-size:.62rem;letter-spacing:.24em;font-weight:700;margin:12px 0 6px}
+  .qr{background:#fff;border-radius:6px;padding:4px;display:block}
+  .card-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:auto}
+  .card .qr{width:54px;height:54px}
+  .qr-cracha{width:84px;height:84px;margin:6px auto 12px}
+  .cr-code{margin-top:auto;width:100%;background:#0d0d0f;border-top:1px solid #2a2a31;padding:12px;font-size:.72rem;color:#4bb6b0;letter-spacing:.12em;font-weight:700}
+  .cr-code small{display:block;color:#8b8b95;letter-spacing:normal;font-weight:400;margin-top:2px}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .btns button{padding:10px 18px;border-radius:10px;border:none;font-weight:600;cursor:pointer;font-size:.9rem}
+  .b1{background:#7ad4cf;color:#06201e} .b2{background:transparent;border:1px solid #2a2a31;color:#b8b8c0}
+  @media (max-width:560px){
+    body{overflow-x:hidden}
+    body.fmt-cartao .scene-cartao{transform:rotate(90deg);transform-origin:center;margin:96px 0}
+  }
+  @media print{
+    html,body{background:#fff;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .toggle,.btns{display:none}
+    body.fmt-cartao #fmt-cartao{zoom:.6215;box-shadow:none;border:none;border-radius:3mm;margin:0}
+    body.fmt-cracha #fmt-cracha{zoom:1.05;box-shadow:none;margin:0}
+  }
+</style></head><body class="fmt-cartao">
+${serve ? '<div class="toggle"><button class="tg on" data-f="cartao">Cartão</button><button class="tg" data-f="cracha">Crachá</button></div>' : ''}
+
+  <div class="scene-cartao">
+  <div id="fmt-cartao" class="formato card">
+    <div class="left"><img class="logo" crossorigin="anonymous" src="${logo}" alt="Fonte">${avCard}<div class="memb">MEMBRO</div></div>
+    <div class="right">
+      <div class="nome">${nome}</div>
+      <div class="org">Igreja Apostólica Fonte</div>
+      <div class="rows">${rowsCartao}</div>
+      <div class="card-foot">
+        <div><div class="cod">${cod}</div><div class="cnpj">CNPJ 52.268.825/0001-95</div></div>
+        <img class="qr" id="qr-cartao" alt="QR">
+      </div>
+    </div>
+  </div>
+  </div>
+
+${serve ? `
+  <div id="fmt-cracha" class="formato cracha hidden">
+    <div class="cr-top"><img class="cr-logo" crossorigin="anonymous" src="${logo}" alt="Fonte"></div>
+    ${avCracha}
+    <div class="cr-nome">${nomeCurto}</div>
+    <div class="cr-org">Igreja Apostólica Fonte</div>
+    <div class="cr-cat">${esc(cat)}</div>
+    <div class="cr-rows">${rowsCracha}</div>
+    <div class="cr-cred">CREDENCIAL</div>
+    <img class="qr qr-cracha" id="qr-cracha" alt="QR">
+    <div class="cr-code">${cod}<small>CNPJ 52.268.825/0001-95</small></div>
+  </div>` : ''}
+
+  <div class="btns">
+    <button class="b1" id="sendBtn">Enviar no WhatsApp</button>
+    <button class="b2" id="dlBtn">Baixar imagem</button>
+    <button class="b2" id="pdfBtn">Baixar PDF</button>
+    <button class="b2" onclick="location.href='carteirinha.html'">Trocar CPF</button>
+  </div>
+  <script>
+    var CARD={nome:${JSON.stringify(m.nome||'')}, wa:${JSON.stringify(waNumber)}, cod:${JSON.stringify(cod)}};
+    function fillQR(){
+      if(typeof QRCode==='undefined') return;
+      var txt=location.origin+'/?membro='+encodeURIComponent(CARD.cod||'');
+      QRCode.toDataURL(txt, {margin:1, width:220, color:{dark:'#0a0a0b', light:'#ffffff'}}, function(err,url){
+        if(err) return;
+        var a=document.getElementById('qr-cartao'); if(a) a.src=url;
+        var b=document.getElementById('qr-cracha'); if(b) b.src=url;
+      });
+    }
+    window.addEventListener('load', fillQR);
+    function nomeArquivo(ext){
+      var f=document.body.className.replace('fmt-','');
+      var base=(f==='cracha')?'cracha':'carteirinha';
+      var pr=((CARD.nome||'').trim().split(/\s+/)[0]||'membro').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+      return base+'-'+(pr||'membro')+'.'+ext;
+    }
+    function setFmt(f){
+      document.body.className='fmt-'+f;
+      document.getElementById('fmt-cartao').classList.toggle('hidden', f!=='cartao');
+      var cr=document.getElementById('fmt-cracha'); if(cr) cr.classList.toggle('hidden', f!=='cracha');
+      var tgs=document.querySelectorAll('.tg'); for(var i=0;i<tgs.length;i++){ tgs[i].classList.toggle('on', tgs[i].getAttribute('data-f')===f); }
+      document.getElementById('pg').textContent = (f==='cartao') ? '@page{size:85.6mm 54mm;margin:0}' : '@page{size:110mm 150mm;margin:0}';
+    }
+    function ativo(){ return document.querySelector('.formato:not(.hidden)'); }
+    function snap(el,opts){
+      document.body.classList.add('capturing');
+      return html2canvas(el,opts).then(function(cv){ document.body.classList.remove('capturing'); return cv; })
+        .catch(function(e){ document.body.classList.remove('capturing'); throw e; });
+    }
+    function gerarPng(){
+      if(typeof html2canvas==='undefined') return Promise.resolve(null);
+      return snap(ativo(),{backgroundColor:null,scale:3,useCORS:true})
+        .then(function(cv){ return new Promise(function(res){ cv.toBlob(res,'image/png'); }); })
+        .catch(function(){ return null; });
+    }
+    function gerarPdfBlob(){
+      if(typeof html2canvas==='undefined') return Promise.resolve(null);
+      var el=ativo();
+      var f=document.body.className.replace('fmt-',''); var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
+      return snap(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
+        el.classList.remove('norad');
+        var img=cv.toDataURL('image/png');
+        var JsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+        var pdf=new JsPDF({orientation: dim[0]>dim[1]?'l':'p', unit:'mm', format:[dim[0],dim[1]]});
+        pdf.addImage(img,'PNG',0,0,dim[0],dim[1]);
+        return pdf.output('blob');
+      }).catch(function(){ el.classList.remove('norad'); return null; });
+    }
+    function abrirWhats(texto){
+      if(CARD.wa){ window.open('https://wa.me/'+CARD.wa+'?text='+encodeURIComponent(texto),'_blank'); }
+      else { alert('Não há telefone cadastrado. Use "Baixar imagem" ou "Baixar PDF".'); }
+    }
+    function enviarWhats(){
+      var texto='Segue minha carteirinha de membro da Igreja Apostólica Fonte.';
+      var btn=document.getElementById('sendBtn'); var t=btn.textContent;
+      var isMobile=/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent||'');
+      if(isMobile && navigator.canShare){
+        btn.disabled=true; btn.textContent='Gerando…';
+        gerarPdfBlob().then(function(blob){
+          var file=blob?new File([blob],nomeArquivo('pdf'),{type:'application/pdf'}):null;
+          if(file && navigator.canShare({files:[file]})){
+            navigator.share({files:[file], text:texto}).catch(function(){}).then(function(){ btn.disabled=false; btn.textContent=t; });
+          } else { abrirWhats(texto); btn.disabled=false; btn.textContent=t; }
+        });
+      } else {
+        abrirWhats(texto);
+        btn.disabled=true; btn.textContent='Gerando PDF…';
+        gerarPdfBlob().then(function(blob){
+          if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nomeArquivo('pdf'); a.click(); }
+          btn.disabled=false; btn.textContent=t;
+        });
+      }
+    }
+    function baixarImg(){
+      var btn=document.getElementById('dlBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
+      gerarPng().then(function(blob){
+        if(blob){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nomeArquivo('png'); a.click(); }
+        else { alert('Não foi possível gerar a imagem.'); }
+        btn.disabled=false; btn.textContent=t;
+      });
+    }
+    function baixarPdf(){
+      var btn=document.getElementById('pdfBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
+      var el=ativo();
+      var f=document.body.className.replace('fmt-','');
+      var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
+      snap(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
+        el.classList.remove('norad');
+        try{
+          var img=cv.toDataURL('image/png');
+          var JsPDF=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+          var pdf=new JsPDF({orientation: dim[0]>dim[1]?'l':'p', unit:'mm', format:[dim[0],dim[1]]});
+          pdf.addImage(img,'PNG',0,0,dim[0],dim[1]);
+          pdf.save(nomeArquivo('pdf'));
+        }catch(e){ alert('Não foi possível gerar o PDF: '+(e.message||e)); }
+        btn.disabled=false; btn.textContent=t;
+      }).catch(function(){ el.classList.remove('norad'); btn.disabled=false; btn.textContent=t; alert('Não foi possível gerar o PDF.'); });
+    }
+    var tgs=document.querySelectorAll('.tg');
+    for(var i=0;i<tgs.length;i++){ tgs[i].addEventListener('click', function(){ setFmt(this.getAttribute('data-f')); }); }
+    document.getElementById('sendBtn').addEventListener('click', enviarWhats);
+    document.getElementById('dlBtn').addEventListener('click', baixarImg);
+    document.getElementById('pdfBtn').addEventListener('click', baixarPdf);
+  <\/script>
+</body></html>`;
+    document.open(); document.write(doc); document.close();
+  }
+
+  async function consultar(){
+    var cpf=(cpfEl.value||'').replace(/\D/g,'');
+    if(cpf.length!==11){ showMsg('Digite um CPF válido (11 dígitos).','err'); return; }
+    goEl.disabled=true; var t=goEl.textContent; goEl.textContent='Buscando…'; msgEl.className='msg';
+    try{
+      var res=await sb.rpc('membro_carteirinha',{p_cpf:cpf});
+      if(res.error) throw res.error;
+      var row=(res.data&&res.data[0])||null;
+      var st=row?row.status:'nao_encontrado';
+      if(st==='ok'){ abrir(row); return; }
+      if(st==='analise'){ showMsg('Seu cadastro foi recebido e está <b>em análise</b> pela liderança. Assim que for aprovado, sua carteirinha aparece aqui. 🙏','info'); }
+      else if(st==='inativo'){ showMsg('Não encontramos um cadastro <b>ativo</b> com esse CPF. Fale com a liderança da Fonte para regularizar.','err'); }
+      else { showMsg('CPF não encontrado. Você já fez seu cadastro de membro? <a href="index.html#membro">Fazer meu cadastro</a>','err'); }
+    }catch(e){ showMsg('Não foi possível consultar agora. Tente novamente em instantes.','err'); }
+    goEl.disabled=false; goEl.textContent=t;
+  }
+  goEl.addEventListener('click',consultar);
+  cpfEl.addEventListener('keydown',function(e){ if(e.key==='Enter') consultar(); });
+</script>
+</body>
+</html>

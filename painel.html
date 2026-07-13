@@ -468,6 +468,7 @@
   .hidden{display:none!important}
   .norad{border-radius:0!important}
   body.capturing .scene-cartao{transform:none!important;margin:0!important}
+  body.capturing #fmt-cartao{width:520px!important;max-width:none!important}
   /* ---- CARTÃO (horizontal) ---- */
   .card{width:520px;max-width:100%;height:328px;display:flex;border-radius:18px;overflow:hidden;background:#101013;border:1px solid #2a2a31;box-shadow:0 22px 60px rgba(0,0,0,.55)}
   .card .left{width:188px;flex-shrink:0;background:linear-gradient(160deg,#4bb6b0,#7ad4cf);display:flex;flex-direction:column;align-items:center;padding:18px 14px}
@@ -592,7 +593,7 @@ ${serve ? `
     }
     function gerarPdfBlob(){
       if(typeof html2canvas==='undefined') return Promise.resolve(null);
-      var el=ativo(); if(document.body.className.replace('fmt-','')==='cartao') el.classList.add('norad');
+      var el=ativo();
       var f=document.body.className.replace('fmt-',''); var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
       return snap(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
         el.classList.remove('norad');
@@ -638,7 +639,7 @@ ${serve ? `
     }
     function baixarPdf(){
       var btn=document.getElementById('pdfBtn'); var t=btn.textContent; btn.disabled=true; btn.textContent='Gerando…';
-      var el=ativo(); if(document.body.className.replace('fmt-','')==='cartao') el.classList.add('norad');
+      var el=ativo();
       var f=document.body.className.replace('fmt-','');
       var sizes={cartao:[85.6,54], cracha:[110,150]}; var dim=sizes[f]||[85.6,54];
       snap(el,{scale:4,backgroundColor:null,useCORS:true}).then(function(cv){
