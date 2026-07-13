@@ -105,6 +105,14 @@
   .leg i{width:11px;height:11px;border-radius:3px;display:inline-block}
   .leg .ci{background:var(--agua)} .leg .si{background:#3a3a42}
   .mcard .vazio{color:var(--cinza);font-size:.85rem}
+  .pie-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .pie{width:128px;height:128px;border-radius:50%;position:relative;flex-shrink:0}
+  .pie-hole{position:absolute;inset:30px;border-radius:50%;background:var(--grafite)}
+  .pie-leg{flex:1;min-width:150px;display:flex;flex-direction:column;gap:10px}
+  .pie-leg .pl{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--luz)}
+  .pie-leg .pl i{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+  .pie-leg .pl span{color:var(--cinza)}
+  .pie-leg .pl b{margin-left:auto;font-weight:700;padding-left:14px}
   .card .rot{font-size:.82rem;color:var(--cinza)}
   .card .num{font-family:var(--display);font-weight:700;font-size:1.9rem;line-height:1.1;margin-top:4px}
   .card .num.agua{color:var(--agua)}
@@ -155,6 +163,9 @@
   .det-lin{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid rgba(42,42,49,.6);font-size:.92rem}
   .det-lin .k{color:var(--cinza);flex:0 0 auto}
   .det-lin .v{color:var(--luz);text-align:right;word-break:break-word}
+  .mb-edit{display:flex;flex-direction:column;gap:13px;margin-top:16px}
+  .mb-edit .fld label{display:block;font-size:.82rem;color:var(--cinza);margin-bottom:6px}
+  .mb-edit .lock-cap{font-size:.78rem;color:var(--cinza);margin:2px 0 -4px}
   .btn-primary{background:var(--agua);color:#04211f;border:none;border-radius:var(--raio-sm);padding:11px 20px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-primary:hover{background:var(--agua-forte)}
   .btn-ghost{background:transparent;border:var(--borda);color:var(--cinza-claro);border-radius:var(--raio-sm);padding:11px 18px;cursor:pointer;font-family:inherit;font-size:.9rem}
@@ -420,7 +431,7 @@
       '<div class="msub">Cadastrado em '+dataBR(m.created_at)+'</div>'+
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
-      '<div class="mb-acoes">'+(validado
+      '<div class="mb-acoes"><button class="btn-ghost" data-act="edit">Editar dados</button>'+(validado
         ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>' : '<button class="btn-del" data-act="del">Excluir membro</button>'))
         : '<button class="btn-val" data-val="1">Validar dados / OK</button>')+'</div>';
     const vb=$('#mbBody .btn-val[data-val]');
@@ -428,9 +439,76 @@
     const vr=$('#mbBody .btn-ghost[data-val="0"]'); if(vr) vr.onclick=()=>setValidadoMembro(m.id, false);
     const bDel=$('#mbBody .btn-del'); if(bDel) bDel.onclick=()=>excluirMembro(m);
     const bCart=$('#mbBody [data-act="cart"]'); if(bCart) bCart.onclick=()=>abrirCarteirinha(m);
+    const bEdit=$('#mbBody [data-act="edit"]'); if(bEdit) bEdit.onclick=()=>abreMembroEdit(m);
     const fBtn=$('#mbFotoBtn'), fFile=$('#mbFotoFile');
     if(fBtn && fFile){ fBtn.onclick=()=>fFile.click(); fFile.onchange=()=>{ const f=fFile.files&&fFile.files[0]; if(f) uploadFotoMembro(m,f); }; }
     $('#mbBg').classList.add('on');
+  }
+  function abreMembroEdit(m){
+    const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '';
+    const MIN=['Não serve em nenhum','Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
+    const minAtual = m.ministerio || 'Não serve em nenhum';
+    const minOpts = MIN.map(x=>'<option'+(x===minAtual?' selected':'')+'>'+esc(x)+'</option>').join('');
+    const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    let mdMes='', mdAno='';
+    if(m.membro_desde){ const d=String(m.membro_desde).split('-'); mdAno=d[0]; mdMes=d[1]; }
+    const mesOpts='<option value="">Mês</option>'+MESES.map((x,i)=>{ const v=('0'+(i+1)).slice(-2); return '<option value="'+v+'"'+(v===mdMes?' selected':'')+'>'+x+'</option>'; }).join('');
+    const anoAtual=new Date().getFullYear(); let anoOpts='<option value="">Ano</option>'; for(let y=anoAtual;y>=1980;y--){ anoOpts+='<option'+((''+y)===mdAno?' selected':'')+'>'+y+'</option>'; }
+    const pen=m.passou_peniel;
+    const cels=Array.from(new Set(MEMBROS.map(x=>x.celula).filter(Boolean))).sort();
+    const celList=cels.map(c=>'<option value="'+esc(c)+'"></option>').join('');
+    const fotoImg = m.foto_url ? '<img class="mb-foto" src="'+esc(m.foto_url)+'" alt="">' : '<div class="mb-foto mb-foto-ph">'+esc(iniciais)+'</div>';
+    const lock=(k,v)=>'<div class="det-lin"><span class="k">'+k+'</span><span class="v">'+(esc(v)||'—')+'</span></div>';
+    $('#mbBody').innerHTML=
+      '<h2><span class="mb-nome">'+esc(m.nome)+'</span></h2>'+
+      '<div class="msub">Editando dados do membro</div>'+
+      fotoImg+
+      '<div class="lock-cap">Não editáveis</div>'+
+      '<div class="det">'+lock('Telefone',m.telefone)+lock('CPF',m.cpf)+lock('Nascimento',nasc)+lock('Estado civil',m.estado_civil)+'</div>'+
+      '<div class="mb-edit">'+
+        '<div class="fld"><label>Célula</label><input id="e-cel" list="e-cel-list" value="'+esc(m.celula||'')+'"><datalist id="e-cel-list">'+celList+'</datalist></div>'+
+        '<div class="fld"><label>Ministério</label><select id="e-min">'+minOpts+'</select></div>'+
+        '<div class="fld"><label>Membro desde</label><div style="display:flex;gap:8px"><select id="e-desde-mes" style="flex:1">'+mesOpts+'</select><select id="e-desde-ano" style="flex:1">'+anoOpts+'</select></div></div>'+
+        '<div class="fld"><label>Passou pelo Encontro Peniel?</label><select id="e-peniel"><option value=""'+(pen==null?' selected':'')+'>—</option><option value="sim"'+(pen===true?' selected':'')+'>Sim</option><option value="nao"'+(pen===false?' selected':'')+'>Não</option></select></div>'+
+        '<div class="fld"><label>CEP</label><input id="e-cep" value="'+esc(m.cep||'')+'"></div>'+
+        '<div class="fld"><label>Endereço</label><input id="e-log" value="'+esc(m.logradouro||'')+'"></div>'+
+        '<div class="fld"><label>Número</label><input id="e-num" value="'+esc(m.numero||'')+'"></div>'+
+        '<div class="fld"><label>Complemento</label><input id="e-comp" value="'+esc(m.complemento||'')+'"></div>'+
+        '<div class="fld"><label>Bairro</label><input id="e-bairro" value="'+esc(m.bairro||'')+'"></div>'+
+        '<div class="fld"><label>Cidade</label><input id="e-cidade" value="'+esc(m.cidade||'')+'"></div>'+
+        '<div class="fld"><label>UF</label><input id="e-uf" maxlength="2" value="'+esc(m.uf||'')+'"></div>'+
+      '</div>'+
+      '<div class="mb-acoes"><button class="btn-ghost" id="e-cancel">Cancelar</button><button class="btn-val" id="e-save">Salvar dados</button></div>';
+    $('#e-cancel').onclick=()=>abreMembro(m);
+    $('#e-save').onclick=()=>salvarMembroEdit(m);
+  }
+  async function salvarMembroEdit(m){
+    const val=id=>{ const el=$('#'+id); return el?el.value.trim():''; };
+    const minSel=val('e-min');
+    const mdMes=val('e-desde-mes'), mdAno=val('e-desde-ano');
+    const membroDesde=(mdMes&&mdAno)?(mdAno+'-'+mdMes+'-01'):null;
+    const penSel=$('#e-peniel')?$('#e-peniel').value:'';
+    const patch={
+      celula: val('e-cel')||null,
+      ministerio: (minSel && minSel!=='Não serve em nenhum') ? minSel : null,
+      membro_desde: membroDesde,
+      passou_peniel: penSel==='sim'?true:penSel==='nao'?false:null,
+      cep: val('e-cep')||null,
+      logradouro: val('e-log')||null,
+      numero: val('e-num')||null,
+      complemento: val('e-comp')||null,
+      bairro: val('e-bairro')||null,
+      cidade: val('e-cidade')||null,
+      uf: (val('e-uf')||'').toUpperCase()||null
+    };
+    const btn=$('#e-save'); if(btn){ btn.disabled=true; btn.textContent='Salvando…'; }
+    const {error}=await sb.from('membros').update(patch).eq('id',m.id);
+    if(error){ if(btn){ btn.disabled=false; btn.textContent='Salvar dados'; } alert('Não foi possível salvar: '+(error.message||error)); return; }
+    Object.assign(m, patch);
+    const mm=MEMBROS.find(x=>x.id===m.id); if(mm) Object.assign(mm, patch);
+    abreMembro(m);
+    if($('#titulo') && $('#titulo').textContent==='Membros') renderMembros();
   }
   async function uploadFotoMembro(m, file){
     if(!/^image\//.test(file.type)){ alert('Selecione uma imagem.'); return; }
@@ -725,8 +803,24 @@ ${serve ? `
     var comPct=Math.round(com/total*100), semPct=100-comPct;
     var split='<div class="split"><i class="com" style="width:'+comPct+'%"></i><i class="sem" style="width:'+semPct+'%"></i></div>'
       +'<div class="leg"><span><i class="ci"></i>Com ministério <b>'+com+'</b></span><span><i class="si"></i>Sem ministério <b>'+sem+'</b></span></div>';
+    var sim=0,nao=0,ninfo=0;
+    lista.forEach(function(m){ if(m.passou_peniel===true) sim++; else if(m.passou_peniel===false) nao++; else ninfo++; });
+    var ptot=(sim+nao+ninfo)||1;
+    var pp=function(n){ return Math.round(n/ptot*100); };
+    var b1=sim/ptot*100, b2=b1+nao/ptot*100;
+    var pieStyle='background:conic-gradient(#7ad4cf 0 '+b1+'%, #f0a868 '+b1+'% '+b2+'%, #4a4a52 '+b2+'% 100%)';
+    var pieCard='<div class="mcard"><h4>Passou pelo Encontro Peniel?</h4>'
+      +'<div class="pie-wrap"><div class="pie" style="'+pieStyle+'"><div class="pie-hole"></div></div>'
+      +'<div class="pie-leg">'
+        +'<div class="pl"><i style="background:#7ad4cf"></i><span>Sim</span><b>'+sim+' · '+pp(sim)+'%</b></div>'
+        +'<div class="pl"><i style="background:#f0a868"></i><span>Não</span><b>'+nao+' · '+pp(nao)+'%</b></div>'
+        +(ninfo?'<div class="pl"><i style="background:#4a4a52"></i><span>Não informado</span><b>'+ninfo+' · '+pp(ninfo)+'%</b></div>':'')
+      +'</div></div></div>';
     return '<div class="metrics">'
-      +'<div class="mcard"><h4>Servindo em ministério</h4>'+split+'</div>'
+      +'<div class="grid2">'
+        +'<div class="mcard"><h4>Servindo em ministério</h4>'+split+'</div>'
+        + pieCard
+      +'</div>'
       +'<div class="grid2">'
         +'<div class="mcard"><h4>Membros por célula</h4>'+barras(pares(cel))+'</div>'
         +'<div class="mcard"><h4>Membros por ministério</h4>'+barras(pares(min))+'</div>'
