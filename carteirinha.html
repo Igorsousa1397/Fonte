@@ -70,7 +70,7 @@
     var cod='FONTE-'+String(m.id||'').replace(/-/g,'').slice(0,8).toUpperCase();
     var waNumber=(m.telefone||'').replace(/\D/g,''); if(waNumber && waNumber.length<=11) waNumber='55'+waNumber;
     var cat=(m.ministerio && m.ministerio!=='Não serve em nenhum') ? m.ministerio : 'MEMBRO';
-    var serve=!!(m.ministerio && m.ministerio!=='Não serve em nenhum');
+    var serve=false; // crachá só no painel (admin); membro emite só o cartão
     var avCard=m.foto_url ? '<img class="av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="av ini">'+esc(iniciais)+'</div>';
     var avCracha=m.foto_url ? '<img class="cr-av" crossorigin="anonymous" src="'+esc(m.foto_url)+'" alt="">' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
     var rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
