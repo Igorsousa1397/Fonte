@@ -219,6 +219,11 @@
   .msg .assunto{font-size:.74rem;color:var(--agua);background:var(--agua-fundo);border-radius:100px;padding:3px 10px;font-weight:600}
   .msg .meta{color:var(--cinza);font-size:.82rem;margin:4px 0 10px}
   .msg .corpo{color:var(--cinza-claro);font-size:.94rem;white-space:pre-wrap}
+  .res-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .res-tab{background:var(--grafite);border:var(--borda);color:var(--cinza-claro);border-radius:100px;padding:7px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.85rem;display:inline-flex;align-items:center;gap:8px}
+  .res-tab.on{background:var(--agua);color:#06201e;border-color:var(--agua)}
+  .msg-acoes{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .msg-res-pill{font-size:.78rem;color:var(--agua);background:var(--agua-fundo);border-radius:100px;padding:4px 12px;font-weight:600}
   .aviso-box{border:1px solid var(--agua-forte);background:var(--agua-fundo);border-radius:var(--raio-sm);
              padding:12px 15px;color:var(--cinza-claro);font-size:.88rem;margin-bottom:18px}
 
@@ -313,7 +318,7 @@
 
   const ASSUNTOS=['Pedido de oração','Dúvida geral','Quero conhecer a igreja','Células','Inscrições / eventos','Gabinete pastoral','Outro'];
   const VALOR_CAMISETA=42;
-  let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoResTab='pendente';
+  let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoResTab='pendente', contatoResTab='pendente';
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -819,18 +824,51 @@ ${serve ? `
   function renderContatos(assunto){
     const filtro = assunto && assunto!=='__todos' ? assunto : null;
     $('#titulo').textContent = filtro || 'Fale com a gente';
-    const lista = filtro ? CONTATOS.filter(c=>c.assunto===filtro) : CONTATOS;
+    const base = filtro ? CONTATOS.filter(c=>c.assunto===filtro) : CONTATOS;
+    const resolvivel = filtro==='Dúvida geral' || filtro==='Outro';
     let html='';
     if(filtro==='Gabinete pastoral') html+='<div class="aviso-box">Solicitações de agenda com o <b>Pr. Eliel</b> para tratar de um assunto específico.</div>';
-    if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma mensagem'+(filtro?' neste assunto':'')+'.</div></div>'; $('#view').innerHTML=html; return; }
+    let lista = base;
+    if(resolvivel){
+      const pend = base.filter(c=>!c.resolvido).length;
+      const res = base.length - pend;
+      html+='<div class="res-tabs">'
+        +'<button class="res-tab'+(contatoResTab==='resolvida'?'':' on')+'" data-rt="pendente">Pendentes <span class="qtd">'+pend+'</span></button>'
+        +'<button class="res-tab'+(contatoResTab==='resolvida'?' on':'')+'" data-rt="resolvida">Resolvidas <span class="qtd">'+res+'</span></button>'
+        +'</div>';
+      lista = base.filter(c=> contatoResTab==='resolvida' ? !!c.resolvido : !c.resolvido);
+    }
+    if(!lista.length){
+      const vaziomsg = resolvivel ? (contatoResTab==='resolvida'?'Nenhuma mensagem resolvida.':'Nenhuma mensagem pendente.') : ('Nenhuma mensagem'+(filtro?' neste assunto':'')+'.');
+      html+='<div class="tabela"><div class="vazio">'+vaziomsg+'</div></div>';
+      $('#view').innerHTML=html; wireRes(assunto); return;
+    }
     html+='<div class="msgs">';
     lista.forEach(c=>{
       const meta=[esc(c.telefone),esc(c.email)].filter(Boolean);
       meta.push(dataBR(c.created_at));
-      html+='<div class="msg"><div class="top"><span class="nome">'+esc(c.nome)+'</span><span class="assunto">'+esc(c.assunto)+'</span></div><div class="meta">'+meta.join(' · ')+'</div><div class="corpo">'+esc(c.mensagem)+'</div></div>';
+      let acao='';
+      if(resolvivel){
+        acao = c.resolvido
+          ? '<div class="msg-acoes"><span class="msg-res-pill">✓ Resolvida'+(c.resolvido_em?' · '+dataBR(c.resolvido_em):'')+'</span><button class="btn-ghost" data-reabrir="'+c.id+'">Reabrir</button></div>'
+          : '<div class="msg-acoes"><button class="btn-val" data-resolver="'+c.id+'">Marcar como resolvido</button></div>';
+      }
+      html+='<div class="msg"><div class="top"><span class="nome">'+esc(c.nome)+'</span><span class="assunto">'+esc(c.assunto)+'</span></div><div class="meta">'+meta.join(' · ')+'</div><div class="corpo">'+esc(c.mensagem)+'</div>'+acao+'</div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
+    wireRes(assunto);
+  }
+  function wireRes(assunto){
+    $$('#view .res-tab').forEach(b=> b.onclick=()=>{ contatoResTab=b.dataset.rt; renderContatos(assunto); });
+    $$('#view [data-resolver]').forEach(b=> b.onclick=()=>setContatoResolvido(b.dataset.resolver, true, assunto));
+    $$('#view [data-reabrir]').forEach(b=> b.onclick=()=>setContatoResolvido(b.dataset.reabrir, false, assunto));
+  }
+  async function setContatoResolvido(id, val, assunto){
+    const {error}=await sb.from('contatos').update({resolvido:val, resolvido_em: val?new Date().toISOString():null}).eq('id',id);
+    if(error){ alert('Não foi possível atualizar: '+(error.message||error)); return; }
+    const c=CONTATOS.find(x=>x.id===id); if(c){ c.resolvido=val; c.resolvido_em=val?new Date().toISOString():null; }
+    renderContatos(assunto);
   }
 
   function montaSubnav(){
@@ -1125,7 +1163,7 @@ ${serve ? `
     $('#quem').textContent=user.email;
     const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
       sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
-      sb.from('contatos').select('nome,telefone,email,assunto,mensagem,created_at').order('created_at',{ascending:false}),
+      sb.from('contatos').select('id,nome,telefone,email,assunto,mensagem,created_at,resolvido,resolvido_em').order('created_at',{ascending:false}),
       sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
       sb.from('acao_itens').select('*').order('nome'),
       sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
