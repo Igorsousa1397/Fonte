@@ -168,8 +168,7 @@ ${serve ? `
   </div>` : ''}
 
   <div class="btns">
-    <button class="b1" id="dlBtn">Baixar imagem</button>
-    <button class="b2" id="pdfBtn">Baixar PDF</button>
+    <button class="b1" id="dlBtn">Salvar carteirinha</button>
     <button class="b2" onclick="location.href='index.html'">Voltar para o site</button>
   </div>
   <script>
@@ -275,7 +274,6 @@ ${serve ? `
     var tgs=document.querySelectorAll('.tg');
     for(var i=0;i<tgs.length;i++){ tgs[i].addEventListener('click', function(){ setFmt(this.getAttribute('data-f')); }); }
     document.getElementById('dlBtn').addEventListener('click', baixarImg);
-    document.getElementById('pdfBtn').addEventListener('click', baixarPdf);
   <\/script>
 </body></html>`;
     document.open(); document.write(doc); document.close();
