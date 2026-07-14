@@ -154,6 +154,10 @@
   .fld label{display:block;font-size:.85rem;color:var(--cinza-claro);margin-bottom:7px}
   .fld input,.fld textarea{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:12px 14px;color:var(--luz);font-family:inherit;font-size:.95rem}
   .fld input:focus,.fld textarea:focus{outline:none;border-color:var(--agua-forte)}
+  .fld select{width:100%;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:12px 14px;color:var(--luz);font-family:inherit;font-size:.95rem}
+  .fld select:focus{outline:none;border-color:var(--agua-forte)}
+  .solic-form{max-width:520px}
+  .solic-intro{color:var(--cinza-claro);line-height:1.55;margin-bottom:4px}
   .vmsg{font-size:.86rem;margin-top:8px;min-height:1.2em}
   .vmsg.ok{color:var(--agua)}
   .vmsg.no{color:#f87171}
@@ -195,6 +199,7 @@
     <div class="maintabs">
       <button class="mtab on" data-tab="mercadinho">Mercadinho</button>
       <button class="mtab" data-tab="doacoes">Doações</button>
+      <button class="mtab" data-tab="solicitar">Solicitar</button>
     </div>
     <div class="subtabs2" id="doacaoSub" style="display:none">
       <button class="dtab on" data-sec="rouparia">Rouparia</button>
@@ -339,6 +344,7 @@
     return ITENS.filter(i=> i.quantidade>0 && secaoOf(i)==='mercadinho');
   }
   function renderConteudo(){
+    if(mainTab==='solicitar'){ renderSolicitar(); return; }
     const lista = itensDaAba();
     if(!lista.length){
       const msg = mainTab==='doacoes' ? 'Nenhum item em '+SEC_LABEL[doacaoSec]+' no momento.' : 'No momento não há itens no mercadinho. Volte em breve.';
@@ -408,6 +414,93 @@
     if(membroCpf.replace(/\D/g,'').length===11) verificarCpf(membroCpf.replace(/\D/g,''));
   }
   function fecharReserva(){ el('rBg').classList.remove('on'); }
+
+  // ---------- solicitação ----------
+  const SOLIC_CATS = ['Alimento','Higiene','Limpeza','Bebida','Roupas','Calçados','Eletrodoméstico','Móvel','Remédio','Outros'];
+  const SOLIC_UNIS = ['un','kg','g','L','ml','pacote','caixa','fardo','par'];
+  function optSel(arr){ return arr.map(function(o){ return '<option>'+esc(o)+'</option>'; }).join(''); }
+  function renderSolicitar(){
+    el('grid').innerHTML =
+      '<div class="solic-form" style="grid-column:1/-1">'+
+        '<p class="solic-intro">Precisa de algo que não está no mercadinho? Faça uma solicitação e a equipe da ação social vai avaliar. É preciso ter cadastro (membro ou não).</p>'+
+        '<div class="fld"><label>Seu CPF</label><input id="s-cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="'+esc(membroCpf)+'"><div class="vmsg" id="s-msg"></div></div>'+
+        '<div id="s-cadastro" style="display:none;border:var(--borda);border-radius:var(--raio-sm);padding:14px;margin:6px 0;background:var(--breu)">'+
+          '<div style="font-weight:600;margin-bottom:2px">Cadastro rápido</div>'+
+          '<div class="msub" style="margin-bottom:10px">Assim conseguimos falar com você sobre a solicitação.</div>'+
+          '<div class="fld" style="margin:0 0 10px"><label>Seu nome completo</label><input id="sc-nome"></div>'+
+          '<div class="fld" style="margin:0 0 10px"><label>Telefone (WhatsApp)</label><input id="sc-tel" inputmode="tel" maxlength="16" placeholder="(11) 90000-0000"></div>'+
+          '<button class="btn" id="sc-salvar" style="margin-top:2px">Cadastrar e continuar</button>'+
+        '</div>'+
+        '<div class="fld"><label>Categoria</label><select id="s-cat">'+optSel(SOLIC_CATS)+'</select></div>'+
+        '<div class="fld"><label>Unidade</label><select id="s-uni">'+optSel(SOLIC_UNIS)+'</select></div>'+
+        '<div class="fld"><label>O que você precisa?</label><textarea id="s-desc" rows="3" placeholder="Ex.: Fraldas geriátricas tamanho G, leite sem lactose…"></textarea></div>'+
+        '<button class="btn" id="s-enviar">Enviar solicitação</button>'+
+      '</div>';
+    const cpf = el('s-cpf');
+    cpf.addEventListener('input', function(){
+      let v = cpf.value.replace(/\D/g,'').slice(0,11);
+      v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+      cpf.value = v; membroOk=false; membroNome='';
+      const d = cpf.value.replace(/\D/g,'');
+      if(d.length===11) verificarCpfSolic(d); else { el('s-msg').textContent=''; el('s-cadastro').style.display='none'; }
+    });
+    const stel = el('sc-tel');
+    if(stel) stel.addEventListener('input', function(){
+      let dd = stel.value.replace(/\D/g,'').slice(0,11);
+      if(dd.length>10)      dd=dd.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3');
+      else if(dd.length>6)  dd=dd.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');
+      else if(dd.length>2)  dd=dd.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2');
+      else if(dd.length>0)  dd=dd.replace(/^(\d{0,2}).*/,'($1');
+      stel.value=dd;
+    });
+    el('sc-salvar').onclick = cadastrarPessoaSolic;
+    el('s-enviar').onclick = enviarSolicitacao;
+    if(membroCpf.replace(/\D/g,'').length===11) verificarCpfSolic(membroCpf.replace(/\D/g,''));
+  }
+  async function verificarCpfSolic(d){
+    const msg=el('s-msg'); if(!msg) return; msg.className='vmsg'; msg.textContent='Verificando…';
+    el('s-cadastro').style.display='none'; membroOk=false;
+    const { data, error } = await sb.rpc('acao_identificar', { p_cpf:d });
+    if(error){ msg.className='vmsg no'; msg.textContent='Não deu para verificar agora. Tente de novo.'; return; }
+    const row=(data&&data[0])||{tipo:'novo'};
+    membroCpf=d; const first=(row.nome||'').split(' ')[0]||'';
+    if(row.tipo==='membro'){ membroOk=true; membroNome=row.nome||''; msg.className='vmsg ok'; msg.textContent='Olá, '+(first||'membro')+'! Você é membro.'; }
+    else if(row.tipo==='pre'){ membroOk=true; membroNome=row.nome||''; msg.className='vmsg ok'; msg.textContent='Olá, '+(first||'')+'! Cadastro encontrado.'; }
+    else { msg.className='vmsg'; msg.textContent='Primeira vez por aqui? Faça um cadastro rápido para solicitar.'; el('s-cadastro').style.display='block'; }
+  }
+  async function cadastrarPessoaSolic(){
+    const nome=(el('sc-nome').value||'').trim(); const tel=(el('sc-tel').value||'').trim();
+    const d=(el('s-cpf').value||'').replace(/\D/g,'');
+    if(d.length!==11){ toast('Confira seu CPF.'); return; }
+    if(!nome){ toast('Informe seu nome completo.'); return; }
+    const btn=el('sc-salvar'); btn.disabled=true; btn.textContent='Salvando…';
+    const { error } = await sb.rpc('acao_registrar_pessoa', { p_cpf:d, p_nome:nome, p_telefone:tel||null });
+    btn.disabled=false; btn.textContent='Cadastrar e continuar';
+    if(error){ toast('Não foi possível cadastrar: '+error.message); return; }
+    membroOk=true; membroNome=nome; membroCpf=d;
+    el('s-cadastro').style.display='none';
+    const msg=el('s-msg'); msg.className='vmsg ok'; msg.textContent='Tudo certo, '+(nome.split(' ')[0]||'')+'! Agora descreva sua solicitação.';
+  }
+  async function enviarSolicitacao(){
+    const d=(el('s-cpf').value||'').replace(/\D/g,'');
+    if(d.length!==11){ toast('Informe seu CPF.'); return; }
+    if(!membroOk){ toast('Confirme ou cadastre seu CPF primeiro.'); return; }
+    const desc=(el('s-desc').value||'').trim();
+    if(!desc){ toast('Descreva o que você precisa.'); return; }
+    const cat=el('s-cat').value, uni=el('s-uni').value;
+    const btn=el('s-enviar'); btn.disabled=true; btn.textContent='Enviando…';
+    const { error } = await sb.rpc('acao_criar_solicitacao', { p_cpf:d, p_categoria:cat, p_unidade:uni, p_descricao:desc });
+    if(error){ btn.disabled=false; btn.textContent='Enviar solicitação'; toast('Não foi possível enviar: '+error.message); return; }
+    el('grid').innerHTML =
+      '<div class="solic-form" style="grid-column:1/-1"><div style="text-align:center;padding:24px 4px">'+
+        '<div style="width:56px;height:56px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:var(--agua-fundo);border:1px solid var(--agua-forte)">'+
+          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7ad4cf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>'+
+        '<div style="font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:8px">Solicitação enviada!</div>'+
+        '<p style="color:var(--cinza-claro)">A equipe da ação social vai avaliar seu pedido. Se precisar, falamos com você pelo WhatsApp.</p>'+
+        '<button class="btn" id="s-nova">Fazer outra solicitação</button>'+
+      '</div></div>';
+    el('s-nova').onclick=renderSolicitar;
+  }
 
   function renderCart(){
     const box = el('r-cart'); if(!box) return;

@@ -290,6 +290,7 @@
         <button class="sub-item" data-acao="necessidades">Necessidades</button>
         <button class="sub-item" data-acao="reservas">Reservas</button>
         <button class="sub-item" data-acao="pessoas">Pessoas</button>
+        <button class="sub-item" data-acao="solicitacoes">Solicitações</button>
       </div>
       <button class="nav-item" id="btn-contato" data-toggle="contato">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><span class="lbl">Fale com a gente</span>
@@ -335,7 +336,7 @@
 
   const ASSUNTOS=['Pedido de oração','Dúvida geral','Quero conhecer a igreja','Células','Inscrições / eventos','Gabinete pastoral','Outro'];
   const VALOR_CAMISETA=42;
-  let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoResTab='pendente', contatoResTab='pendente';
+  let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], ASOLIC=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoEstTab='todas', acaoResTab='pendente', acaoSolicTab='pendente', contatoResTab='pendente';
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -999,6 +1000,7 @@ ${serve ? `
     if(acaoTab==='necessidades') return renderAcaoNec();
     if(acaoTab==='reservas')     return renderAcaoReservas();
     if(acaoTab==='pessoas')      return renderAcaoPessoas();
+    if(acaoTab==='solicitacoes') return renderAcaoSolic();
     return renderAcaoEstoque();
   }
 
@@ -1008,8 +1010,13 @@ ${serve ? `
     let html='<div class="cards">'+card('Itens cadastrados',total,true)+card('Com estoque',comE)+card('Em falta',falta)+'</div>';
     html+='<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn-primary" id="acaoNovo">Novo item</button></div>';
     if(!AITENS.length){ html+='<div class="tabela"><div class="vazio">Nenhum item ainda. Clique em “Novo item”.</div></div>'; $('#view').innerHTML=html; $('#acaoNovo').onclick=()=>abreItem(null); return; }
+    const secCount=k=>AITENS.filter(i=>inferSec(i.secao,i.categoria)===k).length;
+    const stabs=[['todas','Todas']].concat(SEC_ORDER.map(k=>[k,SECOES[k].rot]));
+    html+='<div class="subtabs">'+stabs.map(t=>'<button class="subtab'+(acaoEstTab===t[0]?' on':'')+'" data-est="'+t[0]+'">'+t[1]+(t[0]!=='todas'?' ('+secCount(t[0])+')':'')+'</button>').join('')+'</div>';
+    const lista=acaoEstTab==='todas'?AITENS:AITENS.filter(i=>inferSec(i.secao,i.categoria)===acaoEstTab);
     html+='<div class="tabela itens"><div class="lin cab"><span>Item</span><span>Estoque</span><span>Ativo</span></div>';
-    AITENS.forEach(i=>{
+    if(!lista.length){ html+='<div class="vazio" style="padding:22px">Nenhum item nesta seção.</div>'; }
+    lista.forEach(i=>{
       html+='<div class="lin'+(i.ativo?'':' off')+'" data-iid="'+i.id+'">'+
         '<span class="col" data-l="Item">'+esc(i.nome)+(i.necessidade?'<span class="tag-nec">necessidade</span>':'')+'<span class="sub">'+(esc(i.categoria)||'—')+' · '+esc(i.unidade)+'</span></span>'+
         '<span class="col" data-l="Estoque"><span class="stepper" data-iid="'+i.id+'"><button data-d="-1">−</button><span class="q">'+i.quantidade+'</span><button data-d="1">+</button></span></span>'+
@@ -1019,6 +1026,7 @@ ${serve ? `
     html+='</div>';
     $('#view').innerHTML=html;
     $('#acaoNovo').onclick=()=>abreItem(null);
+    $$('#view .subtab[data-est]').forEach(b=> b.onclick=()=>{ acaoEstTab=b.dataset.est; renderAcaoEstoque(); });
     $$('#view .stepper[data-iid]').forEach(st=>{
       st.querySelectorAll('button').forEach(b=> b.onclick=async(e)=>{
         e.stopPropagation();
@@ -1254,6 +1262,48 @@ ${serve ? `
     if(error){ alert('Erro: '+error.message); return; }
     await Promise.all([reloadPessoas(), reloadMembros()]);
     renderAcaoPessoas();
+  }
+  async function reloadSolic(){ const {data}=await sb.from('acao_solicitacoes').select('*').order('created_at',{ascending:false}); ASOLIC=data||[]; }
+  async function renderAcaoSolic(){
+    $('#titulo').textContent='Ação Social · Solicitações';
+    $('#view').innerHTML='<div class="tabela"><div class="vazio">Carregando…</div></div>';
+    await reloadSolic();
+    const cont=s=>ASOLIC.filter(r=>r.status===s).length;
+    const tabs=[['pendente','Pendentes'],['atendida','Atendidas'],['todas','Todas']];
+    let html='<div class="subtabs">'+tabs.map(t=>'<button class="subtab'+(acaoSolicTab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+t[1]+(t[0]!=='todas'?' ('+cont(t[0])+')':'')+'</button>').join('')+'</div>';
+    const lista=acaoSolicTab==='todas'?ASOLIC:ASOLIC.filter(r=>r.status===acaoSolicTab);
+    if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma solicitação nesta aba.</div></div>'; }
+    else lista.forEach(function(r){
+      const wa=waLink(r.telefone);
+      const pill=r.status==='atendida'?'ok':'aviso';
+      html+='<div class="res-card">'+
+        '<div class="res-head"><div><div style="font-weight:600">'+esc(r.nome||'—')+' <span class="res-pill '+pill+'">'+esc(r.status)+'</span></div>'+
+          '<div class="sub2">'+cpfFmt(r.cpf)+' · '+(esc(r.telefone)||'sem telefone')+' · '+dataBR(r.created_at)+'</div></div>'+
+          (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
+        '<div class="res-itens"><div class="li"><span>'+esc(r.descricao||'—')+'</span><span>'+((esc(r.categoria)||'')+(r.unidade?' · '+esc(r.unidade):''))+'</span></div></div>'+
+        '<div class="res-actions">'+
+          (r.status==='pendente'
+            ? '<button class="mini-btn go" data-sid="'+r.id+'" data-st="atendida">Marcar atendida</button>'
+            : '<button class="mini-btn" data-sid="'+r.id+'" data-st="pendente">Reabrir</button>')+
+          '<button class="mini-btn warn" data-sdel="'+r.id+'">Excluir</button>'+
+        '</div>'+
+      '</div>';
+    });
+    $('#view').innerHTML=html;
+    $$('#view .subtab').forEach(b=> b.onclick=()=>{ acaoSolicTab=b.dataset.tab; renderAcaoSolic(); });
+    $$('#view .mini-btn[data-st]').forEach(b=> b.onclick=()=>mudaStatusSolic(b.dataset.sid, b.dataset.st));
+    $$('#view .mini-btn[data-sdel]').forEach(b=> b.onclick=()=>excluirSolic(b.dataset.sdel));
+  }
+  async function mudaStatusSolic(id, st){
+    const {error}=await sb.from('acao_solicitacoes').update({status:st}).eq('id',id);
+    if(error){ alert('Erro: '+error.message); return; }
+    renderAcaoSolic();
+  }
+  async function excluirSolic(id){
+    if(!confirm('Excluir esta solicitação?')) return;
+    const {error}=await sb.from('acao_solicitacoes').delete().eq('id',id);
+    if(error){ alert('Erro: '+error.message); return; }
+    renderAcaoSolic();
   }
   $('#btn-fin').onclick=function(){
     if(app.classList.contains('recolhido')) setRecolhido(false);
