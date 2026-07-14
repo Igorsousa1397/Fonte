@@ -54,7 +54,12 @@
   .sec-head p{color:var(--cinza);font-size:.9rem}
 
   /* carrossel de necessidades */
-  .carrossel{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;scrollbar-width:thin}
+  .carrossel{overflow:hidden;padding:4px 0 10px;-webkit-mask:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);mask:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+  .carrossel-track{display:flex;width:max-content;animation:marquee 40s linear infinite}
+  .carrossel:hover .carrossel-track{animation-play-state:paused}
+  .carrossel-group{display:flex;gap:14px;padding-right:14px;flex:0 0 auto}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.carrossel{overflow-x:auto}.carrossel-track{animation:none;width:auto}}
   .nec-card{flex:0 0 210px;scroll-snap-align:start;border:var(--borda);border-radius:var(--raio);overflow:hidden;background:var(--grafite)}
   .nec-card .foto,.item-card .foto{aspect-ratio:4/3;background:var(--breu);display:flex;align-items:center;justify-content:center;overflow:hidden}
   .foto img{width:100%;height:100%;object-fit:cover}
@@ -236,12 +241,17 @@
     const necs = ITENS.filter(i=>i.necessidade).slice().sort((a,b)=>(b.prioridade-a.prioridade)||a.nome.localeCompare(b.nome,'pt'));
     if(!necs.length){ el('secNecessidades').style.display='none'; return; }
     el('secNecessidades').style.display='';
-    el('carrossel').innerHTML = necs.map(i=>
+    const cards = necs.map(i=>
       '<div class="nec-card'+(i.quantidade>0?'':' urg')+'"><div class="foto">'+fotoHtml(i)+'</div><div class="body">'+
         '<div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
         (i.quantidade>0 ? '<span class="badge-ok">temos '+i.quantidade+'</span>' : '<span class="badge-falta"><span class="pdot"></span>Em falta</span>')+
       '</div></div>'
     ).join('');
+    el('carrossel').innerHTML = '<div class="carrossel-track" id="carTrack"><div class="carrossel-group">'+cards+'</div><div class="carrossel-group" aria-hidden="true">'+cards+'</div></div>';
+    requestAnimationFrame(function(){
+      var g = el('carrossel').querySelector('.carrossel-group'), track = el('carTrack');
+      if(g && track){ var w=g.getBoundingClientRect().width; track.style.animationDuration=Math.max(18,Math.round(w/55))+'s'; }
+    });
   }
 
   const SEC_LABEL = { mercadinho:'Mercadinho', rouparia:'Rouparia', eletrodomesticos:'Eletrodomésticos', moveis:'Móveis', remedios:'Remédios' };
