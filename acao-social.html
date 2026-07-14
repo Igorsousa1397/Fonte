@@ -105,7 +105,15 @@
   .passo{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:18px}
   .passo .n{font-family:var(--display);font-size:1.4rem;color:var(--agua);font-weight:800}
   .passo p{color:var(--cinza-claro);font-size:.92rem;margin-top:6px}
-  @media(max-width:640px){.passos{grid-template-columns:1fr}}
+  @media(max-width:640px){
+    .passos{grid-template-columns:1fr}
+    .sec-head{flex-direction:column;align-items:flex-start;gap:3px}
+    .nec-card{flex:0 0 150px}
+    .nec-card .body{padding:9px 11px}
+    .nec-card .nm{font-size:.92rem}
+    .nec-card .ct{font-size:.76rem}
+    .carrossel-group{gap:10px;padding-right:10px}
+  }
 
   /* fab reserva */
   .cart-fab{position:fixed;right:16px;top:11px;z-index:50;background:var(--agua);color:#04211f;border:none;border-radius:100px;padding:10px 18px;font-weight:700;cursor:pointer;box-shadow:0 12px 34px -10px rgba(122,212,207,.55);display:none}
