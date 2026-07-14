@@ -134,6 +134,8 @@
   .tabela.membros .lin[data-mid]:hover{background:rgba(255,255,255,.03)}
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
   .modal-bg.on{display:flex}
+  .doac-galeria{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .doac-galeria img{width:130px;height:130px;object-fit:cover;border-radius:10px}
   .modal{background:var(--grafite);border:var(--borda);border-radius:var(--raio);max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:26px 26px 20px;position:relative}
   .modal-x{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--cinza-claro);cursor:pointer;padding:4px;line-height:0}
   .modal-x:hover{color:var(--luz)}
@@ -315,6 +317,12 @@
     <div class="modal">
       <button class="modal-x" id="mbX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
       <div id="mbBody"></div>
+    </div>
+  </div>
+  <div class="modal-bg" id="doacBg">
+    <div class="modal">
+      <button class="modal-x" id="doacX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
+      <div id="doacBody"></div>
     </div>
   </div>
 
@@ -1323,11 +1331,12 @@ ${serve ? `
       const _fotos = Array.isArray(r.fotos)&&r.fotos.length ? r.fotos : (r.foto_url?[r.foto_url]:[]);
       const thumb = _fotos.length ? '<div style="display:flex;gap:6px;flex-shrink:0">'+_fotos.map(function(u){ return '<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" style="width:60px;height:60px;object-fit:cover;border-radius:9px" alt=""></a>'; }).join('')+'</div>' : '';
       html+='<div class="res-card">'+
-        '<div class="res-head" style="align-items:flex-start;gap:12px">'+thumb+'<div style="flex:1;min-width:0">'+
-          '<div style="font-weight:600">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+esc(r.status)+'</span></div>'+
-          '<div class="sub2">'+((esc(r.telefone)||'sem telefone'))+' · '+(esc(r.categoria)||'—')+' · '+dataBR(r.created_at)+'</div>'+
-          '<div style="margin-top:6px;color:var(--cinza-claro)">'+esc(r.descricao)+'</div>'+
-        '</div>'+(wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
+        '<div class="res-head" style="align-items:flex-start;gap:12px">'+
+          '<div style="display:flex;gap:12px;flex:1;min-width:0;cursor:pointer" data-dopen="'+r.id+'">'+thumb+'<div style="flex:1;min-width:0">'+
+            '<div style="font-weight:600">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+esc(r.status)+'</span></div>'+
+            '<div class="sub2">'+((esc(r.telefone)||'sem telefone'))+' · '+(esc(r.categoria)||'—')+' · '+dataBR(r.created_at)+'</div>'+
+            '<div style="margin-top:6px;color:var(--cinza-claro);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+esc(r.descricao)+'</div>'+
+          '</div></div>'+(wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
         '<div class="res-actions">'+
           (r.status!=='aceita'   ? '<button class="mini-btn go" data-did="'+r.id+'" data-st="aceita">Aceitar</button>' : '')+
           (r.status!=='recusada' ? '<button class="mini-btn" data-did="'+r.id+'" data-st="recusada">Recusar</button>' : '')+
@@ -1338,11 +1347,35 @@ ${serve ? `
     });
     $('#view').innerHTML=html;
     $$('#view .subtab').forEach(b=> b.onclick=()=>{ acaoDoacTab=b.dataset.tab; renderAcaoDoacoes(); });
+    $$('#view [data-dopen]').forEach(d=> d.onclick=()=>abreDoacao(d.dataset.dopen));
     $$('#view .mini-btn[data-st]').forEach(b=> b.onclick=()=>mudaStatusDoac(b.dataset.did, b.dataset.st));
     $$('#view .mini-btn[data-ddel]').forEach(b=> b.onclick=()=>excluirDoac(b.dataset.ddel));
   }
   async function mudaStatusDoac(id, st){ const {error}=await sb.from('acao_doacoes').update({status:st}).eq('id',id); if(error){ alert('Erro: '+error.message); return; } renderAcaoDoacoes(); }
   async function excluirDoac(id){ if(!confirm('Excluir esta doação?')) return; const {error}=await sb.from('acao_doacoes').delete().eq('id',id); if(error){ alert('Erro: '+error.message); return; } renderAcaoDoacoes(); }
+  function abreDoacao(id){
+    const r=ADOACOES.find(x=>String(x.id)===String(id)); if(!r) return;
+    const fotos=Array.isArray(r.fotos)&&r.fotos.length?r.fotos:(r.foto_url?[r.foto_url]:[]);
+    const wa=waLink(r.telefone);
+    const pill=r.status==='aceita'?'ok':(r.status==='recusada'?'off2':'aviso');
+    const galeria=fotos.length?'<div class="doac-galeria">'+fotos.map(function(u){ return '<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" alt=""></a>'; }).join('')+'</div>':'';
+    $('#doacBody').innerHTML=
+      '<h2 style="margin:0 30px 2px 0">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+esc(r.status)+'</span></h2>'+
+      '<div class="sub2" style="margin-bottom:14px">'+((esc(r.telefone)||'sem telefone'))+' · '+(esc(r.categoria)||'—')+' · '+dataBR(r.created_at)+'</div>'+
+      galeria+
+      '<div style="white-space:pre-wrap;line-height:1.55;color:var(--luz);margin-top:14px">'+esc(r.descricao)+'</div>'+
+      '<div class="res-actions" style="margin-top:18px">'+
+        (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+
+        (r.status!=='aceita'   ? '<button class="mini-btn go" data-mst="aceita">Aceitar</button>' : '')+
+        (r.status!=='recusada' ? '<button class="mini-btn" data-mst="recusada">Recusar</button>' : '')+
+        (r.status!=='pendente' ? '<button class="mini-btn" data-mst="pendente">Reabrir</button>' : '')+
+        '<button class="mini-btn warn" data-mdel="1">Excluir</button>'+
+      '</div>';
+    $$('#doacBody [data-mst]').forEach(b=> b.onclick=()=>{ fechaDoac(); mudaStatusDoac(id, b.dataset.mst); });
+    $('#doacBody [data-mdel]').onclick=()=>{ fechaDoac(); excluirDoac(id); };
+    $('#doacBg').classList.add('on');
+  }
+  function fechaDoac(){ $('#doacBg').classList.remove('on'); }
   $('#btn-fin').onclick=function(){
     if(app.classList.contains('recolhido')) setRecolhido(false);
     const abre=!$('#subnav-fin').classList.contains('aberto');
@@ -1364,7 +1397,9 @@ ${serve ? `
   $('#mbBg').onclick=e=>{ if(e.target===$('#mbBg')) fechaMembro(); };
   $('#itX').onclick=fechaItem;
   $('#itBg').onclick=e=>{ if(e.target===$('#itBg')) fechaItem(); };
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ fechaMembro(); fechaItem(); } });
+  $('#doacX').onclick=fechaDoac;
+  $('#doacBg').onclick=e=>{ if(e.target===$('#doacBg')) fechaDoac(); };
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ fechaMembro(); fechaItem(); fechaDoac(); } });
 
   (async function(){
     const { data:{ user } } = await sb.auth.getUser();
