@@ -181,6 +181,12 @@
   .embreve p{color:var(--cinza-claro);line-height:1.6;margin:0}
   .ithint{font-size:.72rem;color:var(--cinza);margin-top:5px;line-height:1.4}
   .chkline{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.9rem;color:var(--luz);margin-top:4px}
+  #it-comp{margin-top:6px}
+  .comp-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .comp-row input{background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:9px 11px;color:var(--luz);font-family:inherit;font-size:.9rem}
+  .comp-row .c-nome{flex:2;min-width:0} .comp-row .c-qtd{flex:1;min-width:0}
+  .comp-row .c-rm{background:transparent;border:var(--borda);color:var(--cinza);border-radius:var(--raio-sm);width:36px;height:36px;flex-shrink:0;cursor:pointer;font-size:1.15rem;line-height:1}
+  .comp-add{background:transparent;border:1px dashed var(--linha,#2a2a31);color:var(--agua);border-radius:var(--raio-sm);padding:8px 12px;cursor:pointer;font-family:inherit;font-size:.85rem;margin-top:2px}
   .chkline input{width:18px;height:18px;accent-color:var(--agua)}
   .modal-actions{display:flex;gap:10px;margin-top:20px;align-items:center}
   .stepper{display:inline-flex;align-items:center;border:var(--borda);border-radius:8px;overflow:hidden}
@@ -1068,6 +1074,8 @@ ${serve ? `
       '<div class="fld"><label>Foto (URL)</label><input id="it-foto" placeholder="https://…" value="'+esc(e.foto_url||'')+'"></div>'+
       '<div class="fld" id="it-foto-upload" style="display:none"><label>Ou envie uma foto do item</label><input type="file" id="it-fotofile" accept="image/*"><div class="ithint" id="it-foto-status">A foto é enviada e o link acima é preenchido sozinho.</div></div>'+
       '<div class="fld"><label>Descrição</label><textarea id="it-desc" rows="2">'+esc(e.descricao||'')+'</textarea></div>'+
+      '<label class="chkline"><input type="checkbox" id="it-cesta"'+((Array.isArray(e.composicao)&&e.composicao.length)?' checked':'')+'> É uma cesta básica (listar os itens que vêm nela)</label>'+
+      '<div class="fld" id="it-comp" style="display:none"><label>Itens da cesta</label><div id="it-comp-list"></div><button type="button" class="comp-add" id="it-comp-add">+ Adicionar item</button></div>'+
       '<label class="chkline"><input type="checkbox" id="it-nec"'+(e.necessidade?' checked':'')+'> Mostrar no carrossel “Estamos precisando de…”</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="it-salvar">Salvar</button><button class="btn-ghost" id="it-cancelar">Cancelar</button>'+
         (it?'<button class="btn-danger" id="it-excluir">Excluir</button>':'')+'</div>';
@@ -1079,6 +1087,16 @@ ${serve ? `
     $('#it-secao').onchange=function(){ var s=SECOES[$('#it-secao').value]; $('#it-cat').innerHTML=optsHtml(s.cats, s.cats[0]); $('#it-uni').innerHTML=optsHtml(s.unis, s.unis[0]); _atualizaUpload(); };
     $('#it-cat').addEventListener('change', _atualizaUpload);
     _atualizaUpload();
+    function addCompRow(nome,qtd){
+      var wrap=document.createElement('div'); wrap.className='comp-row';
+      wrap.innerHTML='<input class="c-nome" placeholder="Item (ex.: Arroz 1kg)" value="'+esc(nome||'')+'"><input class="c-qtd" placeholder="Qtd (ex.: 1)" value="'+esc(qtd||'')+'"><button type="button" class="c-rm" title="Remover">×</button>';
+      wrap.querySelector('.c-rm').onclick=function(){ wrap.remove(); };
+      $('#it-comp-list').appendChild(wrap);
+    }
+    ((Array.isArray(e.composicao)&&e.composicao.length)?e.composicao:[]).forEach(function(x){ addCompRow(x.nome, x.qtd); });
+    function _toggleCesta(){ var on=$('#it-cesta').checked; $('#it-comp').style.display=on?'':'none'; if(on && !$('#it-comp-list').children.length) addCompRow('',''); }
+    $('#it-cesta').onchange=_toggleCesta; _toggleCesta();
+    $('#it-comp-add').onclick=function(){ addCompRow('',''); };
     var _ff=$('#it-fotofile'); if(_ff) _ff.onchange=async function(){
       var f=this.files&&this.files[0]; if(!f) return;
       var st=$('#it-foto-status');
@@ -1100,11 +1118,17 @@ ${serve ? `
   async function salvarItem(id){
     const v=i=>{const el=$('#'+i);return el?el.value.trim():'';};
     const nome=v('it-nome'); if(!nome){ alert('Informe o nome do item.'); return; }
+    let composicao=null;
+    if($('#it-cesta') && $('#it-cesta').checked){
+      const rows=Array.prototype.slice.call(document.querySelectorAll('#it-comp-list .comp-row'));
+      const arr=rows.map(r=>({nome:r.querySelector('.c-nome').value.trim(), qtd:r.querySelector('.c-qtd').value.trim()})).filter(x=>x.nome);
+      composicao=arr.length?arr:null;
+    }
     const payload={ nome, secao:$('#it-secao').value, categoria:v('it-cat')||null, unidade:v('it-uni')||'un',
       quantidade:Math.max(0,parseInt($('#it-qtd').value,10)||0),
       prioridade:Math.max(0,parseInt($('#it-prio').value,10)||0),
       limite_mensal_cpf:Math.max(0,parseInt($('#it-lim').value,10)||0),
-      foto_url:v('it-foto')||null, descricao:v('it-desc')||null, necessidade:$('#it-nec').checked };
+      foto_url:v('it-foto')||null, descricao:v('it-desc')||null, necessidade:$('#it-nec').checked, composicao };
     const btn=$('#it-salvar'); btn.disabled=true; btn.textContent='Salvando…';
     let error;
     if(id){ ({error}=await sb.from('acao_itens').update(payload).eq('id',id)); }
