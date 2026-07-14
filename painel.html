@@ -1064,6 +1064,8 @@ ${serve ? `
     var _sec = inferSec(e.secao, e.categoria), _S = SECOES[_sec];
     $('#itBody').innerHTML=
       '<h2>'+(it?'Editar item':'Novo item')+'</h2><div class="msub">Item da ação social</div>'+
+      '<label class="chkline" style="margin-bottom:10px"><input type="checkbox" id="it-cesta"'+((Array.isArray(e.composicao)&&e.composicao.length)?' checked':'')+'> É uma cesta básica (listar os itens que vêm nela)</label>'+
+      '<div class="fld" id="it-comp" style="display:none"><label>Itens da cesta</label><div id="it-comp-list"></div><button type="button" class="comp-add" id="it-comp-add">+ Adicionar item</button></div>'+
       '<div class="fld"><label>Seção</label><select id="it-secao">'+SEC_ORDER.map(function(k){return '<option value="'+k+'"'+(k===_sec?' selected':'')+'>'+SECOES[k].rot+'</option>';}).join('')+'</select></div>'+
       '<div class="fld"><label>Nome</label><input id="it-nome" value="'+esc(e.nome||'')+'"></div>'+
       '<div class="f2"><div class="fld"><label>Categoria</label><select id="it-cat">'+optsHtml(_S.cats, e.categoria)+'</select></div>'+
@@ -1074,8 +1076,6 @@ ${serve ? `
       '<div class="fld"><label>Foto (URL)</label><input id="it-foto" placeholder="https://…" value="'+esc(e.foto_url||'')+'"></div>'+
       '<div class="fld" id="it-foto-upload" style="display:none"><label>Ou envie uma foto do item</label><input type="file" id="it-fotofile" accept="image/*"><div class="ithint" id="it-foto-status">A foto é enviada e o link acima é preenchido sozinho.</div></div>'+
       '<div class="fld"><label>Descrição</label><textarea id="it-desc" rows="2">'+esc(e.descricao||'')+'</textarea></div>'+
-      '<label class="chkline"><input type="checkbox" id="it-cesta"'+((Array.isArray(e.composicao)&&e.composicao.length)?' checked':'')+'> É uma cesta básica (listar os itens que vêm nela)</label>'+
-      '<div class="fld" id="it-comp" style="display:none"><label>Itens da cesta</label><div id="it-comp-list"></div><button type="button" class="comp-add" id="it-comp-add">+ Adicionar item</button></div>'+
       '<label class="chkline"><input type="checkbox" id="it-nec"'+(e.necessidade?' checked':'')+'> Mostrar no carrossel “Estamos precisando de…”</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="it-salvar">Salvar</button><button class="btn-ghost" id="it-cancelar">Cancelar</button>'+
         (it?'<button class="btn-danger" id="it-excluir">Excluir</button>':'')+'</div>';
@@ -1094,7 +1094,14 @@ ${serve ? `
       $('#it-comp-list').appendChild(wrap);
     }
     ((Array.isArray(e.composicao)&&e.composicao.length)?e.composicao:[]).forEach(function(x){ addCompRow(x.nome, x.qtd); });
-    function _toggleCesta(){ var on=$('#it-cesta').checked; $('#it-comp').style.display=on?'':'none'; if(on && !$('#it-comp-list').children.length) addCompRow('',''); }
+    function _toggleCesta(){
+      var on=$('#it-cesta').checked;
+      $('#it-comp').style.display=on?'':'none';
+      if(on && !$('#it-comp-list').children.length) addCompRow('','');
+      ['it-secao','it-cat','it-qtd','it-lim','it-foto','it-desc'].forEach(function(id){ var el=$('#'+id); if(el){ var f=el.closest('.f2')||el.closest('.fld'); if(f) f.style.display=on?'none':''; } });
+      var nec=$('#it-nec'); if(nec){ var l=nec.closest('.chkline'); if(l) l.style.display=on?'none':''; }
+      if(on){ var up=$('#it-foto-upload'); if(up) up.style.display='none'; } else { _atualizaUpload(); }
+    }
     $('#it-cesta').onchange=_toggleCesta; _toggleCesta();
     $('#it-comp-add').onclick=function(){ addCompRow('',''); };
     var _ff=$('#it-fotofile'); if(_ff) _ff.onchange=async function(){
