@@ -1098,10 +1098,10 @@ ${serve ? `
       var on=$('#it-cesta').checked;
       $('#it-comp').style.display=on?'':'none';
       if(on && !$('#it-comp-list').children.length) addCompRow('','');
-      ['it-secao','it-cat','it-foto','it-desc'].forEach(function(id){ var el=$('#'+id); if(el){ var f=el.closest('.f2')||el.closest('.fld'); if(f) f.style.display=on?'none':''; } });
+      ['it-secao','it-cat','it-desc'].forEach(function(id){ var el=$('#'+id); if(el){ var f=el.closest('.f2')||el.closest('.fld'); if(f) f.style.display=on?'none':''; } });
       var _prio=$('#it-prio'); if(_prio){ var _pf=_prio.closest('.fld'); if(_pf) _pf.style.display=on?'none':''; }
       var nec=$('#it-nec'); if(nec){ var l=nec.closest('.chkline'); if(l) l.style.display=on?'none':''; }
-      if(on){ var up=$('#it-foto-upload'); if(up) up.style.display='none'; } else { _atualizaUpload(); }
+      if(on){ var up=$('#it-foto-upload'); if(up) up.style.display=''; } else { _atualizaUpload(); }
     }
     $('#it-cesta').onchange=_toggleCesta; _toggleCesta();
     $('#it-comp-add').onclick=function(){ addCompRow('',''); };
