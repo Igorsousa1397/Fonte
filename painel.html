@@ -135,7 +135,8 @@
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
   .modal-bg.on{display:flex}
   .doac-galeria{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-  .doac-galeria img{width:130px;height:130px;object-fit:cover;border-radius:10px}
+  .doac-galeria img{width:168px;height:168px;object-fit:cover;border-radius:10px}
+  #doacBg .modal{max-width:680px}
   .modal{background:var(--grafite);border:var(--borda);border-radius:var(--raio);max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:26px 26px 20px;position:relative}
   .modal-x{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--cinza-claro);cursor:pointer;padding:4px;line-height:0}
   .modal-x:hover{color:var(--luz)}
@@ -1329,7 +1330,7 @@ ${serve ? `
       const wa=waLink(r.telefone);
       const pill=r.status==='aceita'?'ok':(r.status==='recusada'?'off2':'aviso');
       const _fotos = Array.isArray(r.fotos)&&r.fotos.length ? r.fotos : (r.foto_url?[r.foto_url]:[]);
-      const thumb = _fotos.length ? '<div style="display:flex;gap:6px;flex-shrink:0">'+_fotos.map(function(u){ return '<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" style="width:60px;height:60px;object-fit:cover;border-radius:9px" alt=""></a>'; }).join('')+'</div>' : '';
+      const thumb = _fotos.length ? '<div style="display:flex;gap:6px;flex-shrink:0">'+_fotos.map(function(u){ return '<img src="'+esc(u)+'" style="width:60px;height:60px;object-fit:cover;border-radius:9px" alt="">'; }).join('')+'</div>' : '';
       html+='<div class="res-card">'+
         '<div class="res-head" style="align-items:flex-start;gap:12px">'+
           '<div style="display:flex;gap:12px;flex:1;min-width:0;cursor:pointer" data-dopen="'+r.id+'">'+thumb+'<div style="flex:1;min-width:0">'+
@@ -1358,7 +1359,7 @@ ${serve ? `
     const fotos=Array.isArray(r.fotos)&&r.fotos.length?r.fotos:(r.foto_url?[r.foto_url]:[]);
     const wa=waLink(r.telefone);
     const pill=r.status==='aceita'?'ok':(r.status==='recusada'?'off2':'aviso');
-    const galeria=fotos.length?'<div class="doac-galeria">'+fotos.map(function(u){ return '<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" alt=""></a>'; }).join('')+'</div>':'';
+    const galeria=fotos.length?'<div class="doac-galeria">'+fotos.map(function(u){ return '<img src="'+esc(u)+'" alt="">'; }).join('')+'</div>':'';
     $('#doacBody').innerHTML=
       '<h2 style="margin:0 30px 2px 0">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+esc(r.status)+'</span></h2>'+
       '<div class="sub2" style="margin-bottom:14px">'+((esc(r.telefone)||'sem telefone'))+' · '+(esc(r.categoria)||'—')+' · '+dataBR(r.created_at)+'</div>'+
