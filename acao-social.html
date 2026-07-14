@@ -55,10 +55,10 @@
 
   /* carrossel de necessidades */
   .carrossel{overflow:hidden;padding:4px 0 10px}
-  .carrossel-track{display:flex;width:max-content;animation:marquee 40s linear infinite;transform:translateZ(0);backface-visibility:hidden;will-change:transform}
+  .carrossel-track{display:flex;width:max-content;--shift:0px;animation:marquee 40s linear infinite;transform:translateZ(0);backface-visibility:hidden;will-change:transform}
   .carrossel:hover .carrossel-track{animation-play-state:paused}
   .carrossel-group{display:flex;gap:14px;padding-right:14px;flex:0 0 auto}
-  @keyframes marquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+  @keyframes marquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-1 * var(--shift)),0,0)}}
   @media (prefers-reduced-motion:reduce){.carrossel{overflow-x:auto}.carrossel-track{animation:none;width:auto}}
   .nec-card{flex:0 0 210px;scroll-snap-align:start;border:var(--borda);border-radius:var(--raio);overflow:hidden;background:var(--grafite)}
   .nec-card .foto,.item-card .foto{aspect-ratio:4/3;background:var(--breu);display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -244,6 +244,7 @@
     const { data, error } = await sb.from('acao_itens').select('*').eq('ativo',true).order('nome');
     ITENS = data || [];
     renderNecessidades();
+    var _necT; window.addEventListener('resize', function(){ clearTimeout(_necT); _necT=setTimeout(renderNecessidades, 200); });
     renderConteudo();
   }
 
@@ -257,10 +258,18 @@
         (i.quantidade>0 ? '<span class="badge-ok">temos '+i.quantidade+'</span>' : '<span class="badge-falta"><span class="pdot"></span>Em falta</span>')+
       '</div></div>'
     ).join('');
-    el('carrossel').innerHTML = '<div class="carrossel-track" id="carTrack"><div class="carrossel-group">'+cards+'</div><div class="carrossel-group" aria-hidden="true">'+cards+'</div></div>';
+    const cont = el('carrossel');
+    cont.innerHTML = '<div class="carrossel-track" id="carTrack"><div class="carrossel-group">'+cards+'</div></div>';
     requestAnimationFrame(function(){
-      var g = el('carrossel').querySelector('.carrossel-group'), track = el('carTrack');
-      if(g && track){ var w=g.getBoundingClientRect().width; track.style.animationDuration=Math.max(18,Math.round(w/55))+'s'; }
+      var track = el('carTrack'); if(!track) return;
+      var g = track.querySelector('.carrossel-group'); if(!g) return;
+      var gw = g.getBoundingClientRect().width, cw = cont.getBoundingClientRect().width;
+      if(gw<=0) return;
+      var k = Math.max(2, Math.ceil(cw/gw) + 1), groups='';
+      for(var i=0;i<k;i++){ groups += '<div class="carrossel-group"'+(i>0?' aria-hidden="true"':'')+'>'+cards+'</div>'; }
+      track.innerHTML = groups;
+      track.style.setProperty('--shift', gw+'px');
+      track.style.animationDuration = Math.max(8, Math.round(gw/50))+'s';
     });
   }
 
