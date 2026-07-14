@@ -128,6 +128,20 @@
   .modal-x{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--cinza-claro);cursor:pointer;padding:4px;line-height:0}
   .modal-x:hover{color:var(--luz)}
   .modal h2{font-family:var(--display);font-size:1.4rem;margin:0 30px 4px 0}
+  .item-card [data-det]{cursor:pointer}
+  .det-foto{width:100%;aspect-ratio:4/3;border-radius:var(--raio-sm);overflow:hidden;background:var(--breu);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+  .det-foto img{width:100%;height:100%;object-fit:cover}
+  .det-foto .foto-ph{font-size:3rem}
+  .det-nome{font-family:var(--display);font-size:1.5rem;font-weight:700;margin-right:30px}
+  .det-ct{color:var(--cinza);font-size:.9rem;margin-top:2px}
+  .det-disp{color:var(--agua);font-size:.92rem;margin-top:6px}
+  .det-desc{color:var(--cinza-claro);margin-top:14px;line-height:1.55;white-space:pre-wrap}
+  .det-cesta{margin-top:18px}
+  .det-cesta h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--cinza-claro);margin-bottom:9px}
+  .det-cesta ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .det-cesta li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 13px;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);font-size:.92rem}
+  .det-cesta li .qt{color:var(--agua);font-weight:600;flex-shrink:0}
+  .det-actions{margin-top:20px}
   .modal .msub{color:var(--cinza);font-size:.86rem;margin-bottom:16px}
   .cart-lin{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(42,42,49,.5)}
   .cart-lin .info{flex:1}
@@ -210,6 +224,13 @@
   </div>
 </div>
 
+<div class="modal-bg" id="detBg">
+  <div class="modal">
+    <button class="modal-x" id="detX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
+    <div id="detBody"></div>
+  </div>
+</div>
+
 <footer>
   <div class="foot">
     <span>© 2026 Igreja Apostólica Fonte · Desenvolvido por <span class="dev-cred">iOS Tech</span></span>
@@ -245,6 +266,7 @@
     ITENS = data || [];
     renderNecessidades();
     var _necT; window.addEventListener('resize', function(){ clearTimeout(_necT); _necT=setTimeout(renderNecessidades, 200); });
+    el('detX').onclick=fechaDetalhe; el('detBg').onclick=function(ev){ if(ev.target===el('detBg')) fechaDetalhe(); };
     renderConteudo();
   }
 
@@ -282,17 +304,31 @@
     return 'mercadinho';
   }
 
+  function abreDetalhe(id){
+    var i = ITENS.find(function(x){ return String(x.id)===String(id); }); if(!i) return;
+    var comp = Array.isArray(i.composicao) ? i.composicao.filter(function(x){ return x && x.nome; }) : [];
+    var foto = i.foto_url ? '<img src="'+esc(i.foto_url)+'" alt="'+esc(i.nome)+'">' : '<span class="foto-ph">'+ini(i.nome)+'</span>';
+    var cesta = comp.length ? '<div class="det-cesta"><h3>O que vem na cesta</h3><ul>'+comp.map(function(c){ return '<li><span>'+esc(c.nome)+'</span>'+(c.qtd?'<span class="qt">'+esc(c.qtd)+'</span>':'')+'</li>'; }).join('')+'</ul></div>' : '';
+    var desc = (i.descricao && String(i.descricao).trim()) ? '<div class="det-desc">'+esc(i.descricao)+'</div>' : '';
+    var disp = i.quantidade>0 ? '<div class="det-disp">'+i.quantidade+' '+esc(i.unidade||'un')+' disponível'+(i.quantidade>1?'is':'')+'</div>' : '';
+    var acao = i.quantidade>0 ? '<div class="det-actions"><button class="btn-reservar" id="detReservar">Reservar</button></div>' : '<div class="det-actions"><span class="badge-falta"><span class="pdot"></span>Em falta</span></div>';
+    el('detBody').innerHTML = '<div class="det-foto">'+foto+'</div><div class="det-nome">'+esc(i.nome)+'</div><div class="det-ct">'+(esc(i.categoria)||'')+'</div>'+disp+desc+cesta+acao;
+    el('detBg').classList.add('on');
+    var rb = el('detReservar'); if(rb) rb.onclick=function(){ addCart(i.id); fechaDetalhe(); };
+  }
+  function fechaDetalhe(){ el('detBg').classList.remove('on'); }
   function cardHtml(i){
     const inCart = cart[i.id];
     const foot = inCart
       ? '<div class="stepper" data-id="'+i.id+'"><button data-d="-1">−</button><span class="q">'+inCart.qtd+' no carrinho</span><button data-d="1">+</button></div>'
       : '<button class="btn-reservar" data-add="'+i.id+'">Reservar</button>';
-    return '<div class="item-card"><div class="foto">'+fotoHtml(i)+'</div>'+
-      '<div class="body"><div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
+    return '<div class="item-card"><div class="foto" data-det="'+i.id+'">'+fotoHtml(i)+'</div>'+
+      '<div class="body" data-det="'+i.id+'"><div class="nm">'+esc(i.nome)+'</div><div class="ct">'+(esc(i.categoria)||'&nbsp;')+'</div>'+
         '<div class="disp">'+i.quantidade+' '+esc(i.unidade||'un')+' disponível'+(i.quantidade>1?'is':'')+'</div></div>'+
       '<div class="foot">'+foot+'</div></div>';
   }
   function wireCards(){
+    el('grid').querySelectorAll('[data-det]').forEach(function(d){ d.onclick=function(){ abreDetalhe(d.dataset.det); }; });
     el('grid').querySelectorAll('[data-add]').forEach(b=> b.onclick=()=>addCart(b.dataset.add));
     el('grid').querySelectorAll('.stepper[data-id]').forEach(st=>{
       st.querySelectorAll('button').forEach(b=> b.onclick=()=>mudaQtd(st.dataset.id, parseInt(b.dataset.d,10)));
