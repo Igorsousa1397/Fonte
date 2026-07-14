@@ -162,7 +162,10 @@
   .doar-sub{color:var(--cinza-claro);font-size:.9rem;margin-top:2px;max-width:52ch}
   .doar-btn{display:inline-flex;align-items:center;gap:8px;background:var(--agua);color:#04211f;border:none;border-radius:100px;padding:11px 20px;font-weight:700;text-decoration:none;white-space:nowrap;cursor:pointer}
   .btn-sec{background:transparent;border:var(--borda);color:var(--luz);border-radius:100px;padding:10px 16px;font-family:inherit;font-size:.9rem;cursor:pointer}
-  #dn-foto-prev img{max-width:100%;border-radius:var(--raio-sm);display:block}
+  #dn-foto-prev{display:flex;gap:8px;flex-wrap:wrap}
+  .doar-thumb{position:relative;width:84px;height:84px}
+  .doar-thumb img{width:100%;height:100%;object-fit:cover;border-radius:var(--raio-sm)}
+  .thumb-x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:#1a1a1e;color:#fff;cursor:pointer;font-size:.9rem;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.5)}
   .solic-intro{color:var(--cinza-claro);line-height:1.55;margin-bottom:4px}
   .vmsg{font-size:.86rem;margin-top:8px;min-height:1.2em}
   .vmsg.ok{color:var(--agua)}
@@ -264,7 +267,7 @@
       <div class="fld"><label>WhatsApp</label><input id="dn-tel" inputmode="tel" maxlength="16" placeholder="(11) 90000-0000"></div>
       <div class="fld"><label>Categoria</label><select id="dn-cat"></select></div>
       <div class="fld"><label>O que você quer doar?</label><textarea id="dn-desc" rows="3" placeholder="Ex.: Sofá 3 lugares em bom estado, roupas infantis tam. 4…"></textarea></div>
-      <div class="fld"><label>Foto (opcional)</label><input type="file" id="dn-foto" accept="image/*" style="display:none"><button type="button" class="btn-sec" id="dn-foto-btn">Escolher foto</button><div id="dn-foto-prev" style="margin-top:10px"></div></div>
+      <div class="fld"><label>Fotos (até 3, opcional)</label><input type="file" id="dn-foto" accept="image/*" multiple style="display:none"><button type="button" class="btn-sec" id="dn-foto-btn">Escolher foto</button><div id="dn-foto-prev" style="margin-top:10px"></div></div>
       <button class="btn" id="dn-enviar">Enviar</button>
     </div>
   </div>
@@ -285,7 +288,7 @@
   // >>> Cole aqui o ID do vídeo do YouTube (ex: 'dQw4w9WgXcQ'). Deixe vazio para o placeholder.
   const VIDEO_YOUTUBE_ID = '';
 
-  var ITENS = [], cart = {}, membroOk = false, membroNome = '', membroCpf = '', _doarFile = null;
+  var ITENS = [], cart = {}, membroOk = false, membroNome = '', membroCpf = '', _doarFiles = [];
   const el = id => document.getElementById(id);
   const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -539,7 +542,7 @@
 
   // ---------- doação ----------
   function abrirDoar(){
-    _doarFile=null;
+    _doarFiles=[];
     el('dn-cat').innerHTML=optSel(SOLIC_CATS);
     el('dn-nome').value=''; el('dn-tel').value=''; el('dn-desc').value=''; el('dn-foto-prev').innerHTML='';
     const btn=el('dn-enviar'); btn.disabled=false; btn.textContent='Enviar';
@@ -554,15 +557,20 @@
     };
     el('dn-foto-btn').onclick=function(){ el('dn-foto').click(); };
     el('dn-foto').onchange=function(){
-      const f=el('dn-foto').files&&el('dn-foto').files[0];
-      if(!f){ _doarFile=null; el('dn-foto-prev').innerHTML=''; return; }
-      _doarFile=f;
-      const url=URL.createObjectURL(f);
-      el('dn-foto-prev').innerHTML='<img src="'+url+'" alt=""><button type="button" class="btn-sec" id="dn-foto-rm" style="margin-top:8px">Remover foto</button>';
-      el('dn-foto-rm').onclick=function(){ _doarFile=null; el('dn-foto').value=''; el('dn-foto-prev').innerHTML=''; };
+      const novos=Array.prototype.slice.call(el('dn-foto').files||[]);
+      novos.forEach(function(f){ if(_doarFiles.length<3) _doarFiles.push(f); });
+      el('dn-foto').value='';
+      renderDoarFotos();
     };
+    renderDoarFotos();
     el('dn-enviar').onclick=enviarDoacao;
     el('doarBg').classList.add('on');
+  }
+  function renderDoarFotos(){
+    const prev=el('dn-foto-prev'); if(!prev) return;
+    prev.innerHTML=_doarFiles.map(function(f,idx){ return '<div class="doar-thumb"><img src="'+URL.createObjectURL(f)+'" alt=""><button type="button" class="thumb-x" data-i="'+idx+'">×</button></div>'; }).join('');
+    const btn=el('dn-foto-btn'); if(btn){ btn.textContent=_doarFiles.length?('Adicionar foto ('+_doarFiles.length+'/3)'):'Escolher foto'; btn.style.display=_doarFiles.length>=3?'none':''; }
+    Array.prototype.slice.call(prev.querySelectorAll('.thumb-x')).forEach(function(b){ b.onclick=function(){ _doarFiles.splice(parseInt(b.dataset.i,10),1); renderDoarFotos(); }; });
   }
   async function enviarDoacao(){
     const nome=(el('dn-nome').value||'').trim();
@@ -573,17 +581,18 @@
     if(tel.replace(/\D/g,'').length<10){ toast('Informe um WhatsApp válido.'); return; }
     if(!desc){ toast('Conte o que você quer doar.'); return; }
     const btn=el('dn-enviar'); btn.disabled=true; btn.textContent='Enviando…';
-    let fotoUrl=null;
+    let fotos=[];
     try{
-      if(_doarFile){
-        const ext=((_doarFile.name||'').split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+      for(let k=0;k<_doarFiles.length;k++){
+        const f=_doarFiles[k];
+        const ext=((f.name||'').split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
         const path='doacoes/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
-        const up=await sb.storage.from('acao-doacoes').upload(path,_doarFile,{upsert:false});
+        const up=await sb.storage.from('acao-doacoes').upload(path,f,{upsert:false});
         if(up.error) throw up.error;
-        fotoUrl=sb.storage.from('acao-doacoes').getPublicUrl(path).data.publicUrl;
+        fotos.push(sb.storage.from('acao-doacoes').getPublicUrl(path).data.publicUrl);
       }
-    }catch(e){ btn.disabled=false; btn.textContent='Enviar'; toast('Não deu para enviar a foto. Tente sem foto ou de novo.'); return; }
-    const { error } = await sb.rpc('acao_registrar_doacao', { p_nome:nome, p_telefone:tel, p_categoria:cat, p_descricao:desc, p_foto_url:fotoUrl });
+    }catch(e){ btn.disabled=false; btn.textContent='Enviar'; toast('Não deu para enviar as fotos. Tente com menos fotos ou de novo.'); return; }
+    const { error } = await sb.rpc('acao_registrar_doacao', { p_nome:nome, p_telefone:tel, p_categoria:cat, p_descricao:desc, p_fotos: fotos.length?fotos:null });
     if(error){ btn.disabled=false; btn.textContent='Enviar'; toast('Não foi possível enviar: '+error.message); return; }
     el('doarForm').innerHTML=
       '<div style="text-align:center;padding:14px 4px">'+

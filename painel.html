@@ -1320,7 +1320,8 @@ ${serve ? `
     else lista.forEach(function(r){
       const wa=waLink(r.telefone);
       const pill=r.status==='aceita'?'ok':(r.status==='recusada'?'off2':'aviso');
-      const thumb=r.foto_url?'<img src="'+esc(r.foto_url)+'" style="width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0" alt="">':'';
+      const _fotos = Array.isArray(r.fotos)&&r.fotos.length ? r.fotos : (r.foto_url?[r.foto_url]:[]);
+      const thumb = _fotos.length ? '<div style="display:flex;gap:6px;flex-shrink:0">'+_fotos.map(function(u){ return '<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" style="width:60px;height:60px;object-fit:cover;border-radius:9px" alt=""></a>'; }).join('')+'</div>' : '';
       html+='<div class="res-card">'+
         '<div class="res-head" style="align-items:flex-start;gap:12px">'+thumb+'<div style="flex:1;min-width:0">'+
           '<div style="font-weight:600">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+esc(r.status)+'</span></div>'+
