@@ -137,6 +137,19 @@
   .doac-galeria{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
   .doac-galeria img{width:168px;height:168px;object-fit:cover;border-radius:10px}
   #doacBg .modal{max-width:680px}
+  #doacBg .doac-galeria img{cursor:pointer}
+  #lbBg{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:90;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+  #lbBg.on{display:flex}
+  .lb-top{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:0 22px}
+  .lb-count{color:#dcdce0;font-size:.95rem}
+  .lb-x{background:none;border:none;color:#fff;cursor:pointer;padding:6px;line-height:0}
+  .lb-stage{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;max-width:1100px;flex:1;min-height:0}
+  .lb-img{max-width:min(82vw,900px);max-height:74vh;object-fit:contain;border-radius:8px}
+  .lb-nav{background:rgba(255,255,255,.12);border:none;color:#fff;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.5rem;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+  .lb-nav:hover{background:rgba(255,255,255,.22)}
+  .lb-thumbs{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+  .lb-thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;opacity:.5;border:2px solid transparent}
+  .lb-thumbs img.on{opacity:1;border-color:#fff}
   .modal{background:var(--grafite);border:var(--borda);border-radius:var(--raio);max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:26px 26px 20px;position:relative}
   .modal-x{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--cinza-claro);cursor:pointer;padding:4px;line-height:0}
   .modal-x:hover{color:var(--luz)}
@@ -326,6 +339,11 @@
       <div id="doacBody"></div>
     </div>
   </div>
+  <div id="lbBg">
+    <div class="lb-top"><span class="lb-count" id="lb-count"></span><button class="lb-x" id="lb-x" aria-label="Fechar"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l12 12M17 5L5 17"/></svg></button></div>
+    <div class="lb-stage"><button class="lb-nav" id="lb-prev" aria-label="Anterior">‹</button><img class="lb-img" id="lb-img" src="" alt=""><button class="lb-nav" id="lb-next" aria-label="Próxima">›</button></div>
+    <div class="lb-thumbs" id="lb-thumbs"></div>
+  </div>
 
   <section class="conteudo">
     <div class="topbar">
@@ -347,6 +365,7 @@
   const ASSUNTOS=['Pedido de oração','Dúvida geral','Quero conhecer a igreja','Células','Inscrições / eventos','Gabinete pastoral','Outro'];
   const VALOR_CAMISETA=42;
   let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], ASOLIC=[], ADOACOES=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoEstTab='todas', acaoResTab='pendente', acaoSolicTab='pendente', acaoDoacTab='pendente', contatoResTab='pendente';
+  var _itDirty=false;
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -1098,6 +1117,7 @@ ${serve ? `
       '<label class="chkline"><input type="checkbox" id="it-nec"'+(e.necessidade?' checked':'')+'> Mostrar no carrossel “Estamos precisando de…”</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="it-salvar">Salvar</button><button class="btn-ghost" id="it-cancelar">Cancelar</button>'+
         (it?'<button class="btn-danger" id="it-excluir">Excluir</button>':'')+'</div>';
+    _itDirty=false; var _itb=$('#itBody'); if(_itb){ _itb.oninput=function(){ _itDirty=true; }; _itb.onchange=function(){ _itDirty=true; }; }
     $('#itBg').classList.add('on');
     $('#it-cancelar').onclick=fechaItem;
     $('#it-salvar').onclick=()=>salvarItem(it&&it.id);
@@ -1142,6 +1162,7 @@ ${serve ? `
     if(it) $('#it-excluir').onclick=()=>excluirItem(it.id);
   }
   function fechaItem(){ $('#itBg').classList.remove('on'); }
+  function tentarFecharItem(){ if(_itDirty && !confirm('Há alterações não salvas neste item. Deseja descartá-las?')) return; fechaItem(); }
   async function salvarItem(id){
     const v=i=>{const el=$('#'+i);return el?el.value.trim():'';};
     const nome=v('it-nome'); if(!nome){ alert('Informe o nome do item.'); return; }
@@ -1363,9 +1384,23 @@ ${serve ? `
     $('#doacBody').innerHTML=
       galeria+
       '<div style="white-space:pre-wrap;line-height:1.55;color:var(--luz);margin-top:'+(galeria?'16px':'0')+';font-size:1rem">'+esc(r.descricao)+'</div>';
+    $$('#doacBody .doac-galeria img').forEach(function(im,i){ im.onclick=function(){ abreLightbox(fotos,i); }; });
     $('#doacBg').classList.add('on');
   }
   function fechaDoac(){ $('#doacBg').classList.remove('on'); }
+  var _lbFotos=[], _lbIdx=0;
+  function abreLightbox(fotos, idx){ _lbFotos=fotos||[]; _lbIdx=idx||0; if(!_lbFotos.length) return; lbRender(); $('#lbBg').classList.add('on'); }
+  function lbRender(){
+    $('#lb-img').src=_lbFotos[_lbIdx];
+    $('#lb-count').textContent=(_lbIdx+1)+'/'+_lbFotos.length;
+    const mult=_lbFotos.length>1;
+    $('#lb-prev').style.display=mult?'flex':'none';
+    $('#lb-next').style.display=mult?'flex':'none';
+    $('#lb-thumbs').innerHTML=mult?_lbFotos.map(function(u,i){ return '<img src="'+u+'" data-i="'+i+'" class="'+(i===_lbIdx?'on':'')+'" alt="">'; }).join(''):'';
+    $$('#lb-thumbs img').forEach(function(t){ t.onclick=function(){ _lbIdx=parseInt(t.dataset.i,10); lbRender(); }; });
+  }
+  function lbNav(d){ if(!_lbFotos.length) return; _lbIdx=(_lbIdx+d+_lbFotos.length)%_lbFotos.length; lbRender(); }
+  function fechaLb(){ $('#lbBg').classList.remove('on'); }
   $('#btn-fin').onclick=function(){
     if(app.classList.contains('recolhido')) setRecolhido(false);
     const abre=!$('#subnav-fin').classList.contains('aberto');
@@ -1385,11 +1420,23 @@ ${serve ? `
   $('#sair').onclick=async()=>{ await sb.auth.signOut(); location.replace('login.html'); };
   $('#mbX').onclick=fechaMembro;
   $('#mbBg').onclick=e=>{ if(e.target===$('#mbBg')) fechaMembro(); };
-  $('#itX').onclick=fechaItem;
-  $('#itBg').onclick=e=>{ if(e.target===$('#itBg')) fechaItem(); };
+  $('#itX').onclick=tentarFecharItem;
+  $('#itBg').onclick=e=>{ if(e.target===$('#itBg')) tentarFecharItem(); };
   $('#doacX').onclick=fechaDoac;
   $('#doacBg').onclick=e=>{ if(e.target===$('#doacBg')) fechaDoac(); };
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ fechaMembro(); fechaItem(); fechaDoac(); } });
+  $('#lb-x').onclick=fechaLb;
+  $('#lb-prev').onclick=()=>lbNav(-1);
+  $('#lb-next').onclick=()=>lbNav(1);
+  $('#lbBg').onclick=e=>{ if(e.target===$('#lbBg')) fechaLb(); };
+  document.addEventListener('keydown',e=>{
+    if($('#lbBg').classList.contains('on')){
+      if(e.key==='Escape') fechaLb();
+      else if(e.key==='ArrowLeft') lbNav(-1);
+      else if(e.key==='ArrowRight') lbNav(1);
+      return;
+    }
+    if(e.key==='Escape'){ fechaMembro(); tentarFecharItem(); fechaDoac(); }
+  });
 
   (async function(){
     const { data:{ user } } = await sb.auth.getUser();
