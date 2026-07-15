@@ -1023,7 +1023,7 @@ const CELULAS=[
   // ITAJAÍ / SC
   {nome:'Peniel',lider:'Alex Sandro e Tati',end:'Rua Fermino Vieira Cordeiro, 1200 — Espinheiro (Bloco G / Apto 202), Itajaí/SC',hora:'Sex 20h',cidade:'Itajaí/SC',lat:-26.89586808748668,lng:-48.7307609691978,foto:'assets/celulas/peniel.jpg', wpp:'5517992325979'}, ]; CELULAS.sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
 
-let mapa,markers=[],celAtiva=null;
+let mapa,markers=[],templMarkers=[],celAtiva=null;
 function initMapa(){
   if(typeof L==='undefined'){document.getElementById('mapa').innerHTML=
     '<div style="height:100%;display:grid;place-items:center;color:var(--cinza);font-size:.9rem">Mapa indisponível — use a lista ao lado.</div>';return;}
@@ -1034,8 +1034,9 @@ function initMapa(){
     const html=(t.foto?'<img class="p-foto" src="'+t.foto+'" alt="'+t.nome+'" loading="lazy">':'')
       +'<b>'+t.nome+'</b><br>'
       +'<a class="p-end" href="javascript:void(0)" onclick="abrirMapa('+t.lat+','+t.lng+',&#39;'+t.nome+'&#39;)">'+t.end+' <span class="end-ir">&#8599;</span></a>';
-    L.marker([t.lat,t.lng],{icon:L.divIcon({className:'',html:'<div class="pin igreja"></div>',iconSize:[20,20],iconAnchor:[10,18]})})
+    const mk=L.marker([t.lat,t.lng],{icon:L.divIcon({className:'',html:'<div class="pin igreja"></div>',iconSize:[20,20],iconAnchor:[10,18]})})
       .addTo(mapa).bindPopup(html);
+    templMarkers[TEMPLOS.indexOf(t)]=mk;
   });
   CELULAS.forEach((c,idx)=>{
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16],iconAnchor:[8,14]})})
@@ -1072,7 +1073,7 @@ const celLista=document.getElementById('celLista'),celFiltros=document.getElemen
 const celMais=document.getElementById('celMais'),celPainel=celLista.closest('.cel-painel');
 const LIMITE_CEL=5;
 celMais.onclick=()=>{const ab=celLista.classList.toggle('colapsada')===false;celMais.textContent=ab?'Ver menos':'Ver mais';};
-const cidades=['Todas',...[...new Set(CELULAS.map(c=>c.cidade))]];
+const cidades=['Todas',...[...new Set(CELULAS.map(c=>c.cidade))],'Templos'];
 let cidadeAtiva='Todas', buscaCel='';
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const celBusca=document.getElementById('celBusca');
@@ -1080,9 +1081,34 @@ if(celBusca) celBusca.addEventListener('input',()=>{buscaCel=celBusca.value;rend
 cidades.forEach(cid=>{const b=document.createElement('button');b.className='fcel'+(cid==='Todas'?' on':'');
   b.textContent=cid;b.onclick=()=>{cidadeAtiva=cid;[...celFiltros.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');renderCel();};
   celFiltros.appendChild(b);});
+function selecionaTemplo(ti){
+  const t=TEMPLOS[ti]; if(!t) return;
+  document.querySelectorAll('.cel-item').forEach(el=>el.classList.toggle('on', el.dataset.tpl===String(ti)));
+  if(mapa && templMarkers[ti]){
+    const z=15, off=Math.min(mapa.getSize().y*0.22,130);
+    const centro=mapa.unproject(mapa.project([t.lat,t.lng],z).subtract([0,off]),z);
+    mapa.flyTo(centro,z,{duration:.6});
+    mapa.once('moveend',()=>templMarkers[ti]&&templMarkers[ti].openPopup());
+  }
+}
 function renderCel(){
   celLista.innerHTML='';
   const q=norm(buscaCel.trim());
+  if(cidadeAtiva==='Templos'){
+    TEMPLOS.forEach((t,ti)=>{
+      if(q && !norm(`${t.nome} ${t.end}`).includes(q)) return;
+      const it=document.createElement('div'); it.className='cel-item'; it.dataset.tpl=ti;
+      it.innerHTML=`<h4>${t.nome}<span class="cel-badge">Templo</span></h4>
+        <div class="end">${t.end}</div>
+        <a class="cel-wpp" href="javascript:void(0)" onclick="event.stopPropagation();abrirMapa(${t.lat},${t.lng},&#39;${t.nome}&#39;)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Como chegar</a>`;
+      it.onclick=()=>selecionaTemplo(ti);
+      celLista.appendChild(it);
+    });
+    if(!celLista.children.length) celLista.innerHTML='<div class="cel-vazio">Nenhum templo encontrado.</div>';
+    celLista.classList.remove('colapsada'); celMais.textContent='Ver mais';
+    celPainel.classList.add('poucas');
+    return;
+  }
   CELULAS.forEach((c,idx)=>{
     if(cidadeAtiva!=='Todas'&&c.cidade!==cidadeAtiva)return;
     if(q && !norm(`${c.nome} ${c.lider} ${c.end}`).includes(q))return;
