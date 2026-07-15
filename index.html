@@ -237,6 +237,12 @@
              background:var(--grafite);color:var(--luz);font-size:.9rem;font-family:inherit;outline:none;transition:border-color .2s}
   .cel-busca::placeholder{color:var(--cinza)}
   .cel-busca:focus{border-color:var(--agua-forte)}
+  .loc-btn{margin:8px 16px 0;display:flex;width:fit-content;align-items:center;gap:7px;background:transparent;border:1px solid var(--neblina);color:var(--agua);border-radius:100px;padding:8px 14px;font-family:inherit;font-size:.85rem;cursor:pointer}
+  .loc-btn:hover{border-color:var(--agua-forte)}
+  .loc-btn:disabled{opacity:.6;cursor:default}
+  .loc-nota{margin:8px 16px 0;color:var(--cinza);font-size:.82rem;line-height:1.4}
+  .loc-nota b{color:var(--luz)}
+  .pin-eu{width:16px;height:16px;border-radius:50%;background:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.35);border:2px solid #fff}
   .cel-vazio{padding:20px 14px;color:var(--cinza);font-size:.9rem;text-align:center}
   .fcel{font-size:.78rem;font-weight:500;padding:7px 13px;border-radius:100px;border:1px solid var(--neblina);
         background:transparent;color:var(--cinza-claro);cursor:pointer;transition:all .2s}
@@ -635,6 +641,8 @@
       <div class="cel-painel">
         <input class="cel-busca" id="celBusca" type="search" placeholder="Buscar célula, líder ou endereço…" autocomplete="off" aria-label="Buscar célula">
         <div class="cel-filtros" id="celFiltros"></div>
+        <button class="loc-btn" id="btnLoc" type="button"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span>Usar minha localização</span></button>
+        <div class="loc-nota" id="locNota"></div>
         <div class="cel-lista colapsada" id="celLista"></div>
         <button class="cel-mais" id="celMais" type="button">Ver mais</button>
       </div>
@@ -1067,6 +1075,37 @@ function abrirMapa(lat,lng,label){
   if(isAndroid||isIOS){ window.location.href=url; } else { window.open(url,'_blank','noopener'); }
 }
 function abrirMapaCel(idx){ const c=CELULAS[idx]; if(c) abrirMapa(c.lat,c.lng,c.nome+' - '+c.end); }
+let euMarker=null;
+function haversineKm(la1,lo1,la2,lo2){const R=6371,t=x=>x*Math.PI/180;const dLa=t(la2-la1),dLo=t(lo2-lo1);const a=Math.sin(dLa/2)**2+Math.cos(t(la1))*Math.cos(t(la2))*Math.sin(dLo/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function usarLocalizacao(){
+  if(!mapa) return;
+  if(!navigator.geolocation){ alert('Seu navegador não suporta localização.'); return; }
+  const btn=document.getElementById('btnLoc'), txt=btn.querySelector('span'); const orig=txt.textContent;
+  btn.disabled=true; txt.textContent='Localizando…';
+  navigator.geolocation.getCurrentPosition(function(pos){
+    btn.disabled=false; txt.textContent=orig;
+    const lat=pos.coords.latitude, lng=pos.coords.longitude;
+    if(euMarker) mapa.removeLayer(euMarker);
+    euMarker=L.marker([lat,lng],{icon:L.divIcon({className:'',html:'<div class="pin-eu"></div>',iconSize:[16,16],iconAnchor:[8,8]}),zIndexOffset:1000}).addTo(mapa).bindPopup('<b>Você está aqui</b>');
+    let near=-1,best=Infinity;
+    CELULAS.forEach((c,i)=>{ const dk=haversineKm(lat,lng,c.lat,c.lng); if(dk<best){best=dk;near=i;} });
+    // mostra todas as células na lista pra destacar a mais próxima
+    cidadeAtiva='Todas'; [...celFiltros.children].forEach(x=>x.classList.toggle('on',x.textContent==='Todas')); renderCel();
+    if(near>=0){
+      const nc=CELULAS[near]; celAtiva=near;
+      document.querySelectorAll('.cel-item').forEach(el=>el.classList.toggle('on',+el.dataset.idx===near));
+      celLista.classList.remove('colapsada'); celMais.textContent='Ver menos';
+      const card=document.querySelector('.cel-item[data-idx="'+near+'"]'); if(card) card.scrollIntoView({block:'nearest',behavior:'smooth'});
+      mapa.fitBounds(L.latLngBounds([[lat,lng],[nc.lat,nc.lng]]).pad(0.35));
+      mapa.once('moveend',()=>markers[near]&&markers[near].openPopup());
+      const dtxt = best<1 ? Math.round(best*1000)+' m' : best.toFixed(1).replace('.',',')+' km';
+      document.getElementById('locNota').innerHTML='Célula mais próxima: <b>'+nc.nome+'</b> · ~'+dtxt;
+    } else { mapa.flyTo([lat,lng],14); }
+  }, function(){
+    btn.disabled=false; txt.textContent=orig;
+    alert('Não foi possível obter sua localização. Verifique a permissão do navegador.');
+  }, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
+}
 function popupHtml(c,idx){return `${c.foto?`<img class="p-foto" src="${c.foto}" alt="Célula ${c.nome}" loading="lazy">`:''}<b>${c.nome}</b>${c.tag?` · <span style="color:var(--agua);font-size:.75rem">${c.tag}</span>`:''}<br>${c.lider}<br><a class="p-end" href="javascript:void(0)" onclick="abrirMapaCel(${idx})">${c.end} <span class="end-ir">&#8599;</span></a>${c.hora?`<br><span class="p-hora">${c.hora}</span>`:''}`;}
 
 const celLista=document.getElementById('celLista'),celFiltros=document.getElementById('celFiltros');
@@ -1078,6 +1117,7 @@ let cidadeAtiva='Todas', buscaCel='';
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const celBusca=document.getElementById('celBusca');
 if(celBusca) celBusca.addEventListener('input',()=>{buscaCel=celBusca.value;renderCel();});
+const _btnLoc=document.getElementById('btnLoc'); if(_btnLoc) _btnLoc.onclick=usarLocalizacao;
 cidades.forEach(cid=>{const b=document.createElement('button');b.className='fcel'+(cid==='Todas'?' on':'');
   b.textContent=cid;b.onclick=()=>{cidadeAtiva=cid;[...celFiltros.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');renderCel();};
   celFiltros.appendChild(b);});
