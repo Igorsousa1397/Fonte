@@ -987,6 +987,11 @@ const ANCHOR={
   saopedroA:[-23.423950,-46.857759], saopedroB:[-23.430179,-46.849641],
   camargos:[-23.538540,-46.887075], igreja:[-23.40881,-46.86794]
 };
+/* Templos/núcleos (além da sede). Ajustar lat/lng se o pino ficar fora do lugar. */
+const TEMPLOS=[
+  {nome:'Fonte Barueri (Núcleo)',end:'Estrada das Pitas, 1266 — Parque Viana, Barueri/SP',lat:-23.5228,lng:-46.8585},
+  {nome:'Fonte Itajaí',end:'Av. Ministro Luiz Gallotti, 934B — Cidade Nova, Itajaí/SC',lat:-26.9098,lng:-48.6689},
+];
 const CELULAS=[
   // CAJAMAR
   {nome:'Betesda',lider:'Cris e Carol',end:'Rua dos Flox, 400 — Cond. San Miguel (T8 ap.05)',hora:'20h',cidade:'Cajamar',tag:'Mulheres',lat:-23.4035007,lng:-46.8587154,foto:'assets/celulas/betesda.jpg', wpp:'5511916405273'},
@@ -1026,6 +1031,10 @@ function initMapa(){
   // igreja
   L.marker(ANCHOR.igreja,{icon:L.divIcon({className:'',html:'<div class="pin igreja"></div>',iconSize:[20,20],iconAnchor:[10,18]})})
     .addTo(mapa).bindPopup('<b>Igreja Fonte</b><br>R. Catiguá, 130 — Polvilho, Cajamar');
+  TEMPLOS.forEach(t=>{
+    L.marker([t.lat,t.lng],{icon:L.divIcon({className:'',html:'<div class="pin igreja"></div>',iconSize:[20,20],iconAnchor:[10,18]})})
+      .addTo(mapa).bindPopup('<b>'+t.nome+'</b><br>'+t.end);
+  });
   CELULAS.forEach((c,idx)=>{
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16],iconAnchor:[8,14]})})
       .addTo(mapa).bindPopup(popupHtml(c,idx));
@@ -1033,7 +1042,8 @@ function initMapa(){
   });
   // enquadra na região principal; células distantes (ex.: Itajaí/SC) seguem no marcador e no filtro
   const perto=CELULAS.filter(c=>Math.abs(c.lat-ANCHOR.igreja[0])<1.6 && Math.abs(c.lng-ANCHOR.igreja[1])<1.6);
-  const pts=[ANCHOR.igreja,...(perto.length?perto:CELULAS).map(c=>[c.lat,c.lng])];
+  const templosPerto=TEMPLOS.filter(t=>Math.abs(t.lat-ANCHOR.igreja[0])<1.6 && Math.abs(t.lng-ANCHOR.igreja[1])<1.6).map(t=>[t.lat,t.lng]);
+  const pts=[ANCHOR.igreja,...templosPerto,...(perto.length?perto:CELULAS).map(c=>[c.lat,c.lng])];
   mapa.fitBounds(L.latLngBounds(pts).pad(0.12));
 }
 function abrirMapa(lat,lng,label){
