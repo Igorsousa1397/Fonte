@@ -1098,7 +1098,7 @@ function renderCel(){
     TEMPLOS.forEach((t,ti)=>{
       if(q && !norm(`${t.nome} ${t.end}`).includes(q)) return;
       const it=document.createElement('div'); it.className='cel-item'; it.dataset.tpl=ti;
-      it.innerHTML=`<h4>${t.nome}<span class="cel-badge">Templo</span></h4>
+      it.innerHTML=`<h4>${t.nome}</h4>
         <div class="end">${t.end}</div>
         <a class="cel-wpp" href="javascript:void(0)" onclick="event.stopPropagation();abrirMapa(${t.lat},${t.lng},&#39;${t.nome}&#39;)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Como chegar</a>`;
       it.onclick=()=>selecionaTemplo(ti);
