@@ -894,17 +894,34 @@ const proximoIso=(futuros.find(e=>!e.fixo)||futuros[0]||{}).inicio||null;
 
 /* ---- hero ---- */
 const slidesData=(()=>{
-  const mes=HOJE.getMonth();
-  const eBanner=e=>e.img||e.banner;                        // tem flyer ou é marcado (ex.: Domingo de Ceia)
-  const doMes=futuros.filter(e=>d(e.inicio).getMonth()===mes && !(e.tipo==='culto'&&!eBanner(e)));
-  const l=doMes.sort((a,b)=>d(a.inicio)-d(b.inicio)).slice(0,5);
-  return l.length?l:futuros.slice(0,3);                    // fallback só se o mês não tiver nada à frente
+  const MIN=4;
+  // prioridade: agendas que NÃO são cultos comuns (têm flyer OU não são culto fixo de quarta/domingo)
+  const especiais=futuros.filter(e=>!e.fixo || e.img).sort((a,b)=>d(a.inicio)-d(b.inicio));
+  if(especiais.length>=MIN) return especiais;
+  // completa com Quarta Profética e Domingo em Família (banners), alternando, até no mínimo 4
+  const quartas=futuros.filter(e=>e.fixo && /Quarta/.test(e.titulo));
+  const domingos=futuros.filter(e=>e.fixo && e.dow==='Dom');
+  const fillers=[];
+  const pushQ=e=>fillers.push({...e, titulo:'Quarta Profética', img:'assets/banner-quarta.jpg'});
+  const pushD=e=>{const ceia=/Ceia/.test(e.titulo); fillers.push({...e, titulo:ceia?'Santa Ceia':'Domingo em Família', img:ceia?'assets/banner-ceia.jpg':'assets/banner-domingo.jpg'});};
+  let qi=0,di=0,quartaVez=true;
+  while(especiais.length+fillers.length<MIN){
+    if(quartaVez && qi<quartas.length) pushQ(quartas[qi++]);
+    else if(!quartaVez && di<domingos.length) pushD(domingos[di++]);
+    else if(qi<quartas.length) pushQ(quartas[qi++]);
+    else if(di<domingos.length) pushD(domingos[di++]);
+    else break;
+    quartaVez=!quartaVez;
+  }
+  return especiais.concat(fillers);
 })();
 const track=document.getElementById('track'),dotsBox=document.getElementById('dots');
 function textoSlide(e){
   if(e.titulo.includes('Submergidos'))return 'Um retiro de 3 dias pra mergulhar no próximo nível. Inscrições abertas pelo app do encontro.';
   if(e.titulo.includes('Peniel'))return 'Encontro com Deus. Três dias que marcam. Faça sua inscrição pelo app.';
   if(/Ceia/.test(e.titulo))return 'Nosso Domingo de Santa Ceia. Venha participar da mesa do Senhor com a família Fonte.';
+  if(e.titulo.includes('Quarta Profética'))return 'Toda quarta tem palavra profética pra sua semana. Venha buscar a presença de Deus.';
+  if(e.titulo.includes('Domingo em Família'))return 'Nosso culto de domingo em família. Traga todo mundo pra adorar com a Fonte.';
   if(e.tipo==='culto')return 'Venha adorar com a gente. Todos são bem-vindos à casa da Fonte.';
   if(e.titulo.includes('Aniversário'))return 'Firmamento · nossos 2 anos. Quatro dias de louvor e palavra com a família Fonte.';
   if(e.tipo==='conferencia')return 'Dias de imersão, palavra e presença. Marque na agenda e participe.';
