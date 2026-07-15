@@ -950,7 +950,7 @@ AGENDA.filter(e=>e.link).forEach(e=>{
 
 /* ---- agenda lista ---- */
 const listaBox=document.getElementById('lista'),filtrosBox=document.getElementById('filtros');
-const mesesComEvento=[...new Set(AGENDA.map(e=>d(e.inicio).getMonth()))].sort((a,b)=>a-b);
+const mesesComEvento=[...new Set(AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).map(e=>d(e.inicio).getMonth()))].sort((a,b)=>a-b);
 let filtroAtivo = mesesComEvento.includes(HOJE.getMonth()) ? HOJE.getMonth()
   : (mesesComEvento.find(m=>m>=HOJE.getMonth()) ?? mesesComEvento[0] ?? 'todos');
 mesesComEvento.map(m=>({k:m,l:MESES[m]})).forEach(f=>{
@@ -960,7 +960,7 @@ mesesComEvento.map(m=>({k:m,l:MESES[m]})).forEach(f=>{
 function renderAgenda(){
   listaBox.innerHTML='';const meses=filtroAtivo==='todos'?mesesComEvento:[filtroAtivo];
   meses.forEach(m=>{
-    const evs=AGENDA.filter(e=>d(e.inicio).getMonth()===m).sort((a,b)=>d(a.inicio)-d(b.inicio));
+    const evs=AGENDA.filter(e=>d(e.inicio).getMonth()===m && diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));
     if(!evs.length)return;
     const bloco=document.createElement('div');bloco.style.marginBottom='30px';
     bloco.innerHTML=`<div class="mes-titulo" style="font-family:var(--display);font-weight:600;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--cinza);padding-bottom:12px;border-bottom:var(--borda);margin-bottom:6px">${MESES[m]}</div>`;
