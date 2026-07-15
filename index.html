@@ -989,6 +989,7 @@ const ANCHOR={
 };
 /* Templos/núcleos (além da sede). Ajustar lat/lng se o pino ficar fora do lugar. */
 const TEMPLOS=[
+  {nome:'Igreja Fonte (Sede)',end:'R. Catiguá, 130 — Polvilho, Cajamar/SP',lat:-23.40881,lng:-46.86794,foto:'assets/templo-cajamar.jpg'},
   {nome:'Fonte Barueri (Núcleo)',end:'Estrada das Pitas, 1266 — Parque Viana, Barueri/SP',lat:-23.5228,lng:-46.8585,foto:'assets/templo-barueri.jpg'},
   {nome:'Fonte Itajaí',end:'Av. Ministro Luiz Gallotti, 934B — Cidade Nova, Itajaí/SC',lat:-26.9098,lng:-48.6689,foto:'assets/templo-itajai.jpg'},
 ];
@@ -1028,12 +1029,13 @@ function initMapa(){
     '<div style="height:100%;display:grid;place-items:center;color:var(--cinza);font-size:.9rem">Mapa indisponível — use a lista ao lado.</div>';return;}
   mapa=L.map('mapa',{scrollWheelZoom:false,attributionControl:false}).setView([-23.44,-46.86],11);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(mapa);
-  // igreja
-  L.marker(ANCHOR.igreja,{icon:L.divIcon({className:'',html:'<div class="pin igreja"></div>',iconSize:[20,20],iconAnchor:[10,18]})})
-    .addTo(mapa).bindPopup('<b>Igreja Fonte</b><br>R. Catiguá, 130 — Polvilho, Cajamar');
+  // igrejas/templos (sede + núcleos): foto + endereço clicável (abre rotas)
   TEMPLOS.forEach(t=>{
+    const html=(t.foto?'<img class="p-foto" src="'+t.foto+'" alt="'+t.nome+'" loading="lazy">':'')
+      +'<b>'+t.nome+'</b><br>'
+      +'<a class="p-end" href="javascript:void(0)" onclick="abrirMapa('+t.lat+','+t.lng+',&#39;'+t.nome+'&#39;)">'+t.end+' <span class="end-ir">&#8599;</span></a>';
     L.marker([t.lat,t.lng],{icon:L.divIcon({className:'',html:'<div class="pin igreja"></div>',iconSize:[20,20],iconAnchor:[10,18]})})
-      .addTo(mapa).bindPopup((t.foto?'<img class="p-foto" src="'+t.foto+'" alt="'+t.nome+'" loading="lazy">':'')+'<b>'+t.nome+'</b><br>'+t.end);
+      .addTo(mapa).bindPopup(html);
   });
   CELULAS.forEach((c,idx)=>{
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16],iconAnchor:[8,14]})})
