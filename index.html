@@ -989,8 +989,8 @@ const ANCHOR={
 };
 /* Templos/núcleos (além da sede). Ajustar lat/lng se o pino ficar fora do lugar. */
 const TEMPLOS=[
-  {nome:'Fonte Barueri (Núcleo)',end:'Estrada das Pitas, 1266 — Parque Viana, Barueri/SP',lat:-23.5228,lng:-46.8585},
-  {nome:'Fonte Itajaí',end:'Av. Ministro Luiz Gallotti, 934B — Cidade Nova, Itajaí/SC',lat:-26.9098,lng:-48.6689},
+  {nome:'Fonte Barueri (Núcleo)',end:'Estrada das Pitas, 1266 — Parque Viana, Barueri/SP',lat:-23.5228,lng:-46.8585,foto:'assets/templo-barueri.jpg'},
+  {nome:'Fonte Itajaí',end:'Av. Ministro Luiz Gallotti, 934B — Cidade Nova, Itajaí/SC',lat:-26.9098,lng:-48.6689,foto:'assets/templo-itajai.jpg'},
 ];
 const CELULAS=[
   // CAJAMAR
@@ -998,7 +998,7 @@ const CELULAS=[
   {nome:'Beraká',lider:'Pr. Amilton e Pra. Kátia',end:'Na Igreja (R. Catiguá, 130) — Templo Kids',hora:'20h',cidade:'Cajamar',lat:-23.40868,lng:-46.86781,foto:'assets/celulas/beraka.jpg', wpp:'5511953656812'},
   {nome:'Reobote',lider:'Thais e Junior',end:'Rua Irmã Daria Moreira, 39 — Pq. Paraíso',hora:'20h',cidade:'Cajamar',lat:-23.4106936,lng:-46.8272042,foto:'assets/celulas/reobote.jpg', wpp:'5511997187584'},
   {nome:'Emaús',lider:'Simone e Tiago',end:'Rua Waldemar Meira, 434 — Portal',hora:'20h',cidade:'Cajamar',lat:-23.4077369,lng:-46.853676,foto:'assets/celulas/emaus.jpg', wpp:'5511914680682'},
-  {nome:'Fire',lider:'Paulo e Fabiana',end:'Na Igreja (R. Catiguá, 130)',hora:'20h',cidade:'Cajamar',lat:-23.40846,lng:-46.86852,foto:'assets/celulas/fire.jpg', wpp:'5511997093085'},
+  {nome:'Fire',lider:'Paulo e Fabiana',end:'Rua Alto Porã, 306 — Apto 22B, Colina Maria Luiza (Jordanésia)',hora:'20h',cidade:'Cajamar',lat:-23.3608,lng:-46.8712,foto:'assets/celulas/fire.jpg', wpp:'5511997093085'},
   {nome:'Kerygma',lider:'João e Anchelly',end:'Av. dos Ingás, 416 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3970186,lng:-46.8668598,foto:'assets/celulas/kerygma.jpg', wpp:'5511942418154'},
   {nome:'Ebenézer',lider:'Sóstenes e Kelly',end:'Rua das Alpínias, 577 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3988088,lng:-46.859581,foto:'assets/celulas/ebenezer.jpg', wpp:'5511950413682'},
   {nome:'Betel',lider:'Rodnei e Débora',end:'Av. das Palmeiras, 720 — ap.97 (Portal)',hora:'19h30',cidade:'Cajamar',lat:-23.4041966,lng:-46.8627586,foto:'assets/celulas/betel.jpg', wpp:'5511950932007'},
@@ -1033,7 +1033,7 @@ function initMapa(){
     .addTo(mapa).bindPopup('<b>Igreja Fonte</b><br>R. Catiguá, 130 — Polvilho, Cajamar');
   TEMPLOS.forEach(t=>{
     L.marker([t.lat,t.lng],{icon:L.divIcon({className:'',html:'<div class="pin igreja"></div>',iconSize:[20,20],iconAnchor:[10,18]})})
-      .addTo(mapa).bindPopup('<b>'+t.nome+'</b><br>'+t.end);
+      .addTo(mapa).bindPopup((t.foto?'<img class="p-foto" src="'+t.foto+'" alt="'+t.nome+'" loading="lazy">':'')+'<b>'+t.nome+'</b><br>'+t.end);
   });
   CELULAS.forEach((c,idx)=>{
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16],iconAnchor:[8,14]})})
