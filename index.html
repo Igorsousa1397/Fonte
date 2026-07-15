@@ -895,8 +895,9 @@ const proximoIso=(futuros.find(e=>!e.fixo)||futuros[0]||{}).inicio||null;
 /* ---- hero ---- */
 const slidesData=(()=>{
   const MIN=4;
-  // prioridade: agendas que NÃO são cultos comuns (têm flyer OU não são culto fixo de quarta/domingo)
-  const especiais=futuros.filter(e=>!e.fixo || e.img).sort((a,b)=>d(a.inicio)-d(b.inicio));
+  // prioridade: agendas do MÊS atual que não são cultos comuns (têm flyer OU não são culto fixo)
+  const mes=HOJE.getMonth(), ano=HOJE.getFullYear();
+  const especiais=futuros.filter(e=>(!e.fixo||e.img) && d(e.inicio).getMonth()===mes && d(e.inicio).getFullYear()===ano).sort((a,b)=>d(a.inicio)-d(b.inicio));
   if(especiais.length>=MIN) return especiais;
   // completa com Quarta Profética e Domingo em Família (banners), alternando, até no mínimo 4
   const quartas=futuros.filter(e=>e.fixo && /Quarta/.test(e.titulo));
