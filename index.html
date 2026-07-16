@@ -777,7 +777,7 @@
       <div class="form">
         <div class="duo">
           <div class="campo"><label for="c-nome">Nome</label><input id="c-nome" placeholder="Seu nome"></div>
-          <div class="campo"><label for="c-tel">Telefone</label><input id="c-tel" placeholder="(11) 90000-0000"></div>
+          <div class="campo"><label for="c-tel">Telefone</label><input id="c-tel" inputmode="tel" maxlength="16" placeholder="(11) 90000-0000"></div>
         </div>
         <div class="duo">
           <div class="campo"><label for="c-email">E-mail</label><input id="c-email" type="email" placeholder="voce@email.com"></div>
@@ -1214,10 +1214,15 @@ document.getElementById('copiaPix').onclick=()=>{
 
 /* ===================== contato → WhatsApp ===================== */
 (function(){ const t=document.getElementById('c-msg'), c=document.getElementById('c-msg-count'); if(t&&c){ const upd=()=>{ c.textContent=t.value.length+'/500'; }; t.addEventListener('input',upd); upd(); } })();
+(function(){ const tel=document.getElementById('c-tel'); if(!tel) return; tel.addEventListener('input',()=>{ let d=tel.value.replace(/\D/g,'').slice(0,11); if(d.length>10) d=d.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3'); else if(d.length>6) d=d.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3'); else if(d.length>2) d=d.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2'); else if(d.length>0) d=d.replace(/^(\d{0,2}).*/,'($1'); tel.value=d; }); })();
 document.getElementById('enviaContato').onclick=async()=>{
   const g=id=>document.getElementById(id).value.trim();
   const nome=g('c-nome'),tel=g('c-tel'),email=g('c-email'),assunto=g('c-assunto'),msg=g('c-msg');
   if(!nome||!msg){toast('Preencha ao menos nome e mensagem.');return;}
+  const telDig=tel.replace(/\D/g,'');
+  if(tel && !(telDig.length===10||telDig.length===11)){toast('Telefone inválido. Use DDD + número, ex: (11) 90000-0000.');document.getElementById('c-tel').focus();return;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){toast('E-mail inválido. Confira o endereço, ex: voce@email.com.');document.getElementById('c-email').focus();return;}
+  if(!tel && !email){toast('Informe um telefone ou e-mail para contato.');return;}
   const btn=document.getElementById('enviaContato');
   btn.disabled=true; const label=btn.textContent; btn.textContent='Enviando…';
   const res=await sb.rpc('criar_contato',{p_nome:nome,p_assunto:assunto,p_mensagem:msg,p_telefone:tel,p_email:email});
