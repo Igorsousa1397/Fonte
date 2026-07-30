@@ -285,8 +285,8 @@
       <button class="nav-item" data-view="membros">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Membros</span>
       </button>
-      <button class="nav-item" data-view="contribuicoes">
-        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg><span class="lbl">Contribuições</span>
+      <button class="nav-item" data-view="ministerios">
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span class="lbl">Ministérios</span>
       </button>
       <button class="nav-item" id="btn-fin" data-toggle="fin">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg><span class="lbl">Financeiro</span>
@@ -366,6 +366,8 @@
   const VALOR_CAMISETA=42;
   let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], ASOLIC=[], ADOACOES=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoEstTab='todas', acaoResTab='pendente', acaoSolicTab='pendente', acaoDoacTab='pendente', contatoResTab='pendente';
   var _itDirty=false;
+  let MININSC=[], MINCFG={}, minInscTab='todas';
+  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -394,6 +396,7 @@
     if(view==='acao')      renderAcao(sub);
     if(view==='contato')   renderContatos(sub);
     if(view==='contribuicoes') renderContribuicoes();
+    if(view==='ministerios') renderMinisterios();
   }
 
   const card=(rot,num,agua)=>'<div class="card"><div class="rot">'+rot+'</div><div class="num'+(agua?' agua':'')+'">'+num+'</div></div>';
@@ -949,6 +952,78 @@ ${serve ? `
         '<div class="embreve-tag">Em breve</div>'+
         '<p>O módulo financeiro está em construção. Em breve você poderá registrar entradas e saídas, criar centros de custo, filtrar por período e gerar relatórios.</p>'+
       '</div>';
+  }
+  
+  async function renderMinisterios(){
+    $('#titulo').textContent='Inscrições · Ministérios';
+    $('#view').innerHTML='<div class="carregando">Carregando…</div>';
+    const [cfg, ins] = await Promise.all([
+      sb.from('ministerio_config').select('nome,aberto'),
+      sb.from('ministerio_inscricoes').select('*').order('criado_em',{ascending:false})
+    ]);
+    MINCFG={}; (cfg.data||[]).forEach(r=>{ MINCFG[r.nome]=!!r.aberto; });
+    MININSC=ins.data||[];
+
+    const abertos=MINISTERIOS.filter(m=>MINCFG[m]).length;
+    let html='<div class="cards">'+
+      card('Ministérios abertos',abertos,true)+
+      card('Total de inscrições',MININSC.length)+
+      card('Aguardando análise',MININSC.filter(r=>r.status==='novo'||r.status==='em_analise').length)+
+    '</div>';
+
+    html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:8px 0 6px;letter-spacing:.06em;text-transform:uppercase">Liberação de ministérios</h4>';
+    html+='<p class="view-sub">Ligue os ministérios que estão recebendo inscrição pela página “Quero servir”.</p>';
+    html+='<div class="tabela">';
+    MINISTERIOS.forEach(m=>{
+      const on=!!MINCFG[m];
+      html+='<div class="lin" style="grid-template-columns:1fr auto;align-items:center">'+
+        '<span>'+esc(m)+'<span class="sub">'+(on?'Aberto para inscrição':'Fechado')+'</span></span>'+
+        '<label class="sw"><input type="checkbox" data-min="'+esc(m)+'"'+(on?' checked':'')+'><span class="track"></span></label>'+
+        '</div>';
+    });
+    html+='</div>';
+
+    const cont=s=>MININSC.filter(r=>r.status===s).length;
+    const tabs=[['todas','Todas'],['novo','Novos'],['em_analise','Em análise'],['aprovado','Aprovados'],['recusado','Recusados']];
+    html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:26px 0 12px;letter-spacing:.06em;text-transform:uppercase">Inscrições recebidas</h4>';
+    html+='<div class="subtabs">'+tabs.map(t=>'<button class="subtab'+(minInscTab===t[0]?' on':'')+'" data-mtab="'+t[0]+'">'+t[1]+(t[0]!=='todas'?' ('+cont(t[0])+')':'')+'</button>').join('')+'</div>';
+    const lista=minInscTab==='todas'?MININSC:MININSC.filter(r=>r.status===minInscTab);
+    if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição nesta aba.</div></div>'; }
+    else lista.forEach(r=>{
+      const pill=r.status==='aprovado'?'ok':r.status==='recusado'?'off2':r.status==='em_analise'?'aviso':'mar';
+      const lbl={novo:'novo',em_analise:'em análise',aprovado:'aprovado',recusado:'recusado'}[r.status]||r.status;
+      const wa=waLink(r.telefone);
+      html+='<div class="res-card">'+
+        '<div class="res-head"><div><div style="font-weight:600">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+lbl+'</span></div>'+
+          '<div class="sub2"><b style="color:var(--agua)">'+esc(r.ministerio)+'</b> · '+esc(r.celula)+' · '+(esc(r.telefone)||'sem telefone')+' · '+dataBR(r.criado_em)+'</div></div>'+
+          (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
+        '<div class="res-actions">'+acoesInsc(r)+'</div>'+
+        '</div>';
+    });
+    $('#view').innerHTML=html;
+
+    $$('#view .sw input[data-min]').forEach(cb=> cb.onchange=async()=>{
+      const nome=cb.dataset.min, novo=cb.checked; cb.disabled=true;
+      const {error}=await sb.rpc('ministerio_set_aberto',{p_nome:nome,p_aberto:novo});
+      cb.disabled=false;
+      if(error){ cb.checked=!novo; alert('Erro: '+error.message); return; }
+      MINCFG[nome]=novo;
+      const sub=cb.closest('.lin').querySelector('.sub'); if(sub) sub.textContent=novo?'Aberto para inscrição':'Fechado';
+    });
+    $$('#view .subtab[data-mtab]').forEach(b=> b.onclick=()=>{ minInscTab=b.dataset.mtab; renderMinisterios(); });
+    $$('#view .mini-btn[data-ist]').forEach(b=> b.onclick=()=>mudaStatusInsc(b.dataset.iid, b.dataset.ist));
+  }
+  function acoesInsc(r){
+    const btn=(st,txt,cls)=>'<button class="mini-btn '+cls+'" data-iid="'+r.id+'" data-ist="'+st+'">'+txt+'</button>';
+    if(r.status==='novo')       return btn('em_analise','Em análise','')+btn('aprovado','Aprovar','go')+btn('recusado','Recusar','warn');
+    if(r.status==='em_analise') return btn('aprovado','Aprovar','go')+btn('recusado','Recusar','warn')+btn('novo','Voltar p/ novo','');
+    return btn('novo','Reabrir','go');
+  }
+  async function mudaStatusInsc(id, st){
+    const {error}=await sb.rpc('ministerio_insc_set_status',{p_id:id,p_status:st});
+    if(error){ alert('Erro: '+error.message); return; }
+    const r=MININSC.find(x=>String(x.id)===String(id)); if(r) r.status=st;
+    renderMinisterios();
   }
 
   function renderContatos(assunto){
