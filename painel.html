@@ -366,7 +366,7 @@
   const VALOR_CAMISETA=42;
   let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], ASOLIC=[], ADOACOES=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoEstTab='todas', acaoResTab='pendente', acaoSolicTab='pendente', acaoDoacTab='pendente', contatoResTab='pendente';
   var _itDirty=false;
-  let MININSC=[], MINCFG={}, minInscTab='todas';
+  let MININSC=[], MINCFG={}, minInscTab='todas', minInscMin='todos';
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
@@ -953,7 +953,7 @@ ${serve ? `
         '<p>O módulo financeiro está em construção. Em breve você poderá registrar entradas e saídas, criar centros de custo, filtrar por período e gerar relatórios.</p>'+
       '</div>';
   }
-  
+
   async function renderMinisterios(){
     $('#titulo').textContent='Inscrições · Ministérios';
     $('#view').innerHTML='<div class="carregando">Carregando…</div>';
@@ -983,11 +983,15 @@ ${serve ? `
     });
     html+='</div>';
 
-    const cont=s=>MININSC.filter(r=>r.status===s).length;
+    const minsComInsc=Array.from(new Set(MININSC.map(r=>r.ministerio))).sort((a,b)=>a.localeCompare(b,'pt'));
+    const base=minInscMin==='todos'?MININSC:MININSC.filter(r=>r.ministerio===minInscMin);
+    const cont=s=>base.filter(r=>r.status===s).length;
     const tabs=[['todas','Todas'],['novo','Novos'],['em_analise','Em análise'],['aprovado','Aprovados'],['recusado','Recusados']];
     html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:26px 0 12px;letter-spacing:.06em;text-transform:uppercase">Inscrições recebidas</h4>';
+    html+='<div style="margin-bottom:14px"><select id="minFiltro" style="background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:9px 12px;color:var(--luz);font-family:inherit;font-size:.9rem;max-width:300px;width:100%"><option value="todos">Todos os ministérios</option>'+minsComInsc.map(m=>'<option value="'+esc(m)+'"'+(minInscMin===m?' selected':'')+'>'+esc(m)+'</option>').join('')+'</select></div>';
     html+='<div class="subtabs">'+tabs.map(t=>'<button class="subtab'+(minInscTab===t[0]?' on':'')+'" data-mtab="'+t[0]+'">'+t[1]+(t[0]!=='todas'?' ('+cont(t[0])+')':'')+'</button>').join('')+'</div>';
-    const lista=minInscTab==='todas'?MININSC:MININSC.filter(r=>r.status===minInscTab);
+    let lista=base.slice();
+    if(minInscTab!=='todas') lista=lista.filter(r=>r.status===minInscTab);
     if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição nesta aba.</div></div>'; }
     else lista.forEach(r=>{
       const pill=r.status==='aprovado'?'ok':r.status==='recusado'?'off2':r.status==='em_analise'?'aviso':'mar';
@@ -1011,6 +1015,7 @@ ${serve ? `
       const sub=cb.closest('.lin').querySelector('.sub'); if(sub) sub.textContent=novo?'Aberto para inscrição':'Fechado';
     });
     $$('#view .subtab[data-mtab]').forEach(b=> b.onclick=()=>{ minInscTab=b.dataset.mtab; renderMinisterios(); });
+    const _mf=$('#minFiltro'); if(_mf) _mf.onchange=()=>{ minInscMin=_mf.value; renderMinisterios(); };
     $$('#view .mini-btn[data-ist]').forEach(b=> b.onclick=()=>mudaStatusInsc(b.dataset.iid, b.dataset.ist));
   }
   function acoesInsc(r){
@@ -1541,7 +1546,7 @@ ${serve ? `
     CONTRIB = co.data || [];
     montaSubnav();
     if(isAcao){
-      ['[data-view="batismo"]','[data-view="membros"]','[data-view="contribuicoes"]','#btn-fin','#subnav-fin','#btn-contato','#subnav'].forEach(function(sel){ var e=$(sel); if(e) e.style.display='none'; });
+      ['[data-view="batismo"]','[data-view="membros"]','[data-view="contribuicoes"]','[data-view="ministerios"]','#btn-fin','#subnav-fin','#btn-contato','#subnav'].forEach(function(sel){ var e=$(sel); if(e) e.style.display='none'; });
       $('#subnav-acao').classList.add('aberto');
       irPara('acao','solicitacoes');
     } else {
