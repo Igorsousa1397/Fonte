@@ -999,7 +999,9 @@ ${serve ? `
       const wa=waLink(r.telefone);
       html+='<div class="res-card">'+
         '<div class="res-head"><div><div style="font-weight:600">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+lbl+'</span></div>'+
-          '<div class="sub2"><b style="color:var(--agua)">'+esc(r.ministerio)+'</b> · '+esc(r.celula)+' · '+(esc(r.telefone)||'sem telefone')+' · '+dataBR(r.criado_em)+'</div></div>'+
+          '<div class="sub2"><b style="color:var(--agua)">'+esc(r.ministerio)+'</b> · '+esc(r.celula)+' · '+(esc(r.telefone)||'sem telefone')+' · '+dataBR(r.criado_em)+'</div>'+
+          (r.extra && Object.keys(r.extra).length ? '<div class="sub2" style="margin-top:4px">'+Object.keys(r.extra).map(function(k){ var v=r.extra[k]; if(v==null||v==='') return ''; var L={idade:'Idade',batizado:'Batizado',instrumento:'Instrumento',classificacao_vocal:'Voz'}; return '<b>'+esc(L[k]||k)+':</b> '+esc(v); }).filter(Boolean).join(' · ')+'</div>' : '')+
+          '</div>'+
           (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
         '<div class="res-actions">'+acoesInsc(r)+'</div>'+
         '</div>';

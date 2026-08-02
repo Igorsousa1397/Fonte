@@ -104,6 +104,32 @@
           <option value="">Carregando ministérios…</option>
         </select>
 
+        <div id="louvorCampos" class="hidden">
+          <label for="f-idade">Idade <span class="req">*</span></label>
+          <input id="f-idade" class="field" type="number" inputmode="numeric" min="1" max="120" placeholder="Sua idade">
+
+          <label for="f-batizado">Você é batizado(a)? <span class="req">*</span></label>
+          <select id="f-batizado" class="field">
+            <option value="">Selecione…</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+
+          <label for="f-instrumento">Toca algum instrumento? Qual?</label>
+          <input id="f-instrumento" class="field" type="text" placeholder="Ex.: Violão, teclado… (deixe em branco se não tocar)">
+
+          <label for="f-vocal">Classificação vocal (para voz)</label>
+          <select id="f-vocal" class="field">
+            <option value="">Selecione… (se for cantar)</option>
+            <option value="Soprano">Soprano</option>
+            <option value="Contralto">Contralto</option>
+            <option value="Tenor">Tenor</option>
+            <option value="Barítono">Barítono</option>
+            <option value="Baixo">Baixo</option>
+            <option value="Não sei">Não sei / não canto</option>
+          </select>
+        </div>
+
         <button class="btn" id="enviar">Enviar inscrição</button>
       </div>
     </div>
@@ -112,13 +138,17 @@
     <div class="card ok hidden" id="okCard">
       <div class="ico">✓</div>
       <h2>Inscrição enviada!</h2>
-      <p>Recebemos sua inscrição. Em breve a liderança do ministério entrará em contato com você. Que Deus abençoe o seu servir! 🙌</p>
+      <p id="okMsg">Recebemos sua inscrição. Em breve a liderança do ministério entrará em contato com você. Que Deus abençoe o seu servir! 🙌</p>
+      <div id="okGrupo" class="hidden" style="margin-top:20px">
+        <a id="okGrupoLink" href="#" target="_blank" rel="noopener" style="display:inline-block;background:var(--agua);color:#04201f;text-decoration:none;font-weight:700;padding:13px 24px;border-radius:12px">Entrar no grupo do WhatsApp →</a>
+        <p style="color:var(--raso);font-size:13px;margin-top:12px">Você será redirecionado em instantes…</p>
+      </div>
     </div>
   </div>
 
   <div id="toast"></div>
 
- <!-- Supabase SDK (CDN) + client global `sb` -->
+  <!-- Supabase SDK (CDN) + client global `sb` -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/supabase.js"></script>
   <script>
@@ -152,7 +182,9 @@
       'Transbordo'
     ];
     // 2) Link do próximo Encontro Peniel:
-    const LINK_PENIEL = 'https://encontrocomdeus-fonte.vercel.app/'; // <-- CONFIRMAR/AJUSTAR
+    const LINK_PENIEL = 'https://docs.google.com/forms/d/1bdUJz7JkmDuwdqkbXJH-HdikCBTyAFLc7q_nbJ35g7w/viewform';
+    // grupos de WhatsApp por ministério (redireciona após a inscrição)
+    const GRUPOS = { 'Louvor': 'https://chat.whatsapp.com/LsQVWBDNcKp8NVb3JVZ2xc' };
     // ===================================
 
     const $ = id => document.getElementById(id);
@@ -164,6 +196,11 @@
 
     // link do bloqueio
     $('linkPeniel').href = LINK_PENIEL;
+
+    // mostra campos extras quando o ministério for Louvor
+    $('f-min').addEventListener('change', ()=>{
+      $('louvorCampos').classList.toggle('hidden', $('f-min').value!=='Louvor');
+    });
 
     // popular células
     const selC = $('f-celula');
@@ -227,15 +264,34 @@
       if(!celula){ toast('Selecione sua célula.'); $('f-celula').focus(); return; }
       if(!ministerio){ toast('Escolha um ministério.'); $('f-min').focus(); return; }
 
+      // campos extras do Louvor
+      let extra = {};
+      if(ministerio==='Louvor'){
+        const idade=$('f-idade').value.trim();
+        const batizado=$('f-batizado').value;
+        const instrumento=$('f-instrumento').value.trim();
+        const vocal=$('f-vocal').value;
+        if(!idade || +idade<1){ toast('Informe sua idade.'); $('f-idade').focus(); return; }
+        if(!batizado){ toast('Informe se você é batizado(a).'); $('f-batizado').focus(); return; }
+        extra = { idade:+idade, batizado, instrumento: instrumento||null, classificacao_vocal: vocal||null };
+      }
+
       const btn=$('enviar'); btn.disabled=true; btn.textContent='Enviando…';
       try{
         const { error } = await sb.rpc('ministerio_inscrever',{
           p_nome:nome, p_telefone:tel.value, p_celula:celula,
-          p_passou_peniel:true, p_ministerio:ministerio
+          p_passou_peniel:true, p_ministerio:ministerio, p_extra:extra
         });
         if(error) throw error;
+        const grupo = GRUPOS[ministerio];
         $('formCard').classList.add('hidden');
         $('okCard').classList.remove('hidden');
+        if(grupo){
+          $('okMsg').textContent = 'Sua inscrição foi recebida! Entre no grupo do WhatsApp para receber todas as informações.';
+          $('okGrupoLink').href = grupo;
+          $('okGrupo').classList.remove('hidden');
+          setTimeout(()=>{ window.location.href = grupo; }, 3500);
+        }
         window.scrollTo({top:0,behavior:'smooth'});
       }catch(e){
         toast(e.message || 'Não foi possível enviar. Tente novamente.');
