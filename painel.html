@@ -117,6 +117,15 @@
   .card .num{font-family:var(--display);font-weight:700;font-size:1.9rem;line-height:1.1;margin-top:4px}
   .card .num.agua{color:var(--agua)}
 
+  .secbox{border:var(--borda);border-radius:var(--raio);background:var(--grafite);margin:8px 0 22px;overflow:hidden}
+  .secbox>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 18px;font-size:.82rem;color:var(--cinza);font-weight:600;letter-spacing:.06em;text-transform:uppercase;user-select:none}
+  .secbox>summary::-webkit-details-marker{display:none}
+  .secbox>summary .cnt{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--agua);font-weight:600;font-size:.8rem}
+  .secbox>summary .chev{transition:transform .2s;color:var(--agua);font-size:.9rem}
+  .secbox[open]>summary .chev{transform:rotate(180deg)}
+  .secbox[open]>summary{border-bottom:1px solid rgba(42,42,49,.6)}
+  .secbox .view-sub{padding:14px 18px 2px;margin:0}
+  .secbox .tabela{border:none;border-radius:0;background:transparent;margin:0}
   .tabela{border:var(--borda);border-radius:var(--raio);overflow:hidden;background:var(--grafite)}
   .tabela .lin{display:grid;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(42,42,49,.6);font-size:.9rem;align-items:center}
   .tabela.batismo .lin{grid-template-columns:1.4fr 1fr .9fr .9fr .8fr}
@@ -970,7 +979,7 @@ ${serve ? `
       card('Total de inscrições',MININSC.length)+
     '</div>';
 
-    html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:8px 0 6px;letter-spacing:.06em;text-transform:uppercase">Liberação de ministérios</h4>';
+    html+='<details class="secbox"><summary><span>Liberação de ministérios</span><span class="cnt">'+abertos+' aberto'+(abertos===1?'':'s')+'</span><span class="chev">▾</span></summary>';
     html+='<p class="view-sub">Ligue os ministérios que estão recebendo inscrição pela página “Quero servir”.</p>';
     html+='<div class="tabela">';
     MINISTERIOS.forEach(m=>{
@@ -980,7 +989,7 @@ ${serve ? `
         '<label class="sw"><input type="checkbox" data-min="'+esc(m)+'"'+(on?' checked':'')+'><span class="track"></span></label>'+
         '</div>';
     });
-    html+='</div>';
+    html+='</div></details>';
 
     const minsComInsc=Array.from(new Set(MININSC.map(r=>r.ministerio))).sort((a,b)=>a.localeCompare(b,'pt'));
     const base=minInscMin==='todos'?MININSC:MININSC.filter(r=>r.ministerio===minInscMin);
@@ -1007,6 +1016,7 @@ ${serve ? `
       if(error){ cb.checked=!novo; alert('Erro: '+error.message); return; }
       MINCFG[nome]=novo;
       const sub=cb.closest('.lin').querySelector('.sub'); if(sub) sub.textContent=novo?'Aberto para inscrição':'Fechado';
+      const c=document.querySelector('#view .secbox .cnt'); if(c){ const n=MINISTERIOS.filter(m=>MINCFG[m]).length; c.textContent=n+' aberto'+(n===1?'':'s'); }
     });
     const _mf=$('#minFiltro'); if(_mf) _mf.onchange=()=>{ minInscMin=_mf.value; renderMinisterios(); };
   }
