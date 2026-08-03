@@ -366,7 +366,7 @@
   const VALOR_CAMISETA=42;
   let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], ASOLIC=[], ADOACOES=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoEstTab='todas', acaoResTab='pendente', acaoSolicTab='pendente', acaoDoacTab='pendente', contatoResTab='pendente';
   var _itDirty=false;
-  let MININSC=[], MINCFG={}, minInscTab='todas', minInscMin='todos';
+  let MININSC=[], MINCFG={}, minInscMin='todos';
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
@@ -968,7 +968,6 @@ ${serve ? `
     let html='<div class="cards">'+
       card('Ministérios abertos',abertos,true)+
       card('Total de inscrições',MININSC.length)+
-      card('Aguardando análise',MININSC.filter(r=>r.status==='novo'||r.status==='em_analise').length)+
     '</div>';
 
     html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:8px 0 6px;letter-spacing:.06em;text-transform:uppercase">Liberação de ministérios</h4>';
@@ -985,25 +984,18 @@ ${serve ? `
 
     const minsComInsc=Array.from(new Set(MININSC.map(r=>r.ministerio))).sort((a,b)=>a.localeCompare(b,'pt'));
     const base=minInscMin==='todos'?MININSC:MININSC.filter(r=>r.ministerio===minInscMin);
-    const cont=s=>base.filter(r=>r.status===s).length;
-    const tabs=[['todas','Todas'],['novo','Novos'],['em_analise','Em análise'],['aprovado','Aprovados'],['recusado','Recusados']];
     html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:26px 0 12px;letter-spacing:.06em;text-transform:uppercase">Inscrições recebidas</h4>';
     html+='<div style="margin-bottom:14px"><select id="minFiltro" style="background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:9px 12px;color:var(--luz);font-family:inherit;font-size:.9rem;max-width:300px;width:100%"><option value="todos">Todos os ministérios</option>'+minsComInsc.map(m=>'<option value="'+esc(m)+'"'+(minInscMin===m?' selected':'')+'>'+esc(m)+'</option>').join('')+'</select></div>';
-    html+='<div class="subtabs">'+tabs.map(t=>'<button class="subtab'+(minInscTab===t[0]?' on':'')+'" data-mtab="'+t[0]+'">'+t[1]+(t[0]!=='todas'?' ('+cont(t[0])+')':'')+'</button>').join('')+'</div>';
     let lista=base.slice();
-    if(minInscTab!=='todas') lista=lista.filter(r=>r.status===minInscTab);
-    if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição nesta aba.</div></div>'; }
+    if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição recebida ainda.</div></div>'; }
     else lista.forEach(r=>{
-      const pill=r.status==='aprovado'?'ok':r.status==='recusado'?'off2':r.status==='em_analise'?'aviso':'mar';
-      const lbl={novo:'novo',em_analise:'em análise',aprovado:'aprovado',recusado:'recusado'}[r.status]||r.status;
       const wa=waLink(r.telefone);
       html+='<div class="res-card">'+
-        '<div class="res-head"><div><div style="font-weight:600">'+esc(r.nome)+' <span class="res-pill '+pill+'">'+lbl+'</span></div>'+
+        '<div class="res-head"><div><div style="font-weight:600">'+esc(r.nome)+'</div>'+
           '<div class="sub2"><b style="color:var(--agua)">'+esc(r.ministerio)+'</b> · '+esc(r.celula)+' · '+(esc(r.telefone)||'sem telefone')+' · '+dataBR(r.criado_em)+'</div>'+
           (r.extra && Object.keys(r.extra).length ? '<div class="sub2" style="margin-top:4px">'+Object.keys(r.extra).map(function(k){ var v=r.extra[k]; if(v==null||v==='') return ''; var L={idade:'Idade',batizado:'Batizado',instrumento:'Instrumento',classificacao_vocal:'Voz'}; return '<b>'+esc(L[k]||k)+':</b> '+esc(v); }).filter(Boolean).join(' · ')+'</div>' : '')+
           '</div>'+
           (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
-        '<div class="res-actions">'+acoesInsc(r)+'</div>'+
         '</div>';
     });
     $('#view').innerHTML=html;
@@ -1016,21 +1008,7 @@ ${serve ? `
       MINCFG[nome]=novo;
       const sub=cb.closest('.lin').querySelector('.sub'); if(sub) sub.textContent=novo?'Aberto para inscrição':'Fechado';
     });
-    $$('#view .subtab[data-mtab]').forEach(b=> b.onclick=()=>{ minInscTab=b.dataset.mtab; renderMinisterios(); });
     const _mf=$('#minFiltro'); if(_mf) _mf.onchange=()=>{ minInscMin=_mf.value; renderMinisterios(); };
-    $$('#view .mini-btn[data-ist]').forEach(b=> b.onclick=()=>mudaStatusInsc(b.dataset.iid, b.dataset.ist));
-  }
-  function acoesInsc(r){
-    const btn=(st,txt,cls)=>'<button class="mini-btn '+cls+'" data-iid="'+r.id+'" data-ist="'+st+'">'+txt+'</button>';
-    if(r.status==='novo')       return btn('em_analise','Em análise','')+btn('aprovado','Aprovar','go')+btn('recusado','Recusar','warn');
-    if(r.status==='em_analise') return btn('aprovado','Aprovar','go')+btn('recusado','Recusar','warn')+btn('novo','Voltar p/ novo','');
-    return btn('novo','Reabrir','go');
-  }
-  async function mudaStatusInsc(id, st){
-    const {error}=await sb.rpc('ministerio_insc_set_status',{p_id:id,p_status:st});
-    if(error){ alert('Erro: '+error.message); return; }
-    const r=MININSC.find(x=>String(x.id)===String(id)); if(r) r.status=st;
-    renderMinisterios();
   }
 
   function renderContatos(assunto){
