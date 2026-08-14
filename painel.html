@@ -223,6 +223,10 @@
   .mini-btn:hover{border-color:var(--cinza);color:var(--luz)}
   .mini-btn.go{border-color:var(--agua-forte);color:var(--agua)}
   .mini-btn.warn{border-color:#7f1d1d;color:#f87171}
+  .mini-btn svg{vertical-align:-3px;margin-right:6px}
+  .min-barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .min-barra select{flex:1 1 200px}
+  .min-barra .mini-btn{flex:0 0 auto;white-space:nowrap}
   .sub2{color:var(--cinza);font-size:.82rem}
   .res-card{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:16px 18px;margin-bottom:12px}
   .res-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
@@ -442,6 +446,7 @@
     renderMembros();
   }
   const WA_SVG='<svg class="wa-ic" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.1.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4z"/><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-2.9.9.9-2.8-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>';
+  const PDF_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
   function waNum(tel){ let d=(tel||'').replace(/\D/g,''); if(!d) return ''; if(d.length<=11) d='55'+d; return d; }
   function telWa(tel){ const n=waNum(tel); return n ? '<a class="tel-wpp" href="https://wa.me/'+n+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+WA_SVG+esc(tel)+'</a>' : ''; }
   function abreMembro(m){
@@ -994,7 +999,8 @@ ${serve ? `
     const minsComInsc=Array.from(new Set(MININSC.map(r=>r.ministerio))).sort((a,b)=>a.localeCompare(b,'pt'));
     const base=minInscMin==='todos'?MININSC:MININSC.filter(r=>r.ministerio===minInscMin);
     html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:26px 0 12px;letter-spacing:.06em;text-transform:uppercase">Inscrições recebidas</h4>';
-    html+='<div style="margin-bottom:14px"><select id="minFiltro" style="background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:9px 12px;color:var(--luz);font-family:inherit;font-size:.9rem;max-width:300px;width:100%"><option value="todos">Todos os ministérios</option>'+minsComInsc.map(m=>'<option value="'+esc(m)+'"'+(minInscMin===m?' selected':'')+'>'+esc(m)+'</option>').join('')+'</select></div>';
+    html+='<div class="min-barra"><select id="minFiltro" style="background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:9px 12px;color:var(--luz);font-family:inherit;font-size:.9rem;max-width:300px;width:100%"><option value="todos">Todos os ministérios</option>'+minsComInsc.map(m=>'<option value="'+esc(m)+'"'+(minInscMin===m?' selected':'')+'>'+esc(m)+'</option>').join('')+'</select>'+
+      (base.length?'<button class="mini-btn go" id="minPdf">'+PDF_SVG+'Exportar PDF</button>':'')+'</div>';
     let lista=base.slice();
     if(!lista.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição recebida ainda.</div></div>'; }
     else lista.forEach(r=>{
@@ -1019,6 +1025,90 @@ ${serve ? `
       const c=document.querySelector('#view .secbox .cnt'); if(c){ const n=MINISTERIOS.filter(m=>MINCFG[m]).length; c.textContent=n+' aberto'+(n===1?'':'s'); }
     });
     const _mf=$('#minFiltro'); if(_mf) _mf.onchange=()=>{ minInscMin=_mf.value; renderMinisterios(); };
+    const _mp=$('#minPdf'); if(_mp) _mp.onclick=()=>exportarMinisteriosPdf(base);
+  }
+
+  const EXTRA_LABEL={idade:'Idade',batizado:'Batizado',instrumento:'Instrumento',classificacao_vocal:'Voz'};
+  function extrasTexto(extra){
+    if(!extra) return '';
+    return Object.keys(extra).map(function(k){
+      var v=extra[k]; if(v==null||v==='') return '';
+      return (EXTRA_LABEL[k]||k)+': '+v;
+    }).filter(Boolean).join(' · ');
+  }
+
+  function exportarMinisteriosPdf(lista){
+    if(!lista || !lista.length){ alert('Não há inscrições para exportar.'); return; }
+    const logo=location.origin+'/assets/fonte-logo.png';
+    const filtro = minInscMin==='todos' ? 'Todos os ministérios' : minInscMin;
+    const emitido = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    // agrupa por ministério, na mesma ordem alfabética do filtro
+    const grupos={};
+    lista.forEach(r=>{ const m=r.ministerio||'Sem ministério'; (grupos[m]=grupos[m]||[]).push(r); });
+    const nomes=Object.keys(grupos).sort((a,b)=>a.localeCompare(b,'pt'));
+
+    let corpo='';
+    nomes.forEach(m=>{
+      const rs=grupos[m];
+      corpo+='<h2 class="grp">'+esc(m)+' <span>'+rs.length+' inscrito'+(rs.length===1?'':'s')+'</span></h2>';
+      corpo+='<table><thead><tr><th class="c-n">#</th><th>Nome</th><th>Célula</th><th class="c-t">Telefone</th><th class="c-d">Inscrição</th></tr></thead><tbody>';
+      rs.forEach((r,i)=>{
+        const ex=extrasTexto(r.extra);
+        corpo+='<tr>'+
+          '<td class="c-n">'+(i+1)+'</td>'+
+          '<td><b>'+esc(r.nome)+'</b>'+(ex?'<span class="ex">'+esc(ex)+'</span>':'')+'</td>'+
+          '<td>'+(esc(r.celula)||'—')+'</td>'+
+          '<td class="c-t">'+(esc(r.telefone)||'—')+'</td>'+
+          '<td class="c-d">'+dataBR(r.criado_em)+'</td>'+
+        '</tr>';
+      });
+      corpo+='</tbody></table>';
+    });
+
+    const doc='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Inscricoes-ministerios</title>'+
+'<style>'+
+'@page{size:A4;margin:14mm 12mm}'+
+'*{box-sizing:border-box;margin:0;padding:0}'+
+'body{font-family:Inter,system-ui,-apple-system,sans-serif;color:#16181a;background:#fff;font-size:10.5pt;line-height:1.45}'+
+'.folha{max-width:190mm;margin:0 auto;padding:18px 4px 40px}'+
+'.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;border-bottom:2px solid #16181a;padding-bottom:12px;margin-bottom:6px}'+
+'.cab img{height:30px;width:auto;filter:brightness(0)}'+
+'.cab h1{font-size:15pt;font-weight:700;line-height:1.2;margin-top:8px}'+
+'.cab .org{font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#6b7076;margin-top:3px}'+
+'.cab .dir{text-align:right;font-size:8.5pt;color:#6b7076;line-height:1.5}'+
+'.resumo{display:flex;gap:26px;padding:11px 0 4px;font-size:9pt;color:#6b7076;border-bottom:1px solid #e2e5e8;margin-bottom:4px}'+
+'.resumo b{display:block;font-size:14pt;color:#16181a;font-weight:700;line-height:1.25}'+
+'.grp{font-size:11pt;font-weight:700;margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid #c9ced3;display:flex;justify-content:space-between;align-items:baseline}'+
+'.grp span{font-size:8.5pt;font-weight:500;color:#6b7076}'+
+'table{width:100%;border-collapse:collapse}'+
+'thead{display:table-header-group}'+
+'th{text-align:left;font-size:7.5pt;letter-spacing:.1em;text-transform:uppercase;color:#6b7076;font-weight:600;padding:0 8px 6px;border-bottom:1px solid #e2e5e8}'+
+'td{padding:7px 8px;border-bottom:1px solid #eef0f2;vertical-align:top;font-size:9.5pt}'+
+'tr{page-break-inside:avoid}'+
+'td b{font-weight:600}'+
+'.ex{display:block;font-size:8pt;color:#6b7076;margin-top:2px}'+
+'.c-n{width:22px;color:#9aa1a8;font-size:8.5pt}'+
+'.c-t{width:104px;white-space:nowrap}'+
+'.c-d{width:112px;white-space:nowrap;color:#6b7076;font-size:8.5pt}'+
+'.pe{margin-top:26px;padding-top:10px;border-top:1px solid #e2e5e8;font-size:7.5pt;color:#9aa1a8}'+
+'.btns{position:fixed;top:14px;right:14px;display:flex;gap:8px}'+
+'.btns button{padding:9px 16px;border-radius:9px;border:1px solid #c9ced3;background:#fff;color:#16181a;font-family:inherit;font-weight:600;font-size:9.5pt;cursor:pointer}'+
+'.btns .p{background:#16181a;color:#fff;border-color:#16181a}'+
+'@media print{.btns{display:none}}'+
+'</style></head><body>'+
+'<div class="btns"><button class="p" onclick="window.print()">Salvar PDF</button><button onclick="window.close()">Fechar</button></div>'+
+'<div class="folha">'+
+  '<div class="cab"><div><img src="'+logo+'" alt="Igreja Fonte"><h1>Inscrições · Ministérios</h1><div class="org">Igreja Apostólica Fonte · Cajamar/SP</div></div>'+
+    '<div class="dir">Emitido em '+esc(emitido)+'<br>Filtro: '+esc(filtro)+'</div></div>'+
+  '<div class="resumo"><div><b>'+lista.length+'</b>inscrições</div><div><b>'+nomes.length+'</b>'+(nomes.length===1?'ministério':'ministérios')+'</div></div>'+
+  corpo+
+  '<div class="pe">Documento de uso interno da Igreja Apostólica Fonte · CNPJ 52.268.825/0001-95 · gerado pelo painel administrativo</div>'+
+'</div></body></html>';
+
+    const w=window.open('','_blank');
+    if(!w){ alert('Permita pop-ups para gerar o PDF.'); return; }
+    w.document.open(); w.document.write(doc); w.document.close();
   }
 
   function renderContatos(assunto){
