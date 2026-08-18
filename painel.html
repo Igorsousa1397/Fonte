@@ -382,7 +382,7 @@
   let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], ASOLIC=[], ADOACOES=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoEstTab='todas', acaoResTab='pendente', acaoSolicTab='pendente', acaoDoacTab='pendente', contatoResTab='pendente';
   var _itDirty=false;
   let MININSC=[], MINCFG={}, minInscMin='todos';
-  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
+  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
 
   // Perfis de acesso (profiles.role no Supabase).
   //   itens  = seletores do menu que o perfil vê (ausente = vê tudo)
@@ -515,9 +515,12 @@
   function abreMembroEdit(m){
     const iniciais=(m.nome||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const nasc=m.data_nascimento ? m.data_nascimento.split('-').reverse().join('/') : '';
-    const MIN=['Não serve em nenhum','Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
+    const MIN=['Não serve em nenhum','Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
     const minAtual = m.ministerio || 'Não serve em nenhum';
-    const minOpts = MIN.map(x=>'<option'+(x===minAtual?' selected':'')+'>'+esc(x)+'</option>').join('');
+    // mantém o ministério gravado na lista mesmo se ele saiu do catálogo,
+    // senão o select cai na primeira opção e salvar apagaria o dado do membro
+    const minLista = MIN.indexOf(minAtual)<0 ? MIN.concat([minAtual]) : MIN;
+    const minOpts = minLista.map(x=>'<option'+(x===minAtual?' selected':'')+'>'+esc(x)+'</option>').join('');
     const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     let mdMes='', mdAno='';
     if(m.membro_desde){ const d=String(m.membro_desde).split('-'); mdAno=d[0]; mdMes=d[1]; }
