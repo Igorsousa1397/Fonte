@@ -258,7 +258,6 @@
       'Ministério Juniores',
       'Ministério Teens',
       'Obreiros',
-      'Pastor auxiliar',
       'Voluntários'
     ];
     // ===================================
@@ -273,9 +272,19 @@
     // link do bloqueio
     $('linkPeniel').href = LINK_PENIEL;
 
-    // popula o dropdown de "em qual ministério você já serve"
+    // popula o dropdown de "em qual ministério você já serve", tirando o
+    // ministério da própria inscrição — ninguém já serve onde está se inscrevendo
     const selServe = $('f-d-serve-qual');
-    MINISTERIOS.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; selServe.appendChild(o); });
+    function populaServeQual(){
+      const excluir = $('f-min').value;
+      const anterior = selServe.value;
+      selServe.innerHTML = '<option value="">Selecione…</option>';
+      MINISTERIOS.filter(m=>m!==excluir).forEach(m=>{
+        const o=document.createElement('option'); o.value=m; o.textContent=m; selServe.appendChild(o);
+      });
+      if(anterior && anterior!==excluir) selServe.value = anterior;
+    }
+    populaServeQual();
 
     // o "qual ministério" só é perguntado a quem já serve
     $('f-d-serve').addEventListener('change', ()=>{
@@ -287,6 +296,7 @@
       const m=$('f-min').value;
       $('louvorCampos').classList.toggle('hidden', m!=='Louvor');
       $('dancaCampos').classList.toggle('hidden', m!=='Dança');
+      populaServeQual();
     });
 
 
