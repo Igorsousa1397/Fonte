@@ -131,6 +131,9 @@
         </div>
 
         <div id="dancaCampos" class="hidden">
+          <label for="f-d-idade">Idade <span class="req">*</span></label>
+          <input id="f-d-idade" class="field" type="number" inputmode="numeric" min="1" max="120" placeholder="Sua idade">
+
           <label for="f-d-aulas">Você já fez aulas de dança? <span class="req">*</span></label>
           <select id="f-d-aulas" class="field">
             <option value="">Selecione…</option>
@@ -147,6 +150,20 @@
             <option value="Sim">Sim</option>
             <option value="Não">Não</option>
           </select>
+
+          <label for="f-d-serve">Você já serve em algum ministério? <span class="req">*</span></label>
+          <select id="f-d-serve" class="field">
+            <option value="">Selecione…</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+
+          <div id="dancaServeQual" class="hidden">
+            <label for="f-d-serve-qual">Em qual ministério? <span class="req">*</span></label>
+            <select id="f-d-serve-qual" class="field">
+              <option value="">Selecione…</option>
+            </select>
+          </div>
 
           <label for="f-d-compromissos">Você está disposto(a) a participar dos ensaios, cultos e compromissos do ministério? <span class="req">*</span></label>
           <select id="f-d-compromissos" class="field">
@@ -221,6 +238,29 @@
       'Louvor': 'https://chat.whatsapp.com/LsQVWBDNcKp8NVb3JVZ2xc',
       'Dança':  'https://chat.whatsapp.com/DjSlJJbzHqQJRsfRqHZsTK'
     };
+    // 3) Ministérios da igreja — usada em "já serve em algum ministério?".
+    //    Mantenha igual à lista MINISTERIOS do painel.html.
+    const MINISTERIOS = [
+      'Ação Social',
+      'Boas-vindas',
+      'Dança',
+      'Dorcas',
+      'Estacionamento',
+      'Fonte Coffee',
+      'Fonte Store',
+      'Intercessão',
+      'Líder de célula',
+      'Louvor',
+      'Mídia Social',
+      'Mídia Técnica',
+      'Ministério Baby',
+      'Ministério Kids',
+      'Ministério Juniores',
+      'Ministério Teens',
+      'Obreiros',
+      'Pastor auxiliar',
+      'Voluntários'
+    ];
     // ===================================
 
     const $ = id => document.getElementById(id);
@@ -232,6 +272,15 @@
 
     // link do bloqueio
     $('linkPeniel').href = LINK_PENIEL;
+
+    // popula o dropdown de "em qual ministério você já serve"
+    const selServe = $('f-d-serve-qual');
+    MINISTERIOS.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; selServe.appendChild(o); });
+
+    // o "qual ministério" só é perguntado a quem já serve
+    $('f-d-serve').addEventListener('change', ()=>{
+      $('dancaServeQual').classList.toggle('hidden', $('f-d-serve').value!=='Sim');
+    });
 
     // mostra os campos extras do ministério escolhido
     $('f-min').addEventListener('change', ()=>{
@@ -315,17 +364,25 @@
         extra = { idade:+idade, batizado, instrumento: instrumento||null, classificacao_vocal: vocal||null };
       }
       if(ministerio==='Dança'){
+        const idade=$('f-d-idade').value.trim();
         const aulas=$('f-d-aulas').value;
         const estilo=$('f-d-estilo').value.trim();
         const minDanca=$('f-d-min').value;
+        const serve=$('f-d-serve').value;
+        const serveQual=$('f-d-serve-qual').value;
         const compromissos=$('f-d-compromissos').value;
         const ensaios=$('f-d-ensaios').value;
+        if(!idade || +idade<1){ toast('Informe sua idade.'); $('f-d-idade').focus(); return; }
         if(!aulas){ toast('Informe se você já fez aulas de dança.'); $('f-d-aulas').focus(); return; }
         if(!minDanca){ toast('Informe se você já participou de um Ministério de Dança.'); $('f-d-min').focus(); return; }
+        if(!serve){ toast('Informe se você já serve em algum ministério.'); $('f-d-serve').focus(); return; }
+        if(serve==='Sim' && !serveQual){ toast('Selecione em qual ministério você já serve.'); $('f-d-serve-qual').focus(); return; }
         if(!compromissos){ toast('Informe se você pode participar dos compromissos do ministério.'); $('f-d-compromissos').focus(); return; }
         if(!ensaios){ toast('Informe se você tem disponibilidade para os ensaios.'); $('f-d-ensaios').focus(); return; }
-        extra = { aulas_danca:aulas, estilo_danca: estilo||null,
-                  ministerio_danca:minDanca, compromissos, disponibilidade_ensaios:ensaios };
+        extra = { idade:+idade, aulas_danca:aulas, estilo_danca: estilo||null,
+                  ministerio_danca:minDanca, serve_ministerio:serve,
+                  ministerio_atual: serve==='Sim' ? serveQual : null,
+                  compromissos, disponibilidade_ensaios:ensaios };
       }
 
       const btn=$('enviar'); btn.disabled=true; btn.textContent='Enviando…';
