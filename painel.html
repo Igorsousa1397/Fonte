@@ -1010,7 +1010,7 @@ ${serve ? `
       html+='<div class="res-card">'+
         '<div class="res-head"><div><div style="font-weight:600">'+esc(r.nome)+'</div>'+
           '<div class="sub2"><b style="color:var(--agua)">'+esc(r.ministerio)+'</b> · '+esc(r.celula)+' · '+(esc(r.telefone)||'sem telefone')+' · '+dataBR(r.criado_em)+'</div>'+
-          (r.extra && Object.keys(r.extra).length ? '<div class="sub2" style="margin-top:4px">'+Object.keys(r.extra).map(function(k){ var v=r.extra[k]; if(v==null||v==='') return ''; var L={idade:'Idade',batizado:'Batizado',instrumento:'Instrumento',classificacao_vocal:'Voz'}; return '<b>'+esc(L[k]||k)+':</b> '+esc(v); }).filter(Boolean).join(' · ')+'</div>' : '')+
+          (extrasHtml(r.extra) ? '<div class="sub2" style="margin-top:4px">'+extrasHtml(r.extra)+'</div>' : '')+
           '</div>'+
           (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
         '</div>';
@@ -1030,13 +1030,21 @@ ${serve ? `
     const _mp=$('#minPdf'); if(_mp) _mp.onclick=()=>exportarMinisteriosPdf(base);
   }
 
-  const EXTRA_LABEL={idade:'Idade',batizado:'Batizado',instrumento:'Instrumento',classificacao_vocal:'Voz'};
-  function extrasTexto(extra){
-    if(!extra) return '';
+  const EXTRA_LABEL={idade:'Idade',batizado:'Batizado',instrumento:'Instrumento',classificacao_vocal:'Voz',
+    aulas_danca:'Já fez aulas',estilo_danca:'Estilos',ministerio_danca:'Já serviu em Dança',
+    compromissos:'Aceita compromissos',disponibilidade_ensaios:'Disponível p/ ensaios'};
+  function extrasPares(extra){
+    if(!extra) return [];
     return Object.keys(extra).map(function(k){
-      var v=extra[k]; if(v==null||v==='') return '';
-      return (EXTRA_LABEL[k]||k)+': '+v;
-    }).filter(Boolean).join(' · ');
+      var v=extra[k]; if(v==null||v==='') return null;
+      return [EXTRA_LABEL[k]||k, v];
+    }).filter(Boolean);
+  }
+  function extrasTexto(extra){
+    return extrasPares(extra).map(function(p){ return p[0]+': '+p[1]; }).join(' · ');
+  }
+  function extrasHtml(extra){
+    return extrasPares(extra).map(function(p){ return '<b>'+esc(p[0])+':</b> '+esc(p[1]); }).join(' · ');
   }
 
   // Esqueleto dos relatórios em PDF — cada tela monta só o corpo e chama aqui.

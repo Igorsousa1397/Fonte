@@ -130,6 +130,41 @@
           </select>
         </div>
 
+        <div id="dancaCampos" class="hidden">
+          <label for="f-d-aulas">Você já fez aulas de dança? <span class="req">*</span></label>
+          <select id="f-d-aulas" class="field">
+            <option value="">Selecione…</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+
+          <div id="dancaEstilo" class="hidden">
+            <label for="f-d-estilo">Qual estilo de dança você já praticou? <span class="req">*</span></label>
+            <input id="f-d-estilo" class="field" type="text" placeholder="Ex.: ballet, contemporâneo, jazz…">
+          </div>
+
+          <label for="f-d-min">Você já participou de algum Ministério de Dança? <span class="req">*</span></label>
+          <select id="f-d-min" class="field">
+            <option value="">Selecione…</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+
+          <label for="f-d-compromissos">Você está disposto(a) a participar dos ensaios, cultos e compromissos do ministério? <span class="req">*</span></label>
+          <select id="f-d-compromissos" class="field">
+            <option value="">Selecione…</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+
+          <label for="f-d-ensaios">Você tem disponibilidade para os ensaios? <span class="req">*</span></label>
+          <select id="f-d-ensaios" class="field">
+            <option value="">Selecione…</option>
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </div>
+
         <button class="btn" id="enviar">Enviar inscrição</button>
       </div>
     </div>
@@ -197,9 +232,16 @@
     // link do bloqueio
     $('linkPeniel').href = LINK_PENIEL;
 
-    // mostra campos extras quando o ministério for Louvor
+    // mostra os campos extras do ministério escolhido
     $('f-min').addEventListener('change', ()=>{
-      $('louvorCampos').classList.toggle('hidden', $('f-min').value!=='Louvor');
+      const m=$('f-min').value;
+      $('louvorCampos').classList.toggle('hidden', m!=='Louvor');
+      $('dancaCampos').classList.toggle('hidden', m!=='Dança');
+    });
+
+    // o estilo só é perguntado a quem já fez aulas
+    $('f-d-aulas').addEventListener('change', ()=>{
+      $('dancaEstilo').classList.toggle('hidden', $('f-d-aulas').value!=='Sim');
     });
 
     // popular células
@@ -264,7 +306,7 @@
       if(!celula){ toast('Selecione sua célula.'); $('f-celula').focus(); return; }
       if(!ministerio){ toast('Escolha um ministério.'); $('f-min').focus(); return; }
 
-      // campos extras do Louvor
+      // campos extras por ministério
       let extra = {};
       if(ministerio==='Louvor'){
         const idade=$('f-idade').value.trim();
@@ -274,6 +316,20 @@
         if(!idade || +idade<1){ toast('Informe sua idade.'); $('f-idade').focus(); return; }
         if(!batizado){ toast('Informe se você é batizado(a).'); $('f-batizado').focus(); return; }
         extra = { idade:+idade, batizado, instrumento: instrumento||null, classificacao_vocal: vocal||null };
+      }
+      if(ministerio==='Dança'){
+        const aulas=$('f-d-aulas').value;
+        const estilo=$('f-d-estilo').value.trim();
+        const minDanca=$('f-d-min').value;
+        const compromissos=$('f-d-compromissos').value;
+        const ensaios=$('f-d-ensaios').value;
+        if(!aulas){ toast('Informe se você já fez aulas de dança.'); $('f-d-aulas').focus(); return; }
+        if(aulas==='Sim' && !estilo){ toast('Informe qual estilo de dança você já praticou.'); $('f-d-estilo').focus(); return; }
+        if(!minDanca){ toast('Informe se você já participou de um Ministério de Dança.'); $('f-d-min').focus(); return; }
+        if(!compromissos){ toast('Informe se você pode participar dos compromissos do ministério.'); $('f-d-compromissos').focus(); return; }
+        if(!ensaios){ toast('Informe se você tem disponibilidade para os ensaios.'); $('f-d-ensaios').focus(); return; }
+        extra = { aulas_danca:aulas, estilo_danca: aulas==='Sim' ? estilo : null,
+                  ministerio_danca:minDanca, compromissos, disponibilidade_ensaios:ensaios };
       }
 
       const btn=$('enviar'); btn.disabled=true; btn.textContent='Enviando…';
