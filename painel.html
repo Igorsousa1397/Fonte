@@ -1,6 +1,6 @@
 <!--
   IGREJA FONTE · Cajamar — Painel administrativo
-  Protegido (sessão + role='admin'). Sidebar: Batismo · Financeiro · Fale com a gente.
+  Protegido (sessão + profiles.role). Perfis: admin (tudo), acao_social, ministerios.
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -381,6 +381,19 @@
   var _itDirty=false;
   let MININSC=[], MINCFG={}, minInscMin='todos';
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
+
+  // Perfis de acesso (profiles.role no Supabase).
+  //   itens  = seletores do menu que o perfil vê (ausente = vê tudo)
+  //   abre   = subnav que já vem expandida
+  //   inicio = [view, sub] em que o painel abre
+  // Atenção: isto só monta o menu. Quem barra o acesso aos dados é o RLS no banco.
+  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','[data-view="ministerios"]',
+    '#btn-fin','#subnav-fin','#btn-acao','#subnav-acao','#btn-contato','#subnav'];
+  const PERFIS={
+    admin:       {},
+    acao_social: { itens:['#btn-acao','#subnav-acao'], abre:'#subnav-acao', inicio:['acao','solicitacoes'] },
+    ministerios: { itens:['[data-view="ministerios"]'], inicio:['ministerios'], carregaTudo:false }
+  };
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -1662,35 +1675,43 @@ ${serve ? `
     const { data:{ user } } = await sb.auth.getUser();
     if(!user){ location.replace('login.html'); return; }
     const { data:perfil } = await sb.from('profiles').select('role').eq('id',user.id).single();
-    if(!perfil || (perfil.role!=='admin' && perfil.role!=='acao_social')){
+    const perf = perfil && PERFIS[perfil.role];
+    if(!perf){
       $('#view').innerHTML='<div class="vazio">Sua conta não tem acesso de administrador.</div>';
       await sb.auth.signOut(); setTimeout(()=>location.replace('login.html'),1800); return;
     }
     $('#quem').textContent=user.email;
-    const isAcao = perfil.role==='acao_social';
-    const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
-      sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
-      sb.from('contatos').select('id,nome,telefone,email,assunto,mensagem,created_at,resolvido,resolvido_em').order('created_at',{ascending:false}),
-      sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
-      sb.from('acao_itens').select('*').order('nome'),
-      sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
-      sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),
-      sb.from('contribuicoes').select('*').order('created_at',{ascending:false})
-    ]);
-    BATISMO = rb.data || [];
-    CONTATOS = rc.data || [];
-    MEMBROS = rm.data || [];
-    AITENS = ai.data || [];
-    ARES = ar.data || [];
-    APESSOAS = ap.data || [];
-    CONTRIB = co.data || [];
-    montaSubnav();
-    if(isAcao){
-      ['[data-view="batismo"]','[data-view="membros"]','[data-view="contribuicoes"]','[data-view="ministerios"]','#btn-fin','#subnav-fin','#btn-contato','#subnav'].forEach(function(sel){ var e=$(sel); if(e) e.style.display='none'; });
-      $('#subnav-acao').classList.add('aberto');
-      irPara('acao','solicitacoes');
-    } else {
-      irPara(window.innerWidth<=860 ? 'membros' : 'batismo');
+
+    // A tela de Ministérios busca os dados dela sozinha, então perfis restritos
+    // a ela não precisam (nem devem) carregar membros, contribuições e afins.
+    if(perf.carregaTudo!==false){
+      const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
+        sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
+        sb.from('contatos').select('id,nome,telefone,email,assunto,mensagem,created_at,resolvido,resolvido_em').order('created_at',{ascending:false}),
+        sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
+        sb.from('acao_itens').select('*').order('nome'),
+        sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
+        sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),
+        sb.from('contribuicoes').select('*').order('created_at',{ascending:false})
+      ]);
+      BATISMO = rb.data || [];
+      CONTATOS = rc.data || [];
+      MEMBROS = rm.data || [];
+      AITENS = ai.data || [];
+      ARES = ar.data || [];
+      APESSOAS = ap.data || [];
+      CONTRIB = co.data || [];
     }
+    montaSubnav();
+
+    if(perf.itens){
+      NAV_ITENS.forEach(function(sel){
+        if(perf.itens.indexOf(sel)>=0) return;
+        var e=$(sel); if(e) e.style.display='none';
+      });
+      if(perf.abre){ var sn=$(perf.abre); if(sn) sn.classList.add('aberto'); }
+    }
+    const inicio = perf.inicio || [window.innerWidth<=860 ? 'membros' : 'batismo'];
+    irPara(inicio[0], inicio[1]);
   })();
 </script>

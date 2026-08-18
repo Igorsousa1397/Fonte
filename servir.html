@@ -138,10 +138,8 @@
             <option value="Não">Não</option>
           </select>
 
-          <div id="dancaEstilo" class="hidden">
-            <label for="f-d-estilo">Qual estilo de dança você já praticou? <span class="req">*</span></label>
-            <input id="f-d-estilo" class="field" type="text" placeholder="Ex.: ballet, contemporâneo, jazz…">
-          </div>
+          <label for="f-d-estilo">Qual estilo de dança você já praticou?</label>
+          <input id="f-d-estilo" class="field" type="text" placeholder="Ex.: ballet, contemporâneo, jazz… (em branco se nenhum)">
 
           <label for="f-d-min">Você já participou de algum Ministério de Dança? <span class="req">*</span></label>
           <select id="f-d-min" class="field">
@@ -239,10 +237,6 @@
       $('dancaCampos').classList.toggle('hidden', m!=='Dança');
     });
 
-    // o estilo só é perguntado a quem já fez aulas
-    $('f-d-aulas').addEventListener('change', ()=>{
-      $('dancaEstilo').classList.toggle('hidden', $('f-d-aulas').value!=='Sim');
-    });
 
     // popular células
     const selC = $('f-celula');
@@ -324,11 +318,10 @@
         const compromissos=$('f-d-compromissos').value;
         const ensaios=$('f-d-ensaios').value;
         if(!aulas){ toast('Informe se você já fez aulas de dança.'); $('f-d-aulas').focus(); return; }
-        if(aulas==='Sim' && !estilo){ toast('Informe qual estilo de dança você já praticou.'); $('f-d-estilo').focus(); return; }
         if(!minDanca){ toast('Informe se você já participou de um Ministério de Dança.'); $('f-d-min').focus(); return; }
         if(!compromissos){ toast('Informe se você pode participar dos compromissos do ministério.'); $('f-d-compromissos').focus(); return; }
         if(!ensaios){ toast('Informe se você tem disponibilidade para os ensaios.'); $('f-d-ensaios').focus(); return; }
-        extra = { aulas_danca:aulas, estilo_danca: aulas==='Sim' ? estilo : null,
+        extra = { aulas_danca:aulas, estilo_danca: estilo||null,
                   ministerio_danca:minDanca, compromissos, disponibilidade_ensaios:ensaios };
       }
 
