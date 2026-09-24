@@ -275,6 +275,7 @@
   .cel-wpp:active{transform:translateY(1px)}
   /* Leaflet dark */
   .leaflet-container{background:#0d0d10;font-family:var(--corpo)}
+  .leaflet-control-attribution{background:rgba(13,13,16,.7)!important;color:var(--cinza)!important;font-size:.65rem}
   .leaflet-popup-content-wrapper{background:var(--grafite-2);color:var(--luz);
      border:1px solid var(--neblina);border-radius:12px;box-shadow:0 16px 40px -12px #000}
   .leaflet-popup-tip{background:var(--grafite-2);border:1px solid var(--neblina)}
@@ -1054,8 +1055,12 @@ let mapa,markers=[],templMarkers=[],celAtiva=null;
 function initMapa(){
   if(typeof L==='undefined'){document.getElementById('mapa').innerHTML=
     '<div style="height:100%;display:grid;place-items:center;color:var(--cinza);font-size:.9rem">Mapa indisponível — use a lista ao lado.</div>';return;}
-  mapa=L.map('mapa',{scrollWheelZoom:false,attributionControl:false}).setView([-23.44,-46.86],11);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(mapa);
+  mapa=L.map('mapa',{scrollWheelZoom:false}).setView([-23.44,-46.86],11);
+  mapa.attributionControl.setPrefix(false);
+  // Esri Dark Gray (sem chave de API; a CARTO passou a exigir chave)
+  const esri='https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
+  L.tileLayer(esri+'World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:'Tiles &copy; Esri'}).addTo(mapa);
+  L.tileLayer(esri+'World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:16}).addTo(mapa);
   // igrejas/templos (sede + núcleos): foto + endereço clicável (abre rotas)
   TEMPLOS.forEach(t=>{
     const html=(t.foto?'<img class="p-foto" src="'+t.foto+'" alt="'+t.nome+'" loading="lazy">':'')
