@@ -505,7 +505,7 @@
     <div class="sec-head">
       <span class="eyebrow">Inscrições abertas</span>
       <h2>Os encontros do ano</h2>
-      <p>Dois momentos para mergulhar mais fundo. Garanta sua vaga direto no app de cada encontro.</p>
+      <p id="insc-sub">Dois momentos para mergulhar mais fundo. Garanta sua vaga direto no app de cada encontro.</p>
     </div>
     <div class="cultos insc-grid" id="inscricoes"></div>
   </div>
@@ -850,7 +850,7 @@ const AGENDA = [
   { inicio:'2026-08-04', dow:'Ter', titulo:'Culto “À Fonte do Empreendedor”', tipo:'culto' },
   { inicio:'2026-08-08', dow:'Sáb', titulo:'Culto DN4', tipo:'culto' },
   { inicio:'2026-08-14', dow:'Sex', titulo:'Culto de Mulheres', tipo:'culto' },
-  { inicio:'2026-09-04', fim:'2026-09-06', dow:'Sex–Dom', titulo:'Encontro Submergidos', tipo:'evento', destaque:true, link:'https://submergidos.vercel.app', cta:'Inscrever-se' },
+  { inicio:'2026-09-04', fim:'2026-09-06', dow:'Sex–Dom', id:'submergidos', titulo:'Encontro Submergidos', tipo:'evento', destaque:true, link:'https://submergidos.vercel.app', cta:'Inscrever-se' },
   { inicio:'2026-09-10', fim:'2026-09-14', dow:'Qui–Seg', titulo:'Pastores Comprometidos', tipo:'evento' },
   { inicio:'2026-09-12', dow:'Sáb', titulo:'Culto DN4', tipo:'culto' },
   { inicio:'2026-09-27', dow:'Dom', titulo:'Batismo', tipo:'marco' },
@@ -863,7 +863,7 @@ const AGENDA = [
   { inicio:'2026-11-13', dow:'Sex', titulo:'Último Culto de Homens', tipo:'culto' },
   { inicio:'2026-11-14', dow:'Sáb', titulo:'Casamento do Tiago', tipo:'marco' },
   { inicio:'2026-11-17', dow:'Ter', titulo:'Discipulado com Líderes de Ministério', tipo:'lideranca' },
-  { inicio:'2026-11-20', fim:'2026-11-22', dow:'Sex–Dom', titulo:'Encontro Peniel', tipo:'evento', destaque:true, link:'https://encontrocomdeus-fonte.vercel.app', cta:'Inscrever-se', selo:'3º e último de 2026' },
+  { inicio:'2026-11-20', fim:'2026-11-22', dow:'Sex–Dom', id:'peniel', titulo:'Encontro Peniel', tipo:'evento', destaque:true, link:'https://encontrocomdeus-fonte.vercel.app', cta:'Inscrever-se', selo:'3º e último de 2026' },
   { inicio:'2026-11-28', dow:'Sáb', titulo:'Último Culto DN4 · Batismo (manhã)', tipo:'marco' },
   { inicio:'2026-12-04', dow:'Sex', titulo:'Culto de Mulheres — Encerramento', tipo:'culto' },
   { inicio:'2026-12-11', dow:'Sex', titulo:'Última Célula do Ano', tipo:'evento' },
@@ -937,6 +937,7 @@ slidesData.forEach((e,i)=>{
   const cta=e.link?`<a class="btn btn-claro" href="${e.link}" target="_blank" rel="noopener">${e.cta||'Inscrever-se'} <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7M11 4L4 11"/></svg></a><a class="btn btn-fantasma" href="#agenda">Ver agenda</a>`
     :`<a class="btn btn-claro" href="#agenda">Ver na agenda</a>`;
   const s=document.createElement('div');s.className='slide'+(i===0?' on':'')+(e.img?' slide-foto':'');
+  if(e.id)s.dataset.enc=e.id;
   const contaHtml=`<span class="conta"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3.2L9 9"/></svg>${conta}</span>`;
   const tag=`<span class="slide-tag"><span class="dot"></span> ${fmtFaixa(e)} · ${e.dow}</span>`;
   const corpoTxt=`${tag}<h1>${e.titulo}</h1><p>${textoSlide(e)}</p>
@@ -958,9 +959,13 @@ document.getElementById('next').onclick=()=>irPara(atual+1);
 document.getElementById('prev').onclick=()=>irPara(atual-1);
 if(slides.length>1)reiniciar();
 
-/* ---- cards inscrição ---- */
+/* ---- cards inscrição (encontros ligados/desligados no painel → encontro_config) ---- */
 const boxIns=document.getElementById('inscricoes');
-AGENDA.filter(e=>e.link).forEach(e=>{
+function renderInscricoes(){
+const encontros=AGENDA.filter(e=>e.link);
+document.getElementById('eventos').style.display=encontros.length?'':'none';
+if(encontros.length===1)document.getElementById('insc-sub').textContent='Um momento para mergulhar mais fundo. Garanta sua vaga direto no app do encontro.';
+encontros.forEach(e=>{
   const dias=diasAte(e.inicio),estado=dias>=0?`Faltam ${dias} dias`:'Encerrado';
   const c=document.createElement('a');
   const fotoCls=e.titulo.includes('Submergidos')?' foto sub':e.titulo.includes('Peniel')?' foto campo':'';
@@ -975,6 +980,26 @@ AGENDA.filter(e=>e.link).forEach(e=>{
       <span style="font-size:.75rem;color:var(--cinza-claro);border:1px solid var(--neblina);border-radius:100px;padding:5px 11px">${estado}</span></div>`;
   boxIns.appendChild(c);
 });
+}
+document.getElementById('eventos').style.display='none';
+(async()=>{
+  try{
+    const {data,error}=await sb.from('encontro_config').select('slug,ativo');
+    if(error)throw error;
+    const off=new Set((data||[]).filter(r=>!r.ativo).map(r=>r.slug));
+    if(off.size){
+      // desligado: sai dos cards e perde o botão de inscrição na agenda e no banner
+      AGENDA.forEach(e=>{if(e.id&&off.has(e.id)){delete e.link;delete e.cta;}});
+      slides.filter(s=>off.has(s.dataset.enc)).forEach(s=>{
+        const cta=s.querySelector('.slide-cta');
+        if(cta)cta.querySelectorAll('a').forEach(a=>a.remove()),cta.insertAdjacentHTML('afterbegin','<a class="btn btn-claro" href="#agenda">Ver na agenda</a>');
+        const p=s.querySelector('.slide-txt p, .slide-inner > p');if(p)p.textContent='Reserve a data na sua agenda e venha viver esse momento com a Fonte.';
+      });
+      renderAgenda();
+    }
+  }catch(err){console.warn('encontro_config:',err);}   // falhou: mostra todos
+  renderInscricoes();
+})();
 
 /* ---- agenda lista ---- */
 const listaBox=document.getElementById('lista'),filtrosBox=document.getElementById('filtros');

@@ -70,10 +70,11 @@ Telas:
   inscrições com filtro e contagem, exportação em PDF
 - **Ação Social** — itens (mercadinho/rouparia), doações, reservas
   (pendente → separado → entregue), solicitações, pessoas
+- **Encontros** — ligar/desligar os cards de "Os encontros do ano" no site (`encontro_config`, RPC `encontro_set_ativo`; SQL em `supabase/encontros.sql`)
 - **Contatos** — mensagens do "Fale com a gente"
 - **Financeiro** — contribuições declaradas no envelope (confirmar/recusar)
 
-Tabelas usadas: `membros`, `inscricoes_batismo`, `ministerio_config`,
+Tabelas usadas: `membros`, `encontro_config`, `inscricoes_batismo`, `ministerio_config`,
 `ministerio_inscricoes`, `contatos`, `contribuicoes`, `acao_itens`, `acao_doacoes`,
 `acao_reservas`, `acao_solicitacoes`, `acao_pessoas`, `profiles`.
 
