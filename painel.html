@@ -616,10 +616,10 @@
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
       (!validado && !temCelula(m.celula) ? '<div class="sub2" style="margin-top:12px;color:#e0b341">Para validar e liberar a carteirinha, o membro precisa fazer parte de uma célula. Use "Editar dados" para informar a célula.</div>' : '')+
       '<div class="mb-acoes"><button class="btn-ghost" data-act="edit">Editar dados</button>'+(validado
-        ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>' : ''))
+        ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button><button class="btn-ghost" data-act="mail"'+(m.email?'':' disabled title="Sem e-mail no cadastro"')+'>Enviar carteirinha por e-mail</button>' : ''))
         : '<button class="btn-val" data-val="1"'+(temCelula(m.celula)?'':' disabled title="O membro precisa fazer parte de uma célula"')+'>Validar dados / OK</button>')+
         (!ativo ? (m.arquivado ? '<button class="btn-ghost" data-act="desarq">Desarquivar</button>' : '<button class="btn-ghost" data-act="arq">Arquivar</button>')+'<button class="btn-del" data-act="del">Excluir membro</button>' : '')+
-      '</div>';
+      '</div><div class="sub2" id="mbMailSt" style="margin-top:10px"></div>';
     const vb=$('#mbBody .btn-val[data-val]');
     if(vb) vb.onclick=()=>setValidadoMembro(m.id, true);
     const vr=$('#mbBody .btn-ghost[data-val="0"]'); if(vr) vr.onclick=()=>setValidadoMembro(m.id, false);
@@ -627,6 +627,7 @@
     const bArq=$('#mbBody [data-act="arq"]'); if(bArq) bArq.onclick=()=>arquivarMembro(m,true);
     const bDes=$('#mbBody [data-act="desarq"]'); if(bDes) bDes.onclick=()=>arquivarMembro(m,false);
     const bCart=$('#mbBody [data-act="cart"]'); if(bCart) bCart.onclick=()=>abrirCarteirinha(m);
+    const bMail=$('#mbBody [data-act="mail"]'); if(bMail) bMail.onclick=()=>enviarCarteirinhaEmail(m);
     const bEdit=$('#mbBody [data-act="edit"]'); if(bEdit) bEdit.onclick=()=>abreMembroEdit(m);
     const fBtn=$('#mbFotoBtn'), fFile=$('#mbFotoFile');
     if(fBtn && fFile){ fBtn.onclick=()=>fFile.click(); fFile.onchange=()=>{ const f=fFile.files&&fFile.files[0]; if(f) uploadFotoMembro(m,f); }; }
@@ -729,6 +730,22 @@
     m.arquivado=arq; const mm=MEMBROS.find(x=>x.id===m.id); if(mm) mm.arquivado=arq;
     fechaMembro(); renderMembros();
   }
+  // manda a carteirinha para o e-mail do membro (função enviar-carteirinha no Supabase, via Resend)
+  async function enviarCarteirinhaEmail(m){
+    const st=$('#mbMailSt'), b=$('#mbBody [data-act="mail"]');
+    if(!m.email){ if(st) st.textContent='Sem e-mail no cadastro: a carteirinha não foi enviada. Use "Editar dados" para incluir o e-mail.'; return false; }
+    if(b){ b.disabled=true; b.textContent='Enviando…'; }
+    if(st) st.textContent='Enviando a carteirinha para '+m.email+'…';
+    let ok=false, msg='';
+    try{
+      const {data,error}=await sb.functions.invoke('enviar-carteirinha',{body:{membro_id:m.id}});
+      if(error){ let det=''; try{ det=(await error.context.json()).erro||''; }catch(_){} throw new Error(det||error.message); }
+      ok=!!(data&&data.ok); msg=ok?'Carteirinha enviada para '+m.email+'.':'Não foi possível enviar.';
+    }catch(err){ msg='Não foi possível enviar a carteirinha: '+(err.message||err); }
+    if(st){ st.textContent=msg; st.style.color=ok?'var(--agua)':'#e57373'; }
+    if(b){ b.disabled=false; b.textContent='Enviar carteirinha por e-mail'; }
+    return ok;
+  }
   async function setValidadoMembro(id, val){
     const mv=MEMBROS.find(x=>x.id===id);
     if(val && mv && !temCelula(mv.celula)){ alert('Para validar, o membro precisa fazer parte de uma célula. Edite os dados e informe a célula primeiro.'); return; }
@@ -738,6 +755,7 @@
     const m=MEMBROS.find(x=>x.id===id);
     if(m){ m.validado=val; m.validado_em=val?new Date().toISOString():null; abreMembro(m); }
     if($('#titulo') && $('#titulo').textContent==='Membros') renderMembros();
+    if(val && m && m.ativo!==false) enviarCarteirinhaEmail(m);   // aprovado: carteirinha vai para o e-mail
   }
   async function excluirMembro(m){
     if(m.ativo!==false){ alert('Só é possível excluir um membro inativo. Desative-o primeiro.'); return; }
