@@ -1329,12 +1329,16 @@ ${serve ? `
       '<div class="f2"><div class="fld"><label>Nome</label><input id="cl-nome" maxlength="60" value="'+esc(e.nome||'')+'"></div>'+
         '<div class="fld"><label>Cidade</label><input id="cl-cidade" list="cl-cidades" maxlength="60" value="'+esc(e.cidade||'')+'"><datalist id="cl-cidades">'+cidades.map(x=>'<option value="'+esc(x)+'"></option>').join('')+'</datalist></div></div>'+
       '<div class="fld"><label>Líderes</label><input id="cl-lider" maxlength="80" value="'+esc(e.lider||'')+'" placeholder="Ex.: João e Maria"></div>'+
-      '<div class="fld"><label>Endereço</label><input id="cl-end" maxlength="160" value="'+esc(e.endereco||'')+'" placeholder="Rua, número — bairro"></div>'+
+      '<div class="f2" style="grid-template-columns:1fr 1fr 1.4fr"><div class="fld"><label>CEP</label><input id="cl-cep" inputmode="numeric" maxlength="9" placeholder="00000-000"></div>'+
+        '<div class="fld"><label>Número</label><input id="cl-num" maxlength="10" placeholder="Ex.: 130"></div>'+
+        '<div class="fld"><label>Complemento</label><input id="cl-comp" maxlength="60" placeholder="Bloco, apto…"></div></div>'+
+      '<div class="ithint" id="cl-cep-st" style="margin:-6px 0 12px">Digite o CEP e o número: o endereço e a localização no mapa são preenchidos sozinhos.</div>'+
+      '<div class="fld"><label>Endereço (como aparece no site)</label><input id="cl-end" maxlength="160" value="'+esc(e.endereco||'')+'" placeholder="Rua, número — bairro"></div>'+
       '<div class="f2"><div class="fld"><label>Dia e horário</label><input id="cl-hora" maxlength="30" value="'+esc(e.horario||'')+'" placeholder="Ex.: Qui 20h"></div>'+
         '<div class="fld"><label>Etiqueta (opcional)</label><input id="cl-tag" maxlength="20" value="'+esc(e.tag||'')+'" placeholder="Ex.: Jovens, Mulheres"></div></div>'+
       '<div class="fld"><label>WhatsApp do líder</label><input id="cl-wpp" inputmode="tel" maxlength="20" value="'+esc(e.whatsapp||'')+'" placeholder="(11) 90000-0000"></div>'+
       '<div class="fld"><label>Localização no mapa</label><input id="cl-loc" value="'+(e.lat!=null?esc(e.lat+', '+e.lng):'')+'" placeholder="Cole o link do Google Maps ou as coordenadas">'+
-        '<div class="ithint" id="cl-loc-st">No Google Maps, clique com o botão direito no local e clique nos números que aparecem (eles são copiados). Depois cole aqui.</div></div>'+
+        '<div class="ithint" id="cl-loc-st">'+(e.lat!=null?'<a href="https://www.google.com/maps?q='+e.lat+','+e.lng+'" target="_blank" rel="noopener" style="color:var(--agua)">Conferir no Google Maps</a> · ':'')+'Preenchida pelo CEP. Para ajustar, cole um link do Google Maps ou as coordenadas.</div></div>'+
       '<div class="fld"><label>Foto (opcional)</label><input type="file" id="cl-foto" accept="image/*"><img class="bn-prev" id="cl-prev" alt=""></div>'+
       '<label class="chkline"><input type="checkbox" id="cl-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="cl-salvar">Salvar</button><button class="btn-ghost" id="cl-cancelar">Cancelar</button>'+
@@ -1342,7 +1346,50 @@ ${serve ? `
     const prev=$('#cl-prev');
     if(e.foto_url){ prev.src=e.foto_url; prev.style.display='block'; }
     $('#cl-foto').onchange=function(){ const f=this.files[0]; if(!f) return; prev.src=URL.createObjectURL(f); prev.style.display='block'; };
-    $('#cl-loc').oninput=function(){ const p=lerCoordenadas(this.value); $('#cl-loc-st').textContent=p?('Localização reconhecida: '+p.lat.toFixed(5)+', '+p.lng.toFixed(5)):'Não reconheci a localização. Cole as coordenadas (ex.: -23.40, -46.86) ou um link do Google Maps.'; };
+    const locSt=(html)=>{ $('#cl-loc-st').innerHTML=html; };
+    const linkMapa=p=>'<a href="https://www.google.com/maps?q='+p.lat+','+p.lng+'" target="_blank" rel="noopener" style="color:var(--agua)">Conferir no Google Maps</a>';
+    $('#cl-loc').oninput=function(){ const p=lerCoordenadas(this.value); locSt(p?('Localização reconhecida · '+linkMapa(p)):'Não reconheci a localização. Cole as coordenadas (ex.: -23.40, -46.86) ou um link do Google Maps.'); };
+    // CEP → endereço (ViaCEP); endereço + número → localização (OpenStreetMap)
+    let viacep=null, _geoT=null;
+    const montaEndereco=()=>{
+      if(!viacep) return;
+      const num=$('#cl-num').value.trim(), comp=$('#cl-comp').value.trim();
+      const rua=[viacep.logradouro,num].filter(Boolean).join(', ')+(comp?' ('+comp+')':'');
+      $('#cl-end').value=[rua,viacep.bairro].filter(Boolean).join(' — ');
+    };
+    async function localizar(){
+      if(!viacep) return;
+      const num=$('#cl-num').value.trim();
+      locSt('Procurando no mapa…');
+      const base='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&accept-language=pt-BR';
+      const busca=async rua=>{ const r=await fetch(base+'&street='+encodeURIComponent(rua)+'&city='+encodeURIComponent(viacep.localidade)+'&state='+encodeURIComponent(viacep.uf)); return (await r.json())[0]; };
+      try{
+        let achou=viacep.logradouro ? await busca((num?num+' ':'')+viacep.logradouro) : null;
+        if(!achou && viacep.logradouro && num){ await new Promise(r=>setTimeout(r,1100)); achou=await busca(viacep.logradouro); }
+        if(!achou){ locSt('Não achei esse endereço no mapa. Cole um link do Google Maps ou as coordenadas.'); return; }
+        const p={lat:+(+achou.lat).toFixed(7), lng:+(+achou.lon).toFixed(7)};
+        $('#cl-loc').value=p.lat+', '+p.lng;
+        const exato=achou.addresstype==='building'||achou.class==='building'||achou.class==='place'&&achou.type==='house';
+        locSt((exato?'Localização encontrada':'Localização aproximada (pela rua)')+' · '+linkMapa(p)+(exato?'':' · se precisar, cole um link do Google Maps para acertar o ponto'));
+      }catch(err){ locSt('Não consegui buscar no mapa agora. Cole um link do Google Maps ou as coordenadas.'); }
+    }
+    $('#cl-cep').oninput=async function(){
+      let d=this.value.replace(/\D/g,'').slice(0,8);
+      this.value=d.length>5?d.slice(0,5)+'-'+d.slice(5):d;
+      if(d.length!==8){ viacep=null; return; }
+      const st=$('#cl-cep-st'); st.textContent='Buscando CEP…';
+      try{
+        const r=await (await fetch('https://viacep.com.br/ws/'+d+'/json/')).json();
+        if(r.erro){ st.textContent='CEP não encontrado.'; viacep=null; return; }
+        viacep=r;
+        $('#cl-cidade').value=r.uf==='SP'?r.localidade:r.localidade+'/'+r.uf;
+        st.textContent=[r.logradouro,r.bairro,r.localidade+'/'+r.uf].filter(Boolean).join(' — ');
+        montaEndereco(); localizar();
+        if(!$('#cl-num').value) $('#cl-num').focus();
+      }catch(err){ st.textContent='Não consegui buscar o CEP agora. Preencha o endereço à mão.'; }
+    };
+    $('#cl-num').oninput=()=>{ montaEndereco(); clearTimeout(_geoT); _geoT=setTimeout(localizar,900); };
+    $('#cl-comp').oninput=montaEndereco;
     $('#cl-cancelar').onclick=fechaCelula;
     $('#cl-salvar').onclick=()=>salvarCelula(c);
     if(c) $('#cl-excluir').onclick=()=>removerCelula(c);
