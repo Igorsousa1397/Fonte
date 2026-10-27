@@ -812,7 +812,7 @@
       <div class="campo"><label for="m-email">E-mail</label><input id="m-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com"></div>
       <div class="duo">
         <div class="campo"><label for="m-nasc">Data de nascimento</label><input id="m-nasc" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" autocomplete="bday"></div>
-        <div class="campo"><label for="m-foto-file">Foto do rosto <span style="color:var(--cinza);font-weight:400">(opcional)</span></label>
+        <div class="campo"><label for="m-foto-file">Foto do rosto</label>
           <input id="m-foto-file" type="file" accept="image/*" style="display:none">
           <div style="display:flex;align-items:center;gap:12px">
             <img id="m-foto-prev" alt="" style="display:none;width:52px;height:52px;border-radius:50%;object-fit:cover;border:1px solid var(--neblina)">
@@ -1618,6 +1618,7 @@ document.getElementById('enviaContato').onclick=async()=>{
     const email=g('m-email').toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast('Preencha um e-mail válido. É por ele que você acessa sua carteirinha.'); return; }
     if(!el('m-peniel').value){ toast('Informe se você já passou pelo Encontro Peniel.'); return; }
+    if(!fotoFile){ toast('Adicione uma foto do rosto. Ela vai na sua carteirinha de membro.'); return; }
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
     try{
       let fotoUrl=null;
