@@ -971,31 +971,30 @@ const futuros=AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inic
 const proximoIso=(futuros.find(e=>!e.fixo)||futuros[0]||{}).inicio||null;
 
 /* ---- hero ----
-   Banners cadastrados no painel (tabela `banners`) têm prioridade. Sem nenhum ativo,
-   ficam os automáticos: eventos especiais do mês + Quarta Profética / Domingo. */
-const slidesAuto=(()=>{
+   Junta os banners avulsos do painel (tabela `banners`) com os recorrentes ligados lá
+   (coluna `auto`: agenda, quarta, domingo, ceia), em ordem de data, até no mínimo 4.
+   Sem conseguir ler o banco, mostra os recorrentes com os textos padrão. */
+function escolherSlides(r){
   const MIN=4;
-  // prioridade: agendas do MÊS atual que não são cultos comuns (têm flyer OU não são culto fixo)
+  const on=k=>!r.ok||!!r.autos[k];
+  const comTextos=(k,e)=>{const a=r.autos[k];if(!a)return e;
+    return {...e,titulo:escH(a.titulo),texto:a.descricao!=null?escH(a.descricao):undefined,img:a.imagem_url?escH(a.imagem_url):undefined};};
   const mes=HOJE.getMonth(), ano=HOJE.getFullYear();
-  const especiais=futuros.filter(e=>(!e.fixo||e.img) && d(e.inicio).getMonth()===mes && d(e.inicio).getFullYear()===ano).sort((a,b)=>d(a.inicio)-d(b.inicio));
-  if(especiais.length>=MIN) return especiais;
-  // completa com Quarta Profética e Domingo em Família (banners), alternando, até no mínimo 4
-  const quartas=futuros.filter(e=>e.fixo && /Quarta/.test(e.titulo));
-  const domingos=futuros.filter(e=>e.fixo && e.dow==='Dom');
-  const fillers=[];
-  const pushQ=e=>fillers.push({...e, titulo:'Quarta Profética', img:'assets/banner-quarta.jpg'});
-  const pushD=e=>{const ceia=/Ceia/.test(e.titulo); fillers.push({...e, titulo:ceia?'Santa Ceia':'Domingo em Família', img:ceia?'assets/banner-ceia.jpg':'assets/banner-domingo.jpg'});};
-  let qi=0,di=0,quartaVez=true;
-  while(especiais.length+fillers.length<MIN){
-    if(quartaVez && qi<quartas.length) pushQ(quartas[qi++]);
-    else if(!quartaVez && di<domingos.length) pushD(domingos[di++]);
-    else if(qi<quartas.length) pushQ(quartas[qi++]);
-    else if(di<domingos.length) pushD(domingos[di++]);
-    else break;
-    quartaVez=!quartaVez;
-  }
-  return especiais.concat(fillers);
-})();
+  // eventos especiais do MÊS atual (têm flyer OU não são culto fixo)
+  const especiais=on('agenda')?futuros.filter(e=>(!e.fixo||e.img) && d(e.inicio).getMonth()===mes && d(e.inicio).getFullYear()===ano):[];
+  const porData=(a,b)=>(a.inicio?d(a.inicio):Infinity)-(b.inicio?d(b.inicio):Infinity);
+  const base=r.manuais.concat(especiais).sort(porData);
+  if(base.length>=MIN)return base;
+  // completa com os cultos recorrentes ligados, do mais próximo para o mais distante
+  const fillers=futuros.filter(e=>e.fixo).map(e=>{
+    if(/Quarta/.test(e.titulo))return on('quarta')&&comTextos('quarta',{...e,titulo:'Quarta Profética',img:'assets/banner-quarta.jpg'});
+    if(e.dow!=='Dom')return null;
+    return /Ceia/.test(e.titulo)
+      ?on('ceia')&&comTextos('ceia',{...e,titulo:'Santa Ceia',img:'assets/banner-ceia.jpg'})
+      :on('domingo')&&comTextos('domingo',{...e,titulo:'Domingo em Família',img:undefined});
+  }).filter(Boolean);
+  return base.concat(fillers.slice(0,MIN-base.length)).sort(porData);
+}
 const track=document.getElementById('track'),dotsBox=document.getElementById('dots');
 function textoSlide(e){
   if(e.texto!=null)return e.texto;
@@ -1018,17 +1017,23 @@ function bannerParaSlide(b){
   return {inicio:b.data||null, fim, dow, titulo:escH(b.titulo), texto:escH(b.descricao||''),
     img:b.imagem_url?escH(b.imagem_url):undefined, link:b.link?escH(b.link):undefined, cta:escH(b.cta||'Saiba mais')};
 }
+// o banco só devolve os ativos: recorrente ausente = desligado no painel
 async function buscarBanners(){
   try{
-    const {data,error}=await sb.from('banners').select('titulo,descricao,imagem_url,data,data_fim,link,cta,criado_em')
+    const {data,error}=await sb.from('banners').select('auto,titulo,descricao,imagem_url,data,data_fim,link,cta,criado_em')
       .order('data',{ascending:true,nullsFirst:false}).order('criado_em',{ascending:true});
     if(error)throw error;
-    return (data||[]).filter(b=>{const f=b.data_fim||b.data;return !f||diasAte(f)>=0;}).map(bannerParaSlide);
-  }catch(err){console.warn('banners:',err);return [];}   // falhou: usa os automáticos
+    const autos={};(data||[]).filter(b=>b.auto).forEach(b=>{autos[b.auto]=b;});
+    // tabela sem os recorrentes cadastrados ainda: trata como todos ligados
+    const temAutos=(data||[]).some(b=>b.auto);
+    const manuais=(data||[]).filter(b=>!b.auto&&(()=>{const f=b.data_fim||b.data;return !f||diasAte(f)>=0;})()).map(bannerParaSlide);
+    return {ok:temAutos,autos,manuais};
+  }catch(err){console.warn('banners:',err);return {ok:false,autos:{},manuais:[]};}
 }
 let atual=0,timer,slides=[],dots=[];
 function montarHero(lista){
 track.innerHTML='';dotsBox.innerHTML='';atual=0;
+document.getElementById('topo').style.display=lista.length?'':'none';   // tudo desligado no painel: sem carrossel
 lista.forEach((e,i)=>{
   const dias=e.inicio?diasAte(e.inicio):null;
   const conta=dias>1?`faltam ${dias} dias`:dias===1?'é amanhã':dias===0?'é hoje':'acontecendo agora';
@@ -1096,7 +1101,7 @@ const encontrosProntos=(async()=>{
   }catch(err){console.warn('encontro_config:',err);}   // falhou: mostra todos
   renderInscricoes();
 })();
-Promise.all([buscarBanners(),encontrosProntos]).then(([banners])=>montarHero(banners.length?banners:slidesAuto));
+Promise.all([buscarBanners(),encontrosProntos]).then(([r])=>montarHero(escolherSlides(r)));
 
 /* ---- agenda lista ---- */
 const listaBox=document.getElementById('lista'),filtrosBox=document.getElementById('filtros');

@@ -1117,6 +1117,9 @@ ${serve ? `
 
   /* ===================== BANNERS (topo do site) ===================== */
   let BANNERS=[];
+  // banners recorrentes (coluna `auto`): a data é calculada pelo site
+  const AUTO_ORDEM=['agenda','quarta','domingo','ceia'];
+  const AUTO_QUANDO={agenda:'Eventos com destaque do mês, direto da agenda',quarta:'Toda próxima quarta',domingo:'Todo próximo domingo',ceia:'Primeiro domingo do mês'};
   const dataCurta=iso=>iso?String(iso).split('-').reverse().join('/'):'';
   async function renderBanners(){
     $('#titulo').textContent='Banners do site';
@@ -1126,21 +1129,26 @@ ${serve ? `
     BANNERS=data||[];
     const hoje=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);   // data local
     const passou=b=>{ const f=b.data_fim||b.data; return !!f && f<hoje; };
-    const noSite=BANNERS.filter(b=>b.ativo && !passou(b)).length;
-    let html='<div class="cards">'+card('No site agora',noSite,true)+card('Total cadastrados',BANNERS.length)+'</div>';
-    html+='<p class="view-sub">Estes são os banners do topo do site. '+(noSite?'':'<b>Enquanto não houver nenhum ativo, o site mostra os banners automáticos da agenda.</b> ')+'Depois da data, o banner sai do site sozinho.</p>';
-    html+='<div class="min-barra" style="justify-content:flex-end"><button class="mini-btn go" id="bnNovo">+ Novo banner</button></div>';
-    if(!BANNERS.length) html+='<div class="tabela"><div class="vazio">Nenhum banner cadastrado.</div></div>';
-    BANNERS.forEach(b=>{
-      const quando=b.data?(dataCurta(b.data)+(b.data_fim&&b.data_fim!==b.data?' a '+dataCurta(b.data_fim):'')):'Sem data';
-      const estado=!b.ativo?'Desligado':passou(b)?'Data já passou':'No site';
-      html+='<div class="bn-card'+(b.ativo&&!passou(b)?'':' off')+'">'+
+    const autos=AUTO_ORDEM.map(k=>BANNERS.find(b=>b.auto===k)).filter(Boolean);
+    const avulsos=BANNERS.filter(b=>!b.auto);
+    const noSite=avulsos.filter(b=>b.ativo && !passou(b)).length;
+    const linha=(b,quando,estado,podeEditar)=>'<div class="bn-card'+(b.ativo&&!passou(b)?'':' off')+'">'+
         (b.imagem_url?'<img class="bn-thumb" src="'+esc(b.imagem_url)+'" alt="">':'<div class="bn-thumb vazio">sem foto</div>')+
         '<div class="bn-info"><b>'+esc(b.titulo)+'</b><div class="sub2">'+esc(quando)+' · '+estado+'</div>'+
           (b.descricao?'<div class="sub2">'+esc(b.descricao)+'</div>':'')+'</div>'+
         '<div class="bn-acoes"><label class="sw"><input type="checkbox" data-bn="'+b.id+'"'+(b.ativo?' checked':'')+'><span class="track"></span></label>'+
-          '<button class="mini-btn" data-bned="'+b.id+'">Editar</button></div>'+
+          (podeEditar?'<button class="mini-btn" data-bned="'+b.id+'">Editar</button>':'')+'</div>'+
       '</div>';
+    let html='<div class="cards">'+card('Recorrentes ligados',autos.filter(b=>b.ativo).length+' de '+autos.length,true)+card('Avulsos no site',noSite)+'</div>';
+    html+='<p class="view-sub">O topo do site junta os banners avulsos com os recorrentes que estiverem ligados, em ordem de data (no mínimo 4 no carrossel, quando houver).</p>';
+    html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:22px 0 12px;letter-spacing:.06em;text-transform:uppercase">Recorrentes · data automática</h4>';
+    if(!autos.length) html+='<div class="tabela"><div class="vazio">Rode o arquivo supabase/banners-automaticos.sql no Supabase para os recorrentes aparecerem aqui.</div></div>';
+    autos.forEach(b=>{ html+=linha(b,AUTO_QUANDO[b.auto]||'',b.ativo?'No site':'Desligado',b.auto!=='agenda'); });
+    html+='<div class="min-barra" style="justify-content:space-between;align-items:center;margin-top:26px"><h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:0;letter-spacing:.06em;text-transform:uppercase">Avulsos</h4><button class="mini-btn go" id="bnNovo">+ Novo banner</button></div>';
+    if(!avulsos.length) html+='<div class="tabela"><div class="vazio">Nenhum banner avulso. Use para recados e eventos com data própria.</div></div>';
+    avulsos.forEach(b=>{
+      const quando=b.data?(dataCurta(b.data)+(b.data_fim&&b.data_fim!==b.data?' a '+dataCurta(b.data_fim):'')):'Sem data';
+      html+=linha(b,quando,!b.ativo?'Desligado':passou(b)?'Data já passou':'No site',true);
     });
     $('#view').innerHTML=html;
     $('#bnNovo').onclick=()=>abreBanner(null);
@@ -1154,32 +1162,33 @@ ${serve ? `
   }
   function fechaBanner(){ $('#bnBg').classList.remove('on'); }
   function abreBanner(b){
-    const e=b||{ativo:true};
+    const e=b||{ativo:true}, auto=!!(b&&b.auto);
     $('#bnBody').innerHTML=
-      '<h2>'+(b?'Editar banner':'Novo banner')+'</h2><div class="msub">Aparece no topo do site</div>'+
+      '<h2>'+(b?'Editar banner':'Novo banner')+'</h2><div class="msub">'+(auto?'Recorrente · '+esc(AUTO_QUANDO[b.auto]||'')+' (data automática)':'Aparece no topo do site')+'</div>'+
       '<div class="fld"><label>Título</label><input id="bn-titulo" maxlength="80" value="'+esc(e.titulo||'')+'" placeholder="Ex.: Quarta Profética"></div>'+
       '<div class="fld"><label>Descrição</label><textarea id="bn-desc" rows="3" maxlength="240" placeholder="Uma ou duas frases">'+esc(e.descricao||'')+'</textarea></div>'+
-      '<div class="f2"><div class="fld"><label>Data</label><input id="bn-data" type="date" value="'+esc(e.data||'')+'"></div>'+
+      (auto?'':'<div class="f2"><div class="fld"><label>Data</label><input id="bn-data" type="date" value="'+esc(e.data||'')+'"></div>'+
         '<div class="fld"><label>Até (opcional)</label><input id="bn-fim" type="date" value="'+esc(e.data_fim||'')+'"></div></div>'+
-      '<div class="ithint" style="margin:-6px 0 12px">Sem data, o banner fica no site até ser desligado. Com data, ele mostra "faltam X dias" e sai depois do último dia.</div>'+
+      '<div class="ithint" style="margin:-6px 0 12px">Sem data, o banner fica no site até ser desligado. Com data, ele mostra "faltam X dias" e sai depois do último dia.</div>')+
       '<div class="fld"><label>Foto</label><input type="file" id="bn-foto" accept="image/*">'+
         '<img class="bn-prev" id="bn-prev" alt=""><div class="ithint" id="bn-foto-st">'+(e.imagem_url?'Já tem foto. Escolha outra só se quiser trocar.':'Formato de flyer (em pé) ou paisagem. Até 10MB.')+'</div></div>'+
-      '<div class="f2"><div class="fld"><label>Link do botão (opcional)</label><input id="bn-link" value="'+esc(e.link||'')+'" placeholder="https://…"></div>'+
-        '<div class="fld"><label>Texto do botão</label><input id="bn-cta" maxlength="30" value="'+esc(e.cta||'')+'" placeholder="Saiba mais"></div></div>'+
+      (auto?'':'<div class="f2"><div class="fld"><label>Link do botão (opcional)</label><input id="bn-link" value="'+esc(e.link||'')+'" placeholder="https://…"></div>'+
+        '<div class="fld"><label>Texto do botão</label><input id="bn-cta" maxlength="30" value="'+esc(e.cta||'')+'" placeholder="Saiba mais"></div></div>')+
       '<label class="chkline"><input type="checkbox" id="bn-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="bn-salvar">Salvar</button><button class="btn-ghost" id="bn-cancelar">Cancelar</button>'+
-        (b?'<button class="btn-danger" id="bn-excluir">Excluir</button>':'')+'</div>';
+        (b&&!auto?'<button class="btn-danger" id="bn-excluir">Excluir</button>':'')+'</div>';
     const prev=$('#bn-prev');
     if(e.imagem_url){ prev.src=e.imagem_url; prev.style.display='block'; }
     $('#bn-foto').onchange=function(){ const f=this.files[0]; if(!f) return; prev.src=URL.createObjectURL(f); prev.style.display='block'; $('#bn-foto-st').textContent='Nova foto escolhida: '+f.name; };
     $('#bn-cancelar').onclick=fechaBanner;
     $('#bn-salvar').onclick=()=>salvarBanner(b);
-    if(b) $('#bn-excluir').onclick=()=>excluirBanner(b);
+    if(b&&!auto) $('#bn-excluir').onclick=()=>excluirBanner(b);
     $('#bnBg').classList.add('on');
   }
   async function salvarBanner(b){
     const v=id=>($('#'+id).value||'').trim();
-    const titulo=v('bn-titulo'), data=v('bn-data')||null, fim=v('bn-fim')||null, link=v('bn-link');
+    const auto=!!(b&&b.auto), campo=id=>$('#'+id)?v(id):'';
+    const titulo=v('bn-titulo'), data=campo('bn-data')||null, fim=campo('bn-fim')||null, link=campo('bn-link');
     if(!titulo){ alert('Preencha o título.'); return; }
     if(fim && !data){ alert('Preencha a data de início.'); return; }
     if(fim && fim<data){ alert('A data final é antes da inicial.'); return; }
@@ -1198,7 +1207,8 @@ ${serve ? `
         if(up.error) throw up.error;
         url=sb.storage.from('banners').getPublicUrl(path).data.publicUrl;
       }
-      const reg={titulo, descricao:v('bn-desc')||null, data, data_fim:fim, link:link||null, cta:v('bn-cta')||null, imagem_url:url, ativo:$('#bn-ativo').checked};
+      const reg=auto ? {titulo, descricao:v('bn-desc')||null, imagem_url:url, ativo:$('#bn-ativo').checked}
+        : {titulo, descricao:v('bn-desc')||null, data, data_fim:fim, link:link||null, cta:campo('bn-cta')||null, imagem_url:url, ativo:$('#bn-ativo').checked};
       const {error}= b ? await sb.from('banners').update(reg).eq('id',b.id) : await sb.from('banners').insert(reg);
       if(error) throw error;
       fechaBanner(); renderBanners();
