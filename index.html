@@ -288,6 +288,20 @@
   .leaflet-popup-content b{font-family:var(--display);font-size:1.05rem}
   .leaflet-popup-content .p-hora{color:var(--agua);font-weight:600}
   .leaflet-popup-content .p-foto{width:100%;height:130px;object-fit:cover;border-radius:8px;margin-bottom:8px;display:block;cursor:zoom-in}
+  /* escolha do app de mapas (Google Maps, Waze, Apple Maps) */
+  .mapa-esc{position:fixed;inset:0;z-index:2100;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);padding:16px}
+  .mapa-esc.on{display:flex}
+  .mapa-esc .caixa{width:100%;max-width:420px;background:var(--grafite);border:var(--borda);border-radius:18px;padding:18px;display:grid;gap:10px;
+    margin-bottom:env(safe-area-inset-bottom,0px);animation:sobe .25s cubic-bezier(.2,.6,.2,1)}
+  @keyframes sobe{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+  .mapa-esc h4{font-family:var(--display);font-size:1.05rem;margin:0}
+  .mapa-esc .onde{color:var(--cinza);font-size:.85rem;margin:-4px 0 4px;line-height:1.4}
+  .mapa-esc a,.mapa-esc button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border-radius:12px;border:var(--borda);
+    background:var(--breu);color:var(--luz);font-family:inherit;font-size:.95rem;font-weight:600;text-decoration:none;cursor:pointer;text-align:left}
+  .mapa-esc a:hover{border-color:var(--agua-forte)}
+  .mapa-esc .ic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:.75rem;font-weight:800;flex:0 0 auto}
+  .mapa-esc .cancelar{justify-content:center;background:transparent;color:var(--cinza-claro);font-weight:500}
+  @media(min-width:700px){.mapa-esc{align-items:center}}
   .lightbox{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;
             background:rgba(6,6,8,.9);backdrop-filter:blur(4px);cursor:zoom-out;padding:24px}
   .lightbox.on{display:flex}
@@ -1274,22 +1288,29 @@ function desenharCelulas(){
     m.on('click',()=>selecionaCel(idx,false));markers[idx]=m;
   });
 }
+// endereço clicado → a pessoa escolhe o app (Google Maps, Waze ou Apple Maps), com rota até o local
 function abrirMapa(lat,lng,label){
   const hasC=(lat!=null&&lng!=null&&!isNaN(lat)&&!isNaN(lng));
   const coord=hasC?(lat+','+lng):'';
   const ua=navigator.userAgent||navigator.vendor||'';
-  const isIOS=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&'ontouchend' in document);
-  const isAndroid=/android/i.test(ua);
-  let url;
-  if(isAndroid){
-    url='geo:'+(hasC?coord:'0,0')+'?q='+encodeURIComponent(hasC?(coord+'('+(label||'')+')'):(label||''));
-  }else if(isIOS){
-    url=hasC?('https://maps.apple.com/?q='+encodeURIComponent(label||'')+'&ll='+coord)
-            :('https://maps.apple.com/?q='+encodeURIComponent(label||''));
-  }else{
-    url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(hasC?coord:(label||''));
+  const apple=/iPad|iPhone|iPod|Macintosh/.test(ua);
+  const q=encodeURIComponent(label||'');
+  const google=hasC?'https://www.google.com/maps/dir/?api=1&destination='+coord:'https://www.google.com/maps/search/?api=1&query='+q;
+  const waze=hasC?'https://waze.com/ul?ll='+coord+'&navigate=yes':'https://waze.com/ul?q='+q+'&navigate=yes';
+  const appleUrl=hasC?'https://maps.apple.com/?daddr='+coord+'&q='+q:'https://maps.apple.com/?q='+q;
+  let box=document.getElementById('mapaEsc');
+  if(!box){
+    box=document.createElement('div');box.id='mapaEsc';box.className='mapa-esc';box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');
+    document.body.appendChild(box);
+    box.addEventListener('click',e=>{ if(e.target===box||e.target.closest('.cancelar')||e.target.closest('a')) box.classList.remove('on'); });
+    addEventListener('keydown',e=>{ if(e.key==='Escape') box.classList.remove('on'); });
   }
-  if(isAndroid||isIOS){ window.location.href=url; } else { window.open(url,'_blank','noopener'); }
+  const op=(url,cor,letra,nome)=>`<a href="${url}" target="_blank" rel="noopener"><span class="ic" style="background:${cor};color:#fff">${letra}</span>${nome}</a>`;
+  box.innerHTML=`<div class="caixa"><h4>Como chegar</h4><div class="onde">${escH(label||'')}</div>`+
+    op(google,'#1a73e8','G','Google Maps')+op(waze,'#33ccff','W','Waze')+(apple?op(appleUrl,'#5a5a5f','A','Apple Maps'):'')+
+    `<button type="button" class="cancelar">Cancelar</button></div>`;
+  box.classList.add('on');
+  const primeiro=box.querySelector('a'); if(primeiro) primeiro.focus();
 }
 function abrirMapaCel(idx){ const c=CELULAS[idx]; if(c) abrirMapa(c.lat,c.lng,c.nome+' - '+c.end); }
 let euMarker=null;
