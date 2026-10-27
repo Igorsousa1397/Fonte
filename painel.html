@@ -616,10 +616,10 @@
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
       (!validado && !temCelula(m.celula) ? '<div class="sub2" style="margin-top:12px;color:#e0b341">Para validar e liberar a carteirinha, o membro precisa fazer parte de uma célula. Use "Editar dados" para informar a célula.</div>' : '')+
       '<div class="mb-acoes"><button class="btn-ghost" data-act="edit">Editar dados</button>'+(validado
-        ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button><button class="btn-ghost" data-act="mail"'+(m.email?'':' disabled title="Sem e-mail no cadastro"')+'>Enviar carteirinha por e-mail</button>' : ''))
+        ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>'+(m.carteirinha_enviada_em ? '' : '<button class="btn-ghost" data-act="mail"'+(m.email?'':' disabled title="Sem e-mail no cadastro"')+'>Enviar carteirinha por e-mail</button>') : ''))
         : '<button class="btn-val" data-val="1"'+(temCelula(m.celula)?'':' disabled title="O membro precisa fazer parte de uma célula"')+'>Validar dados / OK</button>')+
         (!ativo ? (m.arquivado ? '<button class="btn-ghost" data-act="desarq">Desarquivar</button>' : '<button class="btn-ghost" data-act="arq">Arquivar</button>')+'<button class="btn-del" data-act="del">Excluir membro</button>' : '')+
-      '</div><div class="sub2" id="mbMailSt" style="margin-top:10px"></div>';
+      '</div><div class="sub2" id="mbMailSt" style="margin-top:10px">'+(validado && m.carteirinha_enviada_em ? 'Carteirinha enviada por e-mail em '+dataBR(m.carteirinha_enviada_em)+'.' : '')+'</div>';
     const vb=$('#mbBody .btn-val[data-val]');
     if(vb) vb.onclick=()=>setValidadoMembro(m.id, true);
     const vr=$('#mbBody .btn-ghost[data-val="0"]'); if(vr) vr.onclick=()=>setValidadoMembro(m.id, false);
@@ -733,6 +733,7 @@
   // manda a carteirinha para o e-mail do membro (função enviar-carteirinha no Supabase, via Resend)
   async function enviarCarteirinhaEmail(m){
     const st=$('#mbMailSt'), b=$('#mbBody [data-act="mail"]');
+    if(m.carteirinha_enviada_em){ if(st) st.textContent='Carteirinha enviada por e-mail em '+dataBR(m.carteirinha_enviada_em)+'.'; return false; }   // envia uma vez só
     if(!m.email){ if(st) st.textContent='Sem e-mail no cadastro: a carteirinha não foi enviada. Use "Editar dados" para incluir o e-mail.'; return false; }
     if(b){ b.disabled=true; b.textContent='Enviando…'; }
     if(st) st.textContent='Enviando a carteirinha para '+m.email+'…';
@@ -741,9 +742,10 @@
       const {data,error}=await sb.functions.invoke('enviar-carteirinha',{body:{membro_id:m.id}});
       if(error){ let det=''; try{ det=(await error.context.json()).erro||''; }catch(_){} throw new Error(det||error.message); }
       ok=!!(data&&data.ok); msg=ok?'Carteirinha enviada para '+m.email+'.':'Não foi possível enviar.';
+      if(ok){ m.carteirinha_enviada_em=data.enviada_em||new Date().toISOString(); const mm=MEMBROS.find(x=>x.id===m.id); if(mm) mm.carteirinha_enviada_em=m.carteirinha_enviada_em; if(b) b.remove(); }
     }catch(err){ msg='Não foi possível enviar a carteirinha: '+(err.message||err); }
     if(st){ st.textContent=msg; st.style.color=ok?'var(--agua)':'#e57373'; }
-    if(b){ b.disabled=false; b.textContent='Enviar carteirinha por e-mail'; }
+    if(b && b.isConnected){ b.disabled=false; b.textContent='Enviar carteirinha por e-mail'; }
     return ok;
   }
   async function setValidadoMembro(id, val){
@@ -2191,7 +2193,7 @@ ${serve ? `
   }
 
   async function reloadPessoas(){ const {data}=await sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}); APESSOAS=data||[]; }
-  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,email,arquivado,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}); MEMBROS=data||[]; }
+  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,email,arquivado,carteirinha_enviada_em,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}); MEMBROS=data||[]; }
 
   function renderAcaoPessoas(){
     $('#titulo').textContent='Ação Social · Pessoas';
@@ -2390,7 +2392,7 @@ ${serve ? `
       const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
         sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
         sb.from('contatos').select('id,nome,telefone,email,assunto,mensagem,created_at,resolvido,resolvido_em').order('created_at',{ascending:false}),
-        sb.from('membros').select('id,nome,cpf,email,arquivado,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
+        sb.from('membros').select('id,nome,cpf,email,arquivado,carteirinha_enviada_em,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
         sb.from('acao_itens').select('*').order('nome'),
         sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
         sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),

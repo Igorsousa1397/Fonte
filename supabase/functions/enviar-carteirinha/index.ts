@@ -1,5 +1,6 @@
 // Envia a carteirinha de membro por e-mail (Resend), chamada pelo painel ao validar o membro.
 // Só um admin logado pode chamar. O membro precisa estar validado, ativo, com célula e e-mail.
+// Envia uma vez só: grava membros.carteirinha_enviada_em e recusa um segundo envio.
 //
 // Segredos (Supabase → Edge Functions → Secrets):
 //   RESEND_API_KEY  = a mesma chave re_… usada no SMTP do Resend
@@ -45,9 +46,10 @@ Deno.serve(async (req) => {
   if (!membro_id) return resposta(400, { erro: "membro_id obrigatório" });
 
   const { data: m, error } = await banco.from("membros")
-    .select("id,nome,email,celula,ministerio,data_nascimento,membro_desde,created_at,foto_url,ativo,validado,arquivado")
+    .select("id,nome,email,celula,ministerio,data_nascimento,membro_desde,created_at,foto_url,ativo,validado,arquivado,carteirinha_enviada_em")
     .eq("id", membro_id).maybeSingle();
   if (error || !m) return resposta(404, { erro: "Membro não encontrado" });
+  if (m.carteirinha_enviada_em) return resposta(409, { erro: "A carteirinha já foi enviada", enviada_em: m.carteirinha_enviada_em });
   if (!m.email) return resposta(422, { erro: "O membro não tem e-mail no cadastro" });
   if (m.validado !== true) return resposta(422, { erro: "O membro ainda não foi validado" });
   if (m.ativo === false || m.arquivado === true) return resposta(422, { erro: "O membro está inativo" });
@@ -110,5 +112,7 @@ Deno.serve(async (req) => {
     const det = await envio.text();
     return resposta(502, { erro: "O Resend recusou o envio", detalhe: det.slice(0, 300) });
   }
-  return resposta(200, { ok: true, email: m.email });
+  const agora = new Date().toISOString();
+  await banco.from("membros").update({ carteirinha_enviada_em: agora }).eq("id", m.id);
+  return resposta(200, { ok: true, email: m.email, enviada_em: agora });
 });
