@@ -1454,7 +1454,11 @@ document.getElementById('enviaContato').onclick=async()=>{
 
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
   const mMin=el('m-min');
-  if(mMin) mMin.innerHTML='<option value="">Não sirvo em nenhum</option>'+MINISTERIOS.map(x=>`<option>${x}</option>`).join('');
+  const preencherMin=lista=>{ if(!mMin) return; const atual=mMin.value;
+    mMin.innerHTML='<option value="">Não sirvo em nenhum</option>'+lista.map(x=>`<option>${escH(x)}</option>`).join(''); mMin.value=atual; };
+  preencherMin(MINISTERIOS);
+  // lista cadastrada no painel substitui a de cima
+  sb.rpc('ministerios_lista').then(({data,error})=>{ if(!error && data && data.length) preencherMin(data.map(x=>typeof x==='string'?x:Object.values(x)[0])); });
   (function(){
     const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const mm=el('m-desde-mes'), ma=el('m-desde-ano');

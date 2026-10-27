@@ -285,6 +285,10 @@
       if(anterior && anterior!==excluir) selServe.value = anterior;
     }
     populaServeQual();
+    // lista cadastrada no painel substitui a de cima
+    sb.rpc('ministerios_lista').then(({data,error})=>{
+      if(!error && data && data.length){ MINISTERIOS.splice(0,MINISTERIOS.length,...data.map(x=>typeof x==='string'?x:Object.values(x)[0])); populaServeQual(); }
+    });
 
     // o "qual ministério" só é perguntado a quem já serve
     $('f-d-serve').addEventListener('change', ()=>{
