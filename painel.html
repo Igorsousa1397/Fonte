@@ -182,6 +182,7 @@
   .btn-val{background:var(--agua);color:#06201e;border:none;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-val:hover{background:var(--agua-forte)}
   .btn-val.off{background:transparent;border:1px solid var(--neblina);color:var(--cinza-claro)}
+  .tag-faixa{display:inline-block;margin-left:8px;font-size:.68rem;font-weight:600;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 12%,transparent);border-radius:999px;padding:1px 8px;vertical-align:middle;white-space:nowrap}
   .tabela.membros .tag-val{display:inline-block;margin-left:8px;font-size:.68rem;color:#e0b341;border:1px solid rgba(224,179,65,.35);border-radius:999px;padding:1px 7px;vertical-align:middle}
   .tel-wpp{display:inline-flex;align-items:center;gap:6px;color:var(--agua);text-decoration:none}
   .tel-wpp:hover{text-decoration:underline}
@@ -435,7 +436,17 @@
   var _itDirty=false;
   let MININSC=[], MINCFG={}, minInscMin='todos', minSecAberta=false;
   // filtros da lista de membros
-  const MF={status:'ativos', celula:'', ministerio:'', semEmail:false, busca:''};
+  const MF={status:'ativos', celula:'', ministerio:'', semEmail:false, busca:'', faixa:''};
+  // faixa etária das crianças pela data de nascimento: Baby até 4, Kids 5–7, Juniores 8–12
+  const FAIXAS={baby:{rot:'Baby',cor:'#f4a6c1'},kids:{rot:'Kids',cor:'#f6c453'},juniores:{rot:'Juniores',cor:'#7cc8f5'}};
+  function idadeDe(nasc){
+    if(!nasc) return null;
+    const [a,mo,d]=String(nasc).split('-').map(Number), h=new Date();
+    let i=h.getFullYear()-a; if(h.getMonth()+1<mo || (h.getMonth()+1===mo && h.getDate()<d)) i--;
+    return i>=0&&i<130?i:null;
+  }
+  function faixaDe(nasc){ const i=idadeDe(nasc); if(i==null) return null; return i<=4?'baby':i<=7?'kids':i<=12?'juniores':null; }
+  const tagFaixa=k=>k?'<span class="tag-faixa" style="--c:'+FAIXAS[k].cor+'">'+FAIXAS[k].rot+'</span>':'';
   const SEM_CELULA=['ainda não participo','não participo de célula','não pertenço a nenhuma célula','não participo','nao participo','sem célula'];
   const temCelula=c=>!!(c&&c.trim()) && SEM_CELULA.indexOf(c.trim().toLowerCase())<0;
   const temMinisterio=x=>!!(x&&x.trim()) && x!=='Não serve em nenhum';
@@ -592,7 +603,7 @@
       ['Telefone', m.telefone, telHtml],
       ['E-mail', m.email],
       ['CPF', m.cpf],
-      ['Nascimento', nasc],
+      ['Nascimento', nasc && (idadeDe(m.data_nascimento)!=null ? nasc+' ('+idadeDe(m.data_nascimento)+' anos)' : nasc)],
       ['Estado civil', m.estado_civil],
       ['Célula', m.celula],
       ['Ministério', m.ministerio || 'Não serve em nenhum'],
@@ -610,7 +621,7 @@
     const foto = fotoImg+'<div class="mb-foto-acao"><input type="file" id="mbFotoFile" accept="image/*" style="display:none"><button class="mb-foto-btn" id="mbFotoBtn">'+(m.foto_url?'Trocar foto':'Adicionar foto')+'</button></div>';
     const valPill = validado ? '<span class="mb-pill ok">Validado</span>' : '<span class="mb-pill no">A validar</span>';
     $('#mbBody').innerHTML=
-      '<h2><span class="mb-nome">'+esc(m.nome)+'</span><span class="mb-pill '+(ativo?'ok':'no')+'">'+(ativo?'Ativo':'Inativo')+'</span>'+valPill+'</h2>'+
+      '<h2><span class="mb-nome">'+esc(m.nome)+'</span>'+tagFaixa(faixaDe(m.data_nascimento))+'<span class="mb-pill '+(ativo?'ok':'no')+'">'+(ativo?'Ativo':'Inativo')+'</span>'+valPill+'</h2>'+
       '<div class="msub">Cadastrado em '+dataBR(m.created_at)+'</div>'+
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
@@ -1064,6 +1075,7 @@ ${serve ? `
       if(MF.ministerio==='__sem' && temMinisterio(m.ministerio)) return false;
       if(MF.ministerio && MF.ministerio!=='__sem' && (m.ministerio||'')!==MF.ministerio) return false;
       if(MF.semEmail && m.email) return false;
+      if(MF.faixa && faixaDe(m.data_nascimento)!==MF.faixa) return false;
       if(MF.busca){   // nome, CPF ou telefone
         const q=norm(MF.busca), dig=MF.busca.replace(/\D/g,'');
         const achou=norm(m.nome||'').includes(q) || (dig.length>=3 && ((m.cpf||'').replace(/\D/g,'').includes(dig) || (m.telefone||'').replace(/\D/g,'').includes(dig)));
@@ -1094,8 +1106,9 @@ ${serve ? `
       '<input id="mfBusca" type="search" placeholder="Buscar por nome, CPF ou telefone" value="'+esc(MF.busca)+'" style="'+selStyle.replace('max-width:220px','flex:1 1 240px;min-width:200px')+'">'+
       '<select id="mfCel" style="'+selStyle+'">'+opt('','Todas as células',MF.celula)+opt('__sem','Sem célula',MF.celula)+celulas.map(c=>opt(c,c,MF.celula)).join('')+'</select>'+
       '<select id="mfMin" style="'+selStyle+'">'+opt('','Todos os ministérios',MF.ministerio)+opt('__sem','Sem ministério',MF.ministerio)+minis.map(c=>opt(c,c,MF.ministerio)).join('')+'</select>'+
+      '<select id="mfFaixa" style="'+selStyle+'">'+opt('','Todas as idades',MF.faixa)+opt('baby','Baby (até 4 anos)',MF.faixa)+opt('kids','Kids (5 a 7)',MF.faixa)+opt('juniores','Juniores (8 a 12)',MF.faixa)+'</select>'+
       '<label class="chkline" style="margin:0"><input type="checkbox" id="mfEmail"'+(MF.semEmail?' checked':'')+'> Sem e-mail</label>'+
-      ((MF.celula||MF.ministerio||MF.semEmail||MF.busca)?'<button class="mini-btn" id="mfLimpar">Limpar filtros</button>':'')+
+      ((MF.celula||MF.ministerio||MF.semEmail||MF.busca||MF.faixa)?'<button class="mini-btn" id="mfLimpar">Limpar filtros</button>':'')+
       '<span class="min-conta" style="margin-left:auto">Exibindo <b>'+lista.length+'</b></span>'+
       (semEmail?'<button class="mini-btn" id="membSemEmailPdf">'+PDF_SVG+'Sem e-mail ('+semEmail+')</button>':'')+
       '<button class="mini-btn go" id="membPdf">'+PDF_SVG+'Exportar PDF</button></div>';
@@ -1104,7 +1117,7 @@ ${serve ? `
     lista.forEach(m=>{
       const on=m.ativo!==false;
       const semCel=!temCelula(m.celula);
-      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+(m.arquivado?'<span class="tag-val" style="color:var(--cinza-claro);border-color:var(--neblina)">Arquivado</span>':'')+'</span>'+
+      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+tagFaixa(faixaDe(m.data_nascimento))+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+(m.arquivado?'<span class="tag-val" style="color:var(--cinza-claro);border-color:var(--neblina)">Arquivado</span>':'')+'</span>'+
         '<span class="col" data-l="Célula">'+(semCel?'<span style="color:var(--cinza)">'+(esc(m.celula)||'—')+'</span>':esc(m.celula))+'</span>'+
         '<span class="col" data-l="Telefone">'+(telWa(m.telefone)||'—')+'</span><span class="col" data-l="Ministério">'+(esc(m.ministerio)||'—')+'</span>'+
         '<span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
@@ -1115,7 +1128,8 @@ ${serve ? `
     $('#mfCel').onchange=function(){ MF.celula=this.value; renderMembros(); };
     $('#mfMin').onchange=function(){ MF.ministerio=this.value; renderMembros(); };
     $('#mfEmail').onchange=function(){ MF.semEmail=this.checked; renderMembros(); };
-    const _lf=$('#mfLimpar'); if(_lf) _lf.onclick=()=>{ MF.celula=''; MF.ministerio=''; MF.semEmail=false; MF.busca=''; renderMembros(); };
+    const _lf=$('#mfLimpar'); if(_lf) _lf.onclick=()=>{ MF.celula=''; MF.ministerio=''; MF.semEmail=false; MF.busca=''; MF.faixa=''; renderMembros(); };
+    $('#mfFaixa').onchange=function(){ MF.faixa=this.value; renderMembros(); };
     const _mb=$('#mfBusca');
     _mb.oninput=()=>{ MF.busca=_mb.value; const pos=_mb.selectionStart; clearTimeout(window._mbT);
       window._mbT=setTimeout(()=>{ renderMembros(); const n=$('#mfBusca'); if(n){ n.focus(); n.setSelectionRange(pos,pos); } },200); };
