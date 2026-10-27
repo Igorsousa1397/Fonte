@@ -240,6 +240,17 @@
   .min-conta{flex:0 0 auto;color:var(--cinza);font-size:.82rem;white-space:nowrap}
   .min-conta b{color:var(--luz);font-weight:600}
   .sub2{color:var(--cinza);font-size:.82rem}
+  .ext{margin-top:8px}
+  .ext summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--agua);font-size:.8rem;font-weight:600;list-style:none;user-select:none}
+  .ext summary::-webkit-details-marker{display:none}
+  .ext summary::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+  .ext[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+  .ext[open] summary{font-size:0}
+  .ext[open] summary::before{content:"Ocultar respostas";font-size:.8rem}
+  .ext-lista{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:5px 22px;color:var(--cinza);font-size:.82rem}
+  .ext-lista li{position:relative;padding-left:12px}
+  .ext-lista li::before{content:"";position:absolute;left:0;top:.6em;width:4px;height:4px;border-radius:50%;background:var(--agua-forte)}
+  .ext-lista b{color:var(--cinza-claro);font-weight:600}
   .res-card{border:var(--borda);border-radius:var(--raio);background:var(--grafite);padding:16px 18px;margin-bottom:12px}
   .res-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
 .c-val{font-family:var(--display);font-weight:700;font-size:1.05rem;flex:0 0 auto;white-space:nowrap}
@@ -1081,9 +1092,9 @@ ${serve ? `
     else lista.forEach(r=>{
       const wa=waLink(r.telefone);
       html+='<div class="res-card">'+
-        '<div class="res-head"><div><div style="font-weight:600">'+esc(r.nome)+'</div>'+
+        '<div class="res-head"><div style="flex:1;min-width:0"><div style="font-weight:600">'+esc(r.nome)+'</div>'+
           '<div class="sub2"><b style="color:var(--agua)">'+esc(r.ministerio)+'</b> · '+esc(r.celula)+' · '+(esc(r.telefone)||'sem telefone')+' · '+dataBR(r.criado_em)+'</div>'+
-          (extrasHtml(r.extra) ? '<div class="sub2" style="margin-top:4px">'+extrasHtml(r.extra)+'</div>' : '')+
+          extrasHtml(r.extra)+
           '</div>'+
           (wa?'<a class="mini-btn go" href="'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+
         '</div>';
@@ -1554,7 +1565,8 @@ ${serve ? `
     return extrasPares(extra).map(function(p){ return p[0]+': '+p[1]; }).join(' · ');
   }
   function extrasHtml(extra){
-    return extrasPares(extra).map(function(p){ return '<b>'+esc(p[0])+':</b> '+esc(p[1]); }).join(' · ');
+    const ps=extrasPares(extra);
+    return ps.length ? '<details class="ext"><summary>Ver respostas ('+ps.length+')</summary><ul class="ext-lista">'+ps.map(function(p){ return '<li><b>'+esc(p[0])+':</b> '+esc(p[1])+'</li>'; }).join('')+'</ul></details>' : '';
   }
 
   // Esqueleto dos relatórios em PDF — cada tela monta só o corpo e chama aqui.
