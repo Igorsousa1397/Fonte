@@ -558,6 +558,7 @@
     <a href="galeria.html">Fotos</a>
     <a href="batismo.html">Batismo</a>
     <a href="envelope.html">Envelope virtual</a>
+    <a href="#contribuir">Contribuir</a>
     <a href="#membro">Seja membro</a>
     <a class="btn btn-claro" href="login.html"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Fazer login</a>
   </nav>
@@ -954,21 +955,28 @@ const diasAte=iso=>Math.ceil((d(iso)-HOJE)/864e5);
 const fmtFaixa=e=>{const i=d(e.inicio);if(!e.fim)return `${i.getDate()} de ${MESES[i.getMonth()]}`;
   const f=d(e.fim);return i.getMonth()===f.getMonth()?`${i.getDate()} a ${f.getDate()} de ${MESES[f.getMonth()]}`
   :`${i.getDate()}/${i.getMonth()+1} a ${f.getDate()}/${f.getMonth()+1}`;};
-/* ---- cultos fixos: Dom (Culto da Família 10h·18h30) e Qua (Quarta Profética 20h), de hoje até dez/2026 ---- */
-(()=>{
+/* ---- cultos fixos: Dom (Culto da Família 10h·18h30) e Qua (Quarta Profética 20h), de hoje até o fim do ano
+   (no mínimo 45 dias à frente). Refeito quando a agenda vem do banco. ---- */
+function gerarFixos(){
+  for(let k=AGENDA.length-1;k>=0;k--)if(AGENDA[k].fixo)AGENDA.splice(k,1);
   const iso=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
   const faixas=AGENDA.map(e=>[e.inicio,e.fim||e.inicio]);          // datas já ocupadas por eventos especiais
   const ocupado=s=>faixas.some(([a,b])=>s>=a&&s<=b);
-  const fim=new Date(HOJE.getFullYear(),11,31);
+  const fim=new Date(Math.max(new Date(HOJE.getFullYear(),11,31),+HOJE+45*864e5));
   for(let dt=new Date(HOJE);dt<=fim;dt.setDate(dt.getDate()+1)){
     const s=iso(dt),w=dt.getDay();
     if(ocupado(s))continue;
     if(w===0){const ceia=dt.getDate()<=7;AGENDA.push({inicio:s,dow:'Dom',titulo:ceia?'Domingo de Ceia':'Culto da Família',tipo:'culto',hora:'10h · 18h30',fixo:true,banner:ceia});}
     else if(w===3)AGENDA.push({inicio:s,dow:'Qua',titulo:'Quarta Profética',tipo:'culto',hora:'20h',fixo:true});
   }
-})();
-const futuros=AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));
-const proximoIso=(futuros.find(e=>!e.fixo)||futuros[0]||{}).inicio||null;
+}
+gerarFixos();
+let proximoIso=null;
+function calcProximo(){
+  const fut=AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));
+  proximoIso=(fut.find(e=>!e.fixo)||fut[0]||{}).inicio||null;
+}
+calcProximo();
 
 /* ---- hero ----
    Junta os banners avulsos do painel (tabela `banners`) com os recorrentes ligados lá
@@ -979,6 +987,7 @@ function escolherSlides(r){
   const on=k=>!r.ok||!!r.autos[k];
   const comTextos=(k,e)=>{const a=r.autos[k];if(!a)return e;
     return {...e,titulo:escH(a.titulo),texto:a.descricao!=null?escH(a.descricao):undefined,img:a.imagem_url?escH(a.imagem_url):undefined};};
+  const futuros=AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));   // de novo: datas podem ter vindo do banco
   const mes=HOJE.getMonth(), ano=HOJE.getFullYear();
   // eventos especiais do MÊS atual (têm flyer OU não são culto fixo)
   const especiais=on('agenda')?futuros.filter(e=>(!e.fixo||e.img) && d(e.inicio).getMonth()===mes && d(e.inicio).getFullYear()===ano):[];
@@ -1078,7 +1087,7 @@ encontros.forEach(e=>{
   c.className='culto'+fotoCls;c.href=e.link;c.target='_blank';c.rel='noopener';
   c.style.minHeight='320px';c.style.height='100%';
   c.innerHTML=`${e.selo?`<span class="selo">${e.selo}</span>`:''}
-    <div class="quando-dia">${fmtFaixa(e)} · 2026</div>
+    <div class="quando-dia">${fmtFaixa(e)} · ${d(e.fim||e.inicio).getFullYear()}</div>
     <h3 style="font-size:1.9rem">${e.titulo}</h3>
     <p style="margin:8px 0 auto">${e.titulo.includes('Submergidos')?'Mergulhe no próximo nível.':'Encontro com Deus.'}</p>
     <div style="display:flex;gap:12px;align-items:center;margin-top:20px">
@@ -1088,10 +1097,40 @@ encontros.forEach(e=>{
 });
 }
 document.getElementById('eventos').style.display='none';
+// eventos cadastrados no painel (tabela `agenda`) substituem os do código; encontros e cultos fixos ficam
+const agendaPronta=(async()=>{
+  try{
+    const {data,error}=await sb.from('agenda').select('titulo,tipo,inicio,fim,hora,destaque,imagem_url,link,cta');
+    if(error)throw error;
+    if(!data||!data.length)return;
+    const SEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const doBanco=data.map(r=>{
+      const fim=(r.fim&&r.fim!==r.inicio)?r.fim:undefined;
+      return {inicio:r.inicio,fim,dow:SEM[d(r.inicio).getDay()]+(fim?'–'+SEM[d(fim).getDay()]:''),titulo:escH(r.titulo),
+        tipo:TIPO_LABEL[r.tipo]?r.tipo:'evento',hora:r.hora?escH(r.hora):undefined,destaque:!!r.destaque,
+        img:r.imagem_url?escH(r.imagem_url):undefined,link:r.link?escH(r.link):undefined,cta:r.cta?escH(r.cta):undefined};
+    });
+    for(let k=AGENDA.length-1;k>=0;k--)if(!AGENDA[k].id&&!AGENDA[k].fixo)AGENDA.splice(k,1);
+    AGENDA.push(...doBanco);
+    refazerAgenda();
+  }catch(err){console.warn('agenda:',err);}
+})();
 const encontrosProntos=(async()=>{
   try{
-    const {data,error}=await sb.from('encontro_config').select('slug,ativo');
+    let {data,error}=await sb.from('encontro_config').select('slug,ativo,inicio,fim');
+    if(error)({data,error}=await sb.from('encontro_config').select('slug,ativo'));   // antes do encontros-datas.sql
     if(error)throw error;
+    // datas salvas no painel substituem as do AGENDA
+    const SEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    let mudouData=false;
+    (data||[]).filter(r=>r.inicio).forEach(r=>{
+      const e=AGENDA.find(x=>x.id===r.slug); if(!e)return;
+      const fim=(r.fim&&r.fim!==r.inicio)?r.fim:undefined;
+      if(e.inicio===r.inicio&&e.fim===fim)return;
+      e.inicio=r.inicio;e.fim=fim;e.dow=SEM[d(r.inicio).getDay()]+(fim?'–'+SEM[d(fim).getDay()]:'');
+      mudouData=true;
+    });
+    if(mudouData)refazerAgenda();
     const off=new Set((data||[]).filter(r=>!r.ativo).map(r=>r.slug));
     if(off.size){
       // desligado: sai dos cards e perde o botão de inscrição na agenda e no banner
@@ -1101,24 +1140,34 @@ const encontrosProntos=(async()=>{
   }catch(err){console.warn('encontro_config:',err);}   // falhou: mostra todos
   renderInscricoes();
 })();
-Promise.all([buscarBanners(),encontrosProntos]).then(([r])=>montarHero(escolherSlides(r)));
+Promise.all([buscarBanners(),encontrosProntos,agendaPronta]).then(([r])=>montarHero(escolherSlides(r)));
 
 /* ---- agenda lista ---- */
 const listaBox=document.getElementById('lista'),filtrosBox=document.getElementById('filtros');
-const mesesComEvento=[...new Set(AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).map(e=>d(e.inicio).getMonth()))].sort((a,b)=>a-b);
-let filtroAtivo = mesesComEvento.includes(HOJE.getMonth()) ? HOJE.getMonth()
-  : (mesesComEvento.find(m=>m>=HOJE.getMonth()) ?? mesesComEvento[0] ?? 'todos');
-mesesComEvento.map(m=>({k:m,l:MESES[m]})).forEach(f=>{
-  const b=document.createElement('button');b.className='fcel'+(f.k===filtroAtivo?' on':'');b.textContent=f.l;
-  b.onclick=()=>{filtroAtivo=f.k;[...filtrosBox.children].forEach(c=>c.classList.remove('on'));b.classList.add('on');renderAgenda();};
-  filtrosBox.appendChild(b);});
+// mês = ano*12+mês, para a agenda poder passar da virada do ano
+const chaveMes=iso=>{const x=d(iso);return x.getFullYear()*12+x.getMonth();};
+const nomeMes=k=>MESES[k%12]+(Math.floor(k/12)!==HOJE.getFullYear()?' '+Math.floor(k/12):'');
+const mesHoje=HOJE.getFullYear()*12+HOJE.getMonth();
+let mesesComEvento=[],filtroAtivo='todos';
+function montarFiltrosAgenda(){
+  mesesComEvento=[...new Set(AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).map(e=>chaveMes(e.inicio)))].sort((a,b)=>a-b);
+  if(!mesesComEvento.includes(filtroAtivo))
+    filtroAtivo=mesesComEvento.includes(mesHoje)?mesHoje:(mesesComEvento.find(m=>m>=mesHoje)??mesesComEvento[0]??'todos');
+  filtrosBox.innerHTML='';
+  mesesComEvento.forEach(k=>{
+    const b=document.createElement('button');b.className='fcel'+(k===filtroAtivo?' on':'');b.textContent=nomeMes(k);
+    b.onclick=()=>{filtroAtivo=k;[...filtrosBox.children].forEach(c=>c.classList.remove('on'));b.classList.add('on');renderAgenda();};
+    filtrosBox.appendChild(b);});
+}
+// depois de mudar AGENDA (banco ou datas de encontro): cultos fixos, próximo evento, filtros e lista
+function refazerAgenda(){gerarFixos();calcProximo();montarFiltrosAgenda();renderAgenda();}
 function renderAgenda(){
   listaBox.innerHTML='';const meses=filtroAtivo==='todos'?mesesComEvento:[filtroAtivo];
   meses.forEach(m=>{
-    const evs=AGENDA.filter(e=>d(e.inicio).getMonth()===m && diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));
+    const evs=AGENDA.filter(e=>chaveMes(e.inicio)===m && diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));
     if(!evs.length)return;
     const bloco=document.createElement('div');bloco.style.marginBottom='30px';
-    bloco.innerHTML=`<div class="mes-titulo" style="font-family:var(--display);font-weight:600;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--cinza);padding-bottom:12px;border-bottom:var(--borda);margin-bottom:6px">${MESES[m]}</div>`;
+    bloco.innerHTML=`<div class="mes-titulo" style="font-family:var(--display);font-weight:600;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--cinza);padding-bottom:12px;border-bottom:var(--borda);margin-bottom:6px">${nomeMes(m)}</div>`;
     evs.forEach(e=>{
       const i=d(e.inicio),ehProx=e.inicio===proximoIso,dias=diasAte(e.inicio);
       const acao=e.link?`<a class="btn-mini fcel" href="${e.link}" target="_blank" rel="noopener">${e.cta||'Inscrever-se'}</a>`
@@ -1134,7 +1183,7 @@ function renderAgenda(){
   });
   if(window.revelar)revelar(listaBox);
 }
-renderAgenda();
+montarFiltrosAgenda();renderAgenda();
 
 /* ===================== CÉLULAS ===================== */
 const ANCHOR={
@@ -1198,16 +1247,21 @@ function initMapa(){
       .addTo(mapa).bindPopup(html);
     templMarkers[TEMPLOS.indexOf(t)]=mk;
   });
-  CELULAS.forEach((c,idx)=>{
-    const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16],iconAnchor:[8,14]})})
-      .addTo(mapa).bindPopup(popupHtml(c,idx));
-    m.on('click',()=>selecionaCel(idx,false));markers[idx]=m;
-  });
+  desenharCelulas();
   // enquadra na região principal; células distantes (ex.: Itajaí/SC) seguem no marcador e no filtro
   const perto=CELULAS.filter(c=>Math.abs(c.lat-ANCHOR.igreja[0])<1.6 && Math.abs(c.lng-ANCHOR.igreja[1])<1.6);
   const templosPerto=TEMPLOS.filter(t=>Math.abs(t.lat-ANCHOR.igreja[0])<1.6 && Math.abs(t.lng-ANCHOR.igreja[1])<1.6).map(t=>[t.lat,t.lng]);
   const pts=[ANCHOR.igreja,...templosPerto,...(perto.length?perto:CELULAS).map(c=>[c.lat,c.lng])];
   mapa.fitBounds(L.latLngBounds(pts).pad(0.12));
+}
+function desenharCelulas(){
+  if(!mapa)return;
+  markers.forEach(m=>m&&mapa.removeLayer(m));markers=[];
+  CELULAS.forEach((c,idx)=>{
+    const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="pin"></div>',iconSize:[16,16],iconAnchor:[8,14]})})
+      .addTo(mapa).bindPopup(popupHtml(c,idx));
+    m.on('click',()=>selecionaCel(idx,false));markers[idx]=m;
+  });
 }
 function abrirMapa(lat,lng,label){
   const hasC=(lat!=null&&lng!=null&&!isNaN(lat)&&!isNaN(lng));
@@ -1264,15 +1318,20 @@ const celLista=document.getElementById('celLista'),celFiltros=document.getElemen
 const celMais=document.getElementById('celMais'),celPainel=celLista.closest('.cel-painel');
 const LIMITE_CEL=5;
 celMais.onclick=()=>{const ab=celLista.classList.toggle('colapsada')===false;celMais.textContent=ab?'Ver menos':'Ver mais';};
-const cidades=['Todas',...[...new Set(CELULAS.map(c=>c.cidade))],'Templos'];
 let cidadeAtiva='Todas', buscaCel='';
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const celBusca=document.getElementById('celBusca');
 if(celBusca) celBusca.addEventListener('input',()=>{buscaCel=celBusca.value;renderCel();});
 const _btnLoc=document.getElementById('btnLoc'); if(_btnLoc) _btnLoc.onclick=usarLocalizacao;
-cidades.forEach(cid=>{const b=document.createElement('button');b.className='fcel'+(cid==='Todas'?' on':'');
-  b.textContent=cid;b.onclick=()=>{cidadeAtiva=cid;[...celFiltros.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');renderCel();};
-  celFiltros.appendChild(b);});
+function montarFiltrosCel(){
+  const cidades=['Todas',...[...new Set(CELULAS.map(c=>c.cidade))],'Templos'];
+  if(!cidades.includes(cidadeAtiva))cidadeAtiva='Todas';
+  celFiltros.innerHTML='';
+  cidades.forEach(cid=>{const b=document.createElement('button');b.className='fcel'+(cid===cidadeAtiva?' on':'');
+    b.textContent=cid;b.onclick=()=>{cidadeAtiva=cid;[...celFiltros.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');renderCel();};
+    celFiltros.appendChild(b);});
+}
+montarFiltrosCel();
 function selecionaTemplo(ti){
   const t=TEMPLOS[ti]; if(!t) return;
   document.querySelectorAll('.cel-item').forEach(el=>el.classList.toggle('on', el.dataset.tpl===String(ti)));
@@ -1339,6 +1398,19 @@ function selecionaCel(idx,fromLista){
 }
 renderCel();
 if(document.readyState==='complete')initMapa(); else window.addEventListener('load',initMapa);
+// células cadastradas no painel (tabela `celulas`) substituem a lista acima; sem banco, fica a lista do código
+(async()=>{
+  try{
+    const {data,error}=await sb.from('celulas').select('nome,lider,endereco,horario,cidade,tag,lat,lng,foto_url,whatsapp');
+    if(error)throw error;
+    if(!data||!data.length)return;
+    const lista=data.map(c=>({nome:escH(c.nome),lider:escH(c.lider||''),end:escH(c.endereco||''),hora:escH(c.horario||''),cidade:escH(c.cidade),
+      tag:c.tag?escH(c.tag):undefined,lat:+c.lat,lng:+c.lng,foto:c.foto_url?escH(c.foto_url):undefined,wpp:(c.whatsapp||'').replace(/\D/g,'')||undefined}))
+      .sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
+    CELULAS.splice(0,CELULAS.length,...lista);
+    celAtiva=null;montarFiltrosCel();renderCel();desenharCelulas();preencherCelulasMembro();
+  }catch(err){console.warn('celulas:',err);}
+})();
 
 /* ===================== copiar PIX ===================== */
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');
@@ -1370,10 +1442,15 @@ document.getElementById('enviaContato').onclick=async()=>{
 /* ===================== seja membro → cadastro (Supabase) ===================== */
 (function(){
   const el=id=>document.getElementById(id);
-  const mCel=el('m-celula');
-  if(mCel) mCel.innerHTML='<option value="">Selecione…</option>'+
-    CELULAS.map(c=>`<option>${c.nome}</option>`).join('')+
-    '<option>Ainda não participo</option>';
+  window.preencherCelulasMembro=function(){
+    const mCel=el('m-celula'); if(!mCel) return;
+    const atual=mCel.value;
+    mCel.innerHTML='<option value="">Selecione…</option>'+
+      CELULAS.map(c=>`<option>${c.nome}</option>`).join('')+
+      '<option>Ainda não participo</option>';
+    mCel.value=atual;
+  };
+  preencherCelulasMembro();
 
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
   const mMin=el('m-min');

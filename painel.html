@@ -319,6 +319,12 @@
       <button class="nav-item" data-view="banners">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span class="lbl">Banners</span>
       </button>
+      <button class="nav-item" data-view="celulas">
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span class="lbl">Células</span>
+      </button>
+      <button class="nav-item" data-view="agenda">
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg><span class="lbl">Agenda</span>
+      </button>
       <button class="nav-item" id="btn-fin" data-toggle="fin">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg><span class="lbl">Financeiro</span>
         <svg class="chev" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
@@ -370,6 +376,18 @@
       <div id="bnBody"></div>
     </div>
   </div>
+  <div class="modal-bg" id="clBg">
+    <div class="modal">
+      <button class="modal-x" id="clX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
+      <div id="clBody"></div>
+    </div>
+  </div>
+  <div class="modal-bg" id="agBg">
+    <div class="modal">
+      <button class="modal-x" id="agX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
+      <div id="agBody"></div>
+    </div>
+  </div>
   <div class="modal-bg" id="doacBg">
     <div class="modal">
       <button class="modal-x" id="doacX" aria-label="Fechar"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>
@@ -411,7 +429,7 @@
   //   abre   = subnav que já vem expandida
   //   inicio = [view, sub] em que o painel abre
   // Atenção: isto só monta o menu. Quem barra o acesso aos dados é o RLS no banco.
-  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','[data-view="ministerios"]','[data-view="encontros"]','[data-view="banners"]',
+  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','[data-view="ministerios"]','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]',
     '#btn-fin','#subnav-fin','#btn-acao','#subnav-acao','#btn-contato','#subnav'];
   const PERFIS={
     admin:       {},
@@ -449,6 +467,8 @@
     if(view==='ministerios') renderMinisterios();
     if(view==='encontros') renderEncontros();
     if(view==='banners') renderBanners();
+    if(view==='celulas') renderCelulas();
+    if(view==='agenda') renderAgendaPainel();
   }
 
   const card=(rot,num,agua)=>'<div class="card"><div class="rot">'+rot+'</div><div class="num'+(agua?' agua':'')+'">'+num+'</div></div>';
@@ -1084,28 +1104,58 @@ ${serve ? `
   }
 
   // slug = campo `id` do encontro no AGENDA do index.html
+  // inicio/fim = datas padrão, usadas até serem salvas no painel
   const ENCONTROS=[
-    {slug:'submergidos', titulo:'Encontro Submergidos', datas:'4 a 6 de setembro · 2026'},
-    {slug:'peniel',      titulo:'Encontro Peniel',      datas:'20 a 22 de novembro · 2026'}
+    {slug:'submergidos', titulo:'Encontro Submergidos', inicio:'2026-09-04', fim:'2026-09-06'},
+    {slug:'peniel',      titulo:'Encontro Peniel',      inicio:'2026-11-20', fim:'2026-11-22'}
   ];
+  const MESES_EXT=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  function faixaDatas(ini,fim){
+    const [ai,mi,di]=ini.split('-').map(Number);
+    if(!fim||fim===ini) return di+' de '+MESES_EXT[mi-1]+' · '+ai;
+    const [af,mf,df]=fim.split('-').map(Number);
+    return mi===mf&&ai===af ? di+' a '+df+' de '+MESES_EXT[mf-1]+' · '+af : di+'/'+mi+' a '+df+'/'+mf+' · '+af;
+  }
   async function renderEncontros(){
     $('#titulo').textContent='Encontros';
     $('#view').innerHTML='<div class="carregando">Carregando…</div>';
-    const {data,error}=await sb.from('encontro_config').select('slug,ativo');
-    if(error){ $('#view').innerHTML='<div class="vazio">Não foi possível carregar: '+esc(error.message)+'</div>'; return; }
-    const cfg={}; (data||[]).forEach(r=>{ cfg[r.slug]=!!r.ativo; });
+    let res=await sb.from('encontro_config').select('slug,ativo,inicio,fim');
+    if(res.error) res=await sb.from('encontro_config').select('slug,ativo');   // antes do encontros-datas.sql
+    if(res.error){ $('#view').innerHTML='<div class="vazio">Não foi possível carregar: '+esc(res.error.message)+'</div>'; return; }
+    const cfg={}, datas={}; (res.data||[]).forEach(r=>{ cfg[r.slug]=!!r.ativo; if(r.inicio) datas[r.slug]={inicio:r.inicio,fim:r.fim}; });
     const on=e=>cfg[e.slug]!==false;
+    const dt=e=>datas[e.slug]||{inicio:e.inicio,fim:e.fim};
     let html='<div class="cards">'+card('Encontros ligados',ENCONTROS.filter(on).length,true)+'</div>';
     html+='<p class="view-sub">Ligue os encontros que aparecem no site em “Os encontros do ano”. Desligado, o card some do site e o evento fica na agenda sem o botão de inscrição.</p>';
     html+='<div class="tabela">';
     ENCONTROS.forEach(e=>{
-      html+='<div class="lin" style="grid-template-columns:1fr auto;align-items:center">'+
-        '<span>'+esc(e.titulo)+'<span class="sub">'+esc(e.datas)+' · '+(on(e)?'Visível no site':'Desligado')+'</span></span>'+
+      const d=dt(e);
+      html+='<div class="lin" style="grid-template-columns:1fr auto auto;align-items:center;gap:12px">'+
+        '<span>'+esc(e.titulo)+'<span class="sub">'+esc(faixaDatas(d.inicio,d.fim))+' · '+(on(e)?'Visível no site':'Desligado')+'</span></span>'+
+        '<button class="mini-btn" data-encdt="'+esc(e.slug)+'">Alterar datas</button>'+
         '<label class="sw"><input type="checkbox" data-enc="'+esc(e.slug)+'"'+(on(e)?' checked':'')+'><span class="track"></span></label>'+
+        '</div>'+
+        '<div class="lin" data-encform="'+esc(e.slug)+'" style="display:none;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">'+
+          '<div class="fld" style="margin:0"><label>Início</label><input type="date" data-ini value="'+esc(d.inicio)+'"></div>'+
+          '<div class="fld" style="margin:0"><label>Fim</label><input type="date" data-fim value="'+esc(d.fim||'')+'"></div>'+
+          '<button class="mini-btn go" data-encsalva="'+esc(e.slug)+'" style="height:40px">Salvar datas</button>'+
         '</div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
+    $$('#view [data-encdt]').forEach(bt=> bt.onclick=()=>{
+      const f=$('#view [data-encform="'+bt.dataset.encdt+'"]'); f.style.display=f.style.display==='none'?'grid':'none';
+    });
+    $$('#view [data-encsalva]').forEach(bt=> bt.onclick=async()=>{
+      const f=$('#view [data-encform="'+bt.dataset.encsalva+'"]');
+      const ini=f.querySelector('[data-ini]').value, fim=f.querySelector('[data-fim]').value||null;
+      if(!ini){ alert('Preencha a data de início.'); return; }
+      if(fim && fim<ini){ alert('A data final é antes da inicial.'); return; }
+      bt.disabled=true; bt.textContent='Salvando…';
+      const {error}=await sb.rpc('encontro_set_datas',{p_slug:bt.dataset.encsalva,p_inicio:ini,p_fim:fim});
+      if(error){ bt.disabled=false; bt.textContent='Salvar datas'; alert('Erro: '+error.message); return; }
+      renderEncontros();
+    });
     $$('#view .sw input[data-enc]').forEach(cb=> cb.onchange=async()=>{
       const novo=cb.checked; cb.disabled=true;
       const {error}=await sb.rpc('encontro_set_ativo',{p_slug:cb.dataset.enc,p_ativo:novo});
@@ -1219,6 +1269,227 @@ ${serve ? `
     const {error}=await sb.from('banners').delete().eq('id',b.id);
     if(error){ alert('Erro: '+error.message); return; }
     fechaBanner(); renderBanners();
+  }
+
+  /* ===================== CÉLULAS (mapa e lista do site) ===================== */
+  let CELS=[], celBuscaTxt='';
+  async function renderCelulas(){
+    $('#titulo').textContent='Células';
+    $('#view').innerHTML='<div class="carregando">Carregando…</div>';
+    const {data,error}=await sb.from('celulas').select('*').order('cidade').order('nome');
+    if(error){ $('#view').innerHTML='<div class="vazio">Não foi possível carregar: '+esc(error.message)+'<br>Rode o arquivo supabase/celulas.sql no Supabase.</div>'; return; }
+    CELS=data||[];
+    const ativas=CELS.filter(c=>c.ativo).length;
+    const cidades=new Set(CELS.filter(c=>c.ativo).map(c=>c.cidade)).size;
+    let html='<div class="cards">'+card('Células no site',ativas,true)+card('Cidades',cidades)+(CELS.length>ativas?card('Desligadas',CELS.length-ativas):'')+'</div>';
+    html+='<p class="view-sub">A lista e o mapa de células do site, e as opções de célula nos formulários (membro, batismo, Quero servir), vêm daqui.</p>';
+    html+='<div class="min-barra"><input id="clBusca" placeholder="Buscar célula, líder ou cidade" value="'+esc(celBuscaTxt)+'" style="flex:1;background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:9px 12px;color:var(--luz);font-family:inherit;font-size:.9rem"><button class="mini-btn go" id="clNova">+ Nova célula</button></div>';
+    const q=norm(celBuscaTxt);
+    const lista=CELS.filter(c=>!q||norm([c.nome,c.lider,c.cidade,c.endereco].join(' ')).includes(q));
+    if(!lista.length) html+='<div class="tabela"><div class="vazio">'+(CELS.length?'Nenhuma célula encontrada.':'Nenhuma célula cadastrada.')+'</div></div>';
+    agrupaPor(lista,'cidade','Sem cidade').forEach(g=>{
+      html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:22px 0 12px;letter-spacing:.06em;text-transform:uppercase">'+esc(g[0])+' · '+g[1].length+'</h4>';
+      g[1].forEach(c=>{
+        html+='<div class="bn-card'+(c.ativo?'':' off')+'">'+
+          (c.foto_url?'<img class="bn-thumb" src="'+esc(c.foto_url)+'" alt="">':'<div class="bn-thumb vazio">sem foto</div>')+
+          '<div class="bn-info"><b>'+esc(c.nome)+(c.tag?' <span class="mb-pill ok">'+esc(c.tag)+'</span>':'')+'</b>'+
+            '<div class="sub2">'+esc(c.lider||'—')+(c.horario?' · '+esc(c.horario):'')+'</div>'+
+            '<div class="sub2">'+esc(c.endereco||'')+'</div></div>'+
+          '<div class="bn-acoes"><label class="sw"><input type="checkbox" data-cl="'+c.id+'"'+(c.ativo?' checked':'')+'><span class="track"></span></label>'+
+            '<button class="mini-btn" data-cled="'+c.id+'">Editar</button></div>'+
+        '</div>';
+      });
+    });
+    $('#view').innerHTML=html;
+    const bi=$('#clBusca'); bi.oninput=()=>{ celBuscaTxt=bi.value; const pos=bi.selectionStart; renderCelulasDebounce(pos); };
+    $('#clNova').onclick=()=>abreCelula(null);
+    $$('#view [data-cled]').forEach(bt=> bt.onclick=()=>abreCelula(CELS.find(x=>x.id===bt.dataset.cled)));
+    $$('#view .sw input[data-cl]').forEach(cb=> cb.onchange=async()=>{
+      cb.disabled=true;
+      const {error}=await sb.from('celulas').update({ativo:cb.checked}).eq('id',cb.dataset.cl);
+      if(error){ cb.checked=!cb.checked; cb.disabled=false; alert('Erro: '+error.message); return; }
+      renderCelulas();
+    });
+  }
+  let _clT=null;
+  function renderCelulasDebounce(pos){ clearTimeout(_clT); _clT=setTimeout(async()=>{ await renderCelulas(); const bi=$('#clBusca'); if(bi){ bi.focus(); bi.setSelectionRange(pos,pos); } },250); }
+  function fechaCelula(){ $('#clBg').classList.remove('on'); }
+  // aceita "lat, lng" ou um link do Google Maps (…/@lat,lng,… ou ?q=lat,lng)
+  function lerCoordenadas(txt){
+    const m=String(txt||'').match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+    if(!m) return null;
+    const lat=+m[1], lng=+m[2];
+    return (Math.abs(lat)<=90 && Math.abs(lng)<=180) ? {lat,lng} : null;
+  }
+  function abreCelula(c){
+    const e=c||{ativo:true};
+    const cidades=Array.from(new Set(CELS.map(x=>x.cidade).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'pt'));
+    $('#clBody').innerHTML=
+      '<h2>'+(c?'Editar célula':'Nova célula')+'</h2><div class="msub">Aparece no mapa e na lista de células do site</div>'+
+      '<div class="f2"><div class="fld"><label>Nome</label><input id="cl-nome" maxlength="60" value="'+esc(e.nome||'')+'"></div>'+
+        '<div class="fld"><label>Cidade</label><input id="cl-cidade" list="cl-cidades" maxlength="60" value="'+esc(e.cidade||'')+'"><datalist id="cl-cidades">'+cidades.map(x=>'<option value="'+esc(x)+'"></option>').join('')+'</datalist></div></div>'+
+      '<div class="fld"><label>Líderes</label><input id="cl-lider" maxlength="80" value="'+esc(e.lider||'')+'" placeholder="Ex.: João e Maria"></div>'+
+      '<div class="fld"><label>Endereço</label><input id="cl-end" maxlength="160" value="'+esc(e.endereco||'')+'" placeholder="Rua, número — bairro"></div>'+
+      '<div class="f2"><div class="fld"><label>Dia e horário</label><input id="cl-hora" maxlength="30" value="'+esc(e.horario||'')+'" placeholder="Ex.: Qui 20h"></div>'+
+        '<div class="fld"><label>Etiqueta (opcional)</label><input id="cl-tag" maxlength="20" value="'+esc(e.tag||'')+'" placeholder="Ex.: Jovens, Mulheres"></div></div>'+
+      '<div class="fld"><label>WhatsApp do líder</label><input id="cl-wpp" inputmode="tel" maxlength="20" value="'+esc(e.whatsapp||'')+'" placeholder="(11) 90000-0000"></div>'+
+      '<div class="fld"><label>Localização no mapa</label><input id="cl-loc" value="'+(e.lat!=null?esc(e.lat+', '+e.lng):'')+'" placeholder="Cole o link do Google Maps ou as coordenadas">'+
+        '<div class="ithint" id="cl-loc-st">No Google Maps, clique com o botão direito no local e clique nos números que aparecem (eles são copiados). Depois cole aqui.</div></div>'+
+      '<div class="fld"><label>Foto (opcional)</label><input type="file" id="cl-foto" accept="image/*"><img class="bn-prev" id="cl-prev" alt=""></div>'+
+      '<label class="chkline"><input type="checkbox" id="cl-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
+      '<div class="modal-actions"><button class="btn-primary" id="cl-salvar">Salvar</button><button class="btn-ghost" id="cl-cancelar">Cancelar</button>'+
+        (c?'<button class="btn-danger" id="cl-excluir">Remover</button>':'')+'</div>';
+    const prev=$('#cl-prev');
+    if(e.foto_url){ prev.src=e.foto_url; prev.style.display='block'; }
+    $('#cl-foto').onchange=function(){ const f=this.files[0]; if(!f) return; prev.src=URL.createObjectURL(f); prev.style.display='block'; };
+    $('#cl-loc').oninput=function(){ const p=lerCoordenadas(this.value); $('#cl-loc-st').textContent=p?('Localização reconhecida: '+p.lat.toFixed(5)+', '+p.lng.toFixed(5)):'Não reconheci a localização. Cole as coordenadas (ex.: -23.40, -46.86) ou um link do Google Maps.'; };
+    $('#cl-cancelar').onclick=fechaCelula;
+    $('#cl-salvar').onclick=()=>salvarCelula(c);
+    if(c) $('#cl-excluir').onclick=()=>removerCelula(c);
+    $('#clBg').classList.add('on');
+  }
+  async function salvarCelula(c){
+    const v=id=>($('#'+id).value||'').trim();
+    const nome=v('cl-nome'), cidade=v('cl-cidade'), pos=lerCoordenadas(v('cl-loc'));
+    if(!nome){ alert('Preencha o nome da célula.'); return; }
+    if(!cidade){ alert('Preencha a cidade.'); return; }
+    if(!pos){ alert('Preencha a localização no mapa (link do Google Maps ou coordenadas).'); return; }
+    let wpp=v('cl-wpp').replace(/\D/g,''); if(wpp && wpp.length<=11) wpp='55'+wpp;
+    const btn=$('#cl-salvar'); btn.disabled=true; btn.textContent='Salvando…';
+    try{
+      let url=c?c.foto_url:null;
+      const f=$('#cl-foto').files[0];
+      if(f){
+        if(!/^image\//.test(f.type)) throw new Error('Selecione uma imagem.');
+        if(f.size>10*1024*1024) throw new Error('Imagem muito grande (máx 10MB).');
+        btn.textContent='Enviando foto…';
+        const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+        const path=Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+        const up=await sb.storage.from('celulas').upload(path,f,{upsert:false,contentType:f.type});
+        if(up.error) throw up.error;
+        url=sb.storage.from('celulas').getPublicUrl(path).data.publicUrl;
+      }
+      const reg={nome, cidade, lider:v('cl-lider')||null, endereco:v('cl-end')||null, horario:v('cl-hora')||null, tag:v('cl-tag')||null,
+        whatsapp:wpp||null, lat:pos.lat, lng:pos.lng, foto_url:url, ativo:$('#cl-ativo').checked};
+      const {error}= c ? await sb.from('celulas').update(reg).eq('id',c.id) : await sb.from('celulas').insert(reg);
+      if(error) throw (error.code==='23505' ? new Error('Já existe uma célula com esse nome.') : error);
+      fechaCelula(); renderCelulas();
+    }catch(err){ alert('Não foi possível salvar: '+(err.message||err)); btn.disabled=false; btn.textContent='Salvar'; }
+  }
+  async function removerCelula(c){
+    if(!confirm('Remover a célula "'+c.nome+'" do site? Isso não pode ser desfeito. Se for algo temporário, prefira desligar a chave.')) return;
+    const {error}=await sb.from('celulas').delete().eq('id',c.id);
+    if(error){ alert('Erro: '+error.message); return; }
+    fechaCelula(); renderCelulas();
+  }
+
+  /* ===================== AGENDA MINISTERIAL ===================== */
+  let AGEV=[], agPassados=false;
+  const AG_TIPOS={culto:'Culto',evento:'Evento',conferencia:'Conferência',lideranca:'Liderança',marco:'Marco'};
+  const AG_MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const AG_SEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  async function renderAgendaPainel(){
+    $('#titulo').textContent='Agenda ministerial';
+    $('#view').innerHTML='<div class="carregando">Carregando…</div>';
+    const {data,error}=await sb.from('agenda').select('*').order('inicio');
+    if(error){ $('#view').innerHTML='<div class="vazio">Não foi possível carregar: '+esc(error.message)+'<br>Rode o arquivo supabase/agenda.sql no Supabase.</div>'; return; }
+    AGEV=data||[];
+    const hoje=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+    const passou=e=>(e.fim||e.inicio)<hoje;
+    const futuros=AGEV.filter(e=>!passou(e));
+    let html='<div class="cards">'+card('Próximos eventos',futuros.filter(e=>e.ativo).length,true)+card('Em destaque',futuros.filter(e=>e.ativo&&e.destaque).length)+'</div>';
+    html+='<p class="view-sub">Eventos da seção "Agenda Ministerial" do site. Os cultos de domingo e a Quarta Profética entram sozinhos, e os encontros ficam na tela Encontros. Evento com flyer aparece também no topo do site no mês dele.</p>';
+    html+='<div class="min-barra" style="justify-content:space-between"><label class="chkline" style="margin:0"><input type="checkbox" id="agPass"'+(agPassados?' checked':'')+'> Mostrar eventos que já passaram</label><button class="mini-btn go" id="agNovo">+ Novo evento</button></div>';
+    const lista=agPassados?AGEV:futuros;
+    if(!lista.length) html+='<div class="tabela"><div class="vazio">Nenhum evento '+(agPassados?'cadastrado':'futuro')+'.</div></div>';
+    const grupos={};
+    lista.forEach(e=>{ const k=e.inicio.slice(0,7); (grupos[k]=grupos[k]||[]).push(e); });
+    Object.keys(grupos).sort().forEach(k=>{
+      const [a,m]=k.split('-').map(Number);
+      html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:22px 0 12px;letter-spacing:.06em;text-transform:uppercase">'+AG_MESES[m-1]+' '+a+'</h4>';
+      grupos[k].forEach(e=>{
+        const di=e.inicio.split('-')[2]*1, df=e.fim&&e.fim!==e.inicio?e.fim.split('-')[2]*1:null;
+        const dow=AG_SEM[new Date(e.inicio+'T00:00:00').getDay()];
+        html+='<div class="bn-card'+(e.ativo&&!passou(e)?'':' off')+'">'+
+          '<div class="bn-thumb vazio" style="width:64px;height:64px;flex-direction:column;font-family:var(--display);color:var(--luz)"><b style="font-size:1.3rem">'+di+(df?'–'+df:'')+'</b><span style="font-size:.7rem;color:var(--cinza)">'+dow+'</span></div>'+
+          '<div class="bn-info"><b>'+esc(e.titulo)+(e.destaque?' <span class="mb-pill ok">Destaque</span>':'')+'</b>'+
+            '<div class="sub2">'+esc(AG_TIPOS[e.tipo]||e.tipo)+(e.hora?' · '+esc(e.hora):'')+(e.imagem_url?' · com flyer':'')+(e.link?' · com botão':'')+(passou(e)?' · já passou':'')+'</div></div>'+
+          '<div class="bn-acoes"><label class="sw"><input type="checkbox" data-ag="'+e.id+'"'+(e.ativo?' checked':'')+'><span class="track"></span></label>'+
+            '<button class="mini-btn" data-aged="'+e.id+'">Editar</button></div>'+
+        '</div>';
+      });
+    });
+    $('#view').innerHTML=html;
+    $('#agPass').onchange=function(){ agPassados=this.checked; renderAgendaPainel(); };
+    $('#agNovo').onclick=()=>abreEvento(null);
+    $$('#view [data-aged]').forEach(bt=> bt.onclick=()=>abreEvento(AGEV.find(x=>x.id===bt.dataset.aged)));
+    $$('#view .sw input[data-ag]').forEach(cb=> cb.onchange=async()=>{
+      cb.disabled=true;
+      const {error}=await sb.from('agenda').update({ativo:cb.checked}).eq('id',cb.dataset.ag);
+      if(error){ cb.checked=!cb.checked; cb.disabled=false; alert('Erro: '+error.message); return; }
+      renderAgendaPainel();
+    });
+  }
+  function fechaEvento(){ $('#agBg').classList.remove('on'); }
+  function abreEvento(ev){
+    const e=ev||{ativo:true,tipo:'evento'};
+    $('#agBody').innerHTML=
+      '<h2>'+(ev?'Editar evento':'Novo evento')+'</h2><div class="msub">Agenda ministerial do site</div>'+
+      '<div class="fld"><label>Título</label><input id="ag-titulo" maxlength="80" value="'+esc(e.titulo||'')+'" placeholder="Ex.: Culto de Mulheres"></div>'+
+      '<div class="f2"><div class="fld"><label>Tipo</label><select id="ag-tipo">'+Object.keys(AG_TIPOS).map(k=>'<option value="'+k+'"'+(k===e.tipo?' selected':'')+'>'+AG_TIPOS[k]+'</option>').join('')+'</select></div>'+
+        '<div class="fld"><label>Horário (opcional)</label><input id="ag-hora" maxlength="30" value="'+esc(e.hora||'')+'" placeholder="Ex.: 20h"></div></div>'+
+      '<div class="f2"><div class="fld"><label>Data</label><input id="ag-ini" type="date" value="'+esc(e.inicio||'')+'"></div>'+
+        '<div class="fld"><label>Até (opcional)</label><input id="ag-fim" type="date" value="'+esc(e.fim||'')+'"></div></div>'+
+      '<label class="chkline" style="margin-bottom:14px"><input type="checkbox" id="ag-dest"'+(e.destaque?' checked':'')+'> Destacar na agenda</label>'+
+      '<div class="fld"><label>Flyer (opcional)</label><input type="file" id="ag-foto" accept="image/*"><img class="bn-prev" id="ag-prev" alt="">'+
+        '<div class="ithint">Com flyer, o evento também aparece no topo do site no mês dele.'+(e.imagem_url?' <a href="#" id="ag-tira-foto" style="color:#f87171">Tirar flyer</a>':'')+'</div></div>'+
+      '<div class="f2"><div class="fld"><label>Link do botão (opcional)</label><input id="ag-link" value="'+esc(e.link||'')+'" placeholder="https://…"></div>'+
+        '<div class="fld"><label>Texto do botão</label><input id="ag-cta" maxlength="30" value="'+esc(e.cta||'')+'" placeholder="Inscrever-se"></div></div>'+
+      '<label class="chkline"><input type="checkbox" id="ag-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
+      '<div class="modal-actions"><button class="btn-primary" id="ag-salvar">Salvar</button><button class="btn-ghost" id="ag-cancelar">Cancelar</button>'+
+        (ev?'<button class="btn-danger" id="ag-excluir">Excluir</button>':'')+'</div>';
+    const prev=$('#ag-prev'); let tirarFoto=false;
+    if(e.imagem_url){ prev.src=e.imagem_url; prev.style.display='block'; }
+    $('#ag-foto').onchange=function(){ const f=this.files[0]; if(!f) return; prev.src=URL.createObjectURL(f); prev.style.display='block'; tirarFoto=false; };
+    const tf=$('#ag-tira-foto'); if(tf) tf.onclick=ev2=>{ ev2.preventDefault(); tirarFoto=true; prev.style.display='none'; $('#ag-foto').value=''; tf.textContent='Flyer será removido ao salvar'; };
+    $('#ag-cancelar').onclick=fechaEvento;
+    $('#ag-salvar').onclick=()=>salvarEvento(ev,()=>tirarFoto);
+    if(ev) $('#ag-excluir').onclick=()=>excluirEvento(ev);
+    $('#agBg').classList.add('on');
+  }
+  async function salvarEvento(ev,tirarFoto){
+    const v=id=>($('#'+id).value||'').trim();
+    const titulo=v('ag-titulo'), ini=v('ag-ini'), fim=v('ag-fim')||null, link=v('ag-link');
+    if(!titulo){ alert('Preencha o título.'); return; }
+    if(!ini){ alert('Preencha a data.'); return; }
+    if(fim && fim<ini){ alert('A data final é antes da inicial.'); return; }
+    if(link && !/^https?:\/\//i.test(link)){ alert('O link precisa começar com https://'); return; }
+    const btn=$('#ag-salvar'); btn.disabled=true; btn.textContent='Salvando…';
+    try{
+      let url=ev&&!tirarFoto()?ev.imagem_url:null;
+      const f=$('#ag-foto').files[0];
+      if(f){
+        if(!/^image\//.test(f.type)) throw new Error('Selecione uma imagem.');
+        if(f.size>10*1024*1024) throw new Error('Imagem muito grande (máx 10MB).');
+        btn.textContent='Enviando flyer…';
+        const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+        const path='agenda/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+        const up=await sb.storage.from('banners').upload(path,f,{upsert:false,contentType:f.type});
+        if(up.error) throw up.error;
+        url=sb.storage.from('banners').getPublicUrl(path).data.publicUrl;
+      }
+      const reg={titulo, tipo:v('ag-tipo'), inicio:ini, fim:(fim&&fim!==ini)?fim:null, hora:v('ag-hora')||null, destaque:$('#ag-dest').checked,
+        imagem_url:url, link:link||null, cta:v('ag-cta')||null, ativo:$('#ag-ativo').checked};
+      const {error}= ev ? await sb.from('agenda').update(reg).eq('id',ev.id) : await sb.from('agenda').insert(reg);
+      if(error) throw error;
+      fechaEvento(); renderAgendaPainel();
+    }catch(err){ alert('Não foi possível salvar: '+(err.message||err)); btn.disabled=false; btn.textContent='Salvar'; }
+  }
+  async function excluirEvento(ev){
+    if(!confirm('Excluir "'+ev.titulo+'" da agenda? Isso não pode ser desfeito.')) return;
+    const {error}=await sb.from('agenda').delete().eq('id',ev.id);
+    if(error){ alert('Erro: '+error.message); return; }
+    fechaEvento(); renderAgendaPainel();
   }
 
   const EXTRA_LABEL={idade:'Idade',batizado:'Batizado',instrumento:'Instrumento',classificacao_vocal:'Voz',
@@ -1863,6 +2134,10 @@ ${serve ? `
   $('#itBg').onclick=e=>{ if(e.target===$('#itBg')) tentarFecharItem(); };
   $('#bnX').onclick=fechaBanner;
   $('#bnBg').onclick=e=>{ if(e.target===$('#bnBg')) fechaBanner(); };
+  $('#clX').onclick=fechaCelula;
+  $('#clBg').onclick=e=>{ if(e.target===$('#clBg')) fechaCelula(); };
+  $('#agX').onclick=fechaEvento;
+  $('#agBg').onclick=e=>{ if(e.target===$('#agBg')) fechaEvento(); };
   $('#doacX').onclick=fechaDoac;
   $('#doacBg').onclick=e=>{ if(e.target===$('#doacBg')) fechaDoac(); };
   $('#lb-x').onclick=fechaLb;

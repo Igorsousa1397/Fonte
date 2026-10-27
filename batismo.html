@@ -214,9 +214,19 @@
   ];
   (function(){
     var sel=document.getElementById('b-celula');
-    if(sel) sel.innerHTML='<option value="">Selecione…</option>'+
-      CELULAS.map(function(c){return '<option>'+c.nome+' — '+c.cidade+'</option>';}).join('')+
-      '<option>Não participo de célula</option>';
+    function preencher(lista){
+      if(!sel) return;
+      var atual=sel.value;
+      sel.innerHTML='<option value="">Selecione…</option>'+
+        lista.map(function(c){var t=c.nome+' — '+c.cidade;return '<option>'+t.replace(/</g,'&lt;')+'</option>';}).join('')+
+        '<option>Não participo de célula</option>';
+      sel.value=atual;
+    }
+    preencher(CELULAS);
+    // células cadastradas no painel substituem a lista acima
+    sb.from('celulas').select('nome,cidade').order('nome').then(function(r){
+      if(!r.error && r.data && r.data.length) preencher(r.data);
+    });
   })();
 
   (function(){

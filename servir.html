@@ -302,9 +302,20 @@
 
     // popular células
     const selC = $('f-celula');
-    CELULAS.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; selC.appendChild(o); });
-    const oN=document.createElement('option'); oN.value='Não pertenço a nenhuma célula';
-    oN.textContent='Não pertenço a nenhuma célula'; selC.appendChild(oN);
+    const opc0 = [...selC.options].filter(o=>!o.value);   // "Selecione…"
+    function preencherCelulas(nomes){
+      const atual = selC.value;
+      selC.innerHTML=''; opc0.forEach(o=>selC.appendChild(o));
+      nomes.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; selC.appendChild(o); });
+      const oN=document.createElement('option'); oN.value='Não pertenço a nenhuma célula';
+      oN.textContent='Não pertenço a nenhuma célula'; selC.appendChild(oN);
+      selC.value = atual;
+    }
+    preencherCelulas(CELULAS);
+    // células cadastradas no painel substituem a lista acima
+    sb.from('celulas').select('nome').order('nome').then(({data,error})=>{
+      if(!error && data && data.length) preencherCelulas(data.map(c=>c.nome));
+    });
 
     // máscara de telefone BR
     const tel=$('f-tel');
