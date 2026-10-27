@@ -435,7 +435,7 @@
   var _itDirty=false;
   let MININSC=[], MINCFG={}, minInscMin='todos', minSecAberta=false;
   // filtros da lista de membros
-  const MF={status:'ativos', celula:'', ministerio:'', semEmail:false};
+  const MF={status:'ativos', celula:'', ministerio:'', semEmail:false, busca:''};
   const SEM_CELULA=['ainda não participo','não participo de célula','não pertenço a nenhuma célula','não participo','nao participo','sem célula'];
   const temCelula=c=>!!(c&&c.trim()) && SEM_CELULA.indexOf(c.trim().toLowerCase())<0;
   const temMinisterio=x=>!!(x&&x.trim()) && x!=='Não serve em nenhum';
@@ -1064,6 +1064,11 @@ ${serve ? `
       if(MF.ministerio==='__sem' && temMinisterio(m.ministerio)) return false;
       if(MF.ministerio && MF.ministerio!=='__sem' && (m.ministerio||'')!==MF.ministerio) return false;
       if(MF.semEmail && m.email) return false;
+      if(MF.busca){   // nome, CPF ou telefone
+        const q=norm(MF.busca), dig=MF.busca.replace(/\D/g,'');
+        const achou=norm(m.nome||'').includes(q) || (dig.length>=3 && ((m.cpf||'').replace(/\D/g,'').includes(dig) || (m.telefone||'').replace(/\D/g,'').includes(dig)));
+        if(!achou) return false;
+      }
       return true;
     });
   }
@@ -1086,10 +1091,11 @@ ${serve ? `
     html+='<div class="subtabs" style="margin-top:6px">'+st('ativos','Ativos',ativos)+st('inativos','Inativos',inativos)+st('todos','Todos',vivos.length)+st('arquivados','Arquivados',arquivados)+'</div>';
     const lista=membrosFiltrados();
     html+='<div class="min-barra" style="flex-wrap:wrap">'+
+      '<input id="mfBusca" type="search" placeholder="Buscar por nome, CPF ou telefone" value="'+esc(MF.busca)+'" style="'+selStyle.replace('max-width:220px','flex:1 1 240px;min-width:200px')+'">'+
       '<select id="mfCel" style="'+selStyle+'">'+opt('','Todas as células',MF.celula)+opt('__sem','Sem célula',MF.celula)+celulas.map(c=>opt(c,c,MF.celula)).join('')+'</select>'+
       '<select id="mfMin" style="'+selStyle+'">'+opt('','Todos os ministérios',MF.ministerio)+opt('__sem','Sem ministério',MF.ministerio)+minis.map(c=>opt(c,c,MF.ministerio)).join('')+'</select>'+
       '<label class="chkline" style="margin:0"><input type="checkbox" id="mfEmail"'+(MF.semEmail?' checked':'')+'> Sem e-mail</label>'+
-      ((MF.celula||MF.ministerio||MF.semEmail)?'<button class="mini-btn" id="mfLimpar">Limpar filtros</button>':'')+
+      ((MF.celula||MF.ministerio||MF.semEmail||MF.busca)?'<button class="mini-btn" id="mfLimpar">Limpar filtros</button>':'')+
       '<span class="min-conta" style="margin-left:auto">Exibindo <b>'+lista.length+'</b></span>'+
       (semEmail?'<button class="mini-btn" id="membSemEmailPdf">'+PDF_SVG+'Sem e-mail ('+semEmail+')</button>':'')+
       '<button class="mini-btn go" id="membPdf">'+PDF_SVG+'Exportar PDF</button></div>';
@@ -1109,7 +1115,10 @@ ${serve ? `
     $('#mfCel').onchange=function(){ MF.celula=this.value; renderMembros(); };
     $('#mfMin').onchange=function(){ MF.ministerio=this.value; renderMembros(); };
     $('#mfEmail').onchange=function(){ MF.semEmail=this.checked; renderMembros(); };
-    const _lf=$('#mfLimpar'); if(_lf) _lf.onclick=()=>{ MF.celula=''; MF.ministerio=''; MF.semEmail=false; renderMembros(); };
+    const _lf=$('#mfLimpar'); if(_lf) _lf.onclick=()=>{ MF.celula=''; MF.ministerio=''; MF.semEmail=false; MF.busca=''; renderMembros(); };
+    const _mb=$('#mfBusca');
+    _mb.oninput=()=>{ MF.busca=_mb.value; const pos=_mb.selectionStart; clearTimeout(window._mbT);
+      window._mbT=setTimeout(()=>{ renderMembros(); const n=$('#mfBusca'); if(n){ n.focus(); n.setSelectionRange(pos,pos); } },200); };
     $$('#view .sw input').forEach(cb=> cb.onchange=()=>setAtivoMembro(cb.dataset.id, cb.checked, cb));
     const _bp=$('#membPdf'); if(_bp) _bp.onclick=()=>exportarMembrosPdf(lista);
     const _bs=$('#membSemEmailPdf'); if(_bs) _bs.onclick=()=>exportarSemEmailPdf(vivos.filter(m=>m.ativo!==false && !m.email));
