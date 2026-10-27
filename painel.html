@@ -1277,7 +1277,8 @@ ${serve ? `
         '<div class="bn-info"><b>'+esc(b.titulo)+'</b><div class="sub2">'+esc(quando)+' · '+estado+'</div>'+
           (b.descricao?'<div class="sub2">'+esc(b.descricao)+'</div>':'')+'</div>'+
         '<div class="bn-acoes"><label class="sw"><input type="checkbox" data-bn="'+b.id+'"'+(b.ativo?' checked':'')+'><span class="track"></span></label>'+
-          (podeEditar?'<button class="mini-btn" data-bned="'+b.id+'">Editar</button>':'')+'</div>'+
+          (podeEditar?'<button class="mini-btn" data-bned="'+b.id+'">Editar</button>':'')+
+          '<button class="mini-btn warn" data-bndel="'+b.id+'">Excluir</button></div>'+
       '</div>';
     let html='<div class="cards">'+card('Recorrentes ligados',autos.filter(b=>b.ativo).length+' de '+autos.length,true)+card('Avulsos no site',noSite)+'</div>';
     html+='<p class="view-sub">O topo do site junta os banners avulsos com os recorrentes que estiverem ligados, em ordem de data. Cada recorrente aparece uma vez, na data mais próxima.</p>';
@@ -1293,6 +1294,7 @@ ${serve ? `
     $('#view').innerHTML=html;
     $('#bnNovo').onclick=()=>abreBanner(null);
     $$('#view [data-bned]').forEach(bt=> bt.onclick=()=>abreBanner(BANNERS.find(x=>x.id===bt.dataset.bned)));
+    $$('#view [data-bndel]').forEach(bt=> bt.onclick=()=>excluirBanner(BANNERS.find(x=>x.id===bt.dataset.bndel)));
     $$('#view .sw input[data-bn]').forEach(cb=> cb.onchange=async()=>{
       cb.disabled=true;
       const {error}=await sb.from('banners').update({ativo:cb.checked}).eq('id',cb.dataset.bn);
@@ -1316,13 +1318,13 @@ ${serve ? `
         '<div class="fld"><label>Texto do botão</label><input id="bn-cta" maxlength="30" value="'+esc(e.cta||'')+'" placeholder="Saiba mais"></div></div>')+
       '<label class="chkline"><input type="checkbox" id="bn-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="bn-salvar">Salvar</button><button class="btn-ghost" id="bn-cancelar">Cancelar</button>'+
-        (b&&!auto?'<button class="btn-danger" id="bn-excluir">Excluir</button>':'')+'</div>';
+        (b?'<button class="btn-danger" id="bn-excluir">Excluir</button>':'')+'</div>';
     const prev=$('#bn-prev');
     if(e.imagem_url){ prev.src=e.imagem_url; prev.style.display='block'; }
     $('#bn-foto').onchange=function(){ const f=this.files[0]; if(!f) return; prev.src=URL.createObjectURL(f); prev.style.display='block'; $('#bn-foto-st').textContent='Nova foto escolhida: '+f.name; };
     $('#bn-cancelar').onclick=fechaBanner;
     $('#bn-salvar').onclick=()=>salvarBanner(b);
-    if(b&&!auto) $('#bn-excluir').onclick=()=>excluirBanner(b);
+    if(b) $('#bn-excluir').onclick=()=>excluirBanner(b);
     $('#bnBg').classList.add('on');
   }
   async function salvarBanner(b){
@@ -1355,7 +1357,10 @@ ${serve ? `
     }catch(err){ alert('Não foi possível salvar: '+(err.message||err)); btn.disabled=false; btn.textContent='Salvar'; }
   }
   async function excluirBanner(b){
-    if(!confirm('Excluir o banner "'+b.titulo+'"? Isso não pode ser desfeito.')) return;
+    const aviso=b.auto
+      ? 'Excluir o banner recorrente "'+b.titulo+'"? Ele some do site e da lista para sempre. Se for só por um tempo, use a chave para desligar.'
+      : 'Excluir o banner "'+b.titulo+'"? Isso não pode ser desfeito.';
+    if(!confirm(aviso)) return;
     const {error}=await sb.from('banners').delete().eq('id',b.id);
     if(error){ alert('Erro: '+error.message); return; }
     fechaBanner(); renderBanners();

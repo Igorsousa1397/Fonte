@@ -1058,10 +1058,9 @@ async function buscarBanners(){
       .order('data',{ascending:true,nullsFirst:false}).order('criado_em',{ascending:true});
     if(error)throw error;
     const autos={};(data||[]).filter(b=>b.auto).forEach(b=>{autos[b.auto]=b;});
-    // tabela sem os recorrentes cadastrados ainda: trata como todos ligados
-    const temAutos=(data||[]).some(b=>b.auto);
+    // a leitura funcionou: recorrente que não veio está desligado ou foi excluído no painel
     const manuais=(data||[]).filter(b=>!b.auto&&(()=>{const f=b.data_fim||b.data;return !f||diasAte(f)>=0;})()).map(bannerParaSlide);
-    return {ok:temAutos,autos,manuais};
+    return {ok:true,autos,manuais};
   }catch(err){console.warn('banners:',err);return {ok:false,autos:{},manuais:[]};}
 }
 let atual=0,timer,slides=[],dots=[];
