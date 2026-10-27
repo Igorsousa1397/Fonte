@@ -1142,7 +1142,7 @@ const encontrosProntos=(async()=>{
   }catch(err){console.warn('encontro_config:',err);}   // falhou: mostra todos
   renderInscricoes();
 })();
-Promise.all([buscarBanners(),encontrosProntos,agendaPronta]).then(([r])=>montarHero(escolherSlides(r)));
+const heroPronto=Promise.all([buscarBanners(),encontrosProntos,agendaPronta]).then(([r])=>montarHero(escolherSlides(r)));
 
 /* ---- agenda lista ---- */
 const listaBox=document.getElementById('lista'),filtrosBox=document.getElementById('filtros');
@@ -1401,7 +1401,7 @@ function selecionaCel(idx,fromLista){
 renderCel();
 if(document.readyState==='complete')initMapa(); else window.addEventListener('load',initMapa);
 // células cadastradas no painel (tabela `celulas`) substituem a lista acima; sem banco, fica a lista do código
-(async()=>{
+const celulasProntas=(async()=>{
   try{
     const {data,error}=await sb.from('celulas').select('nome,lider,endereco,horario,cidade,tag,lat,lng,foto_url,whatsapp');
     if(error)throw error;
@@ -1600,6 +1600,23 @@ const setMenu=(open)=>{mobileMenu.classList.toggle('aberto',open);if(menuOverlay
 document.getElementById('menuBtn').onclick=()=>setMenu(!mobileMenu.classList.contains('aberto'));
 mobileMenu.addEventListener('click',e=>{if(e.target.tagName==='A')setMenu(false);});
 if(menuOverlay)menuOverlay.onclick=()=>setMenu(false);
+
+/* ===================== link com #seção (ex.: QR code para #celulas) =====================
+   O navegador pula para a seção antes de o topo, os encontros e as listas carregarem do banco;
+   quando eles entram, a seção desce. Depois que tudo carrega, volta a alinhar na seção,
+   a menos que a pessoa já tenha rolado a página por conta própria. */
+(function(){
+  const alvo=decodeURIComponent((location.hash||'').slice(1));
+  if(!alvo||!/^[\w-]+$/.test(alvo)) return;
+  let mexeu=false;
+  const parar=()=>{mexeu=true;};
+  ['wheel','touchmove','keydown','mousedown'].forEach(ev=>addEventListener(ev,parar,{passive:true,once:true}));
+  // 'instant': o html tem scroll-behavior:smooth, e uma rolagem suave em andamento erra o alvo se a página mudar
+  const alinhar=()=>{ if(mexeu) return; const el=document.getElementById(alvo); if(el) el.scrollIntoView({behavior:'instant',block:'start'}); };
+  Promise.allSettled([heroPronto,celulasProntas]).then(()=>{ alinhar(); setTimeout(alinhar,500); });
+  // fotos e mapa terminam de carregar depois e ainda podem mexer na altura
+  if(document.readyState!=='complete') addEventListener('load',()=>setTimeout(alinhar,100),{once:true});
+})();
 
 /* ===================== animações sutis ===================== */
 (function(){
