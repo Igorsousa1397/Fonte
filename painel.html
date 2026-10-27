@@ -1,6 +1,6 @@
 <!--
   IGREJA FONTE · Cajamar — Painel administrativo
-  Protegido (sessão + profiles.role). Perfis: admin (tudo), acao_social, ministerios.
+  Protegido (sessão + profiles.role). Perfis: admin (tudo), acao_social, ministerios, site (conteúdo do site).
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -446,8 +446,12 @@
   const PERFIS={
     admin:       {},
     acao_social: { itens:['#btn-acao','#subnav-acao'], abre:'#subnav-acao', inicio:['acao','solicitacoes'] },
-    ministerios: { itens:['[data-view="ministerios"]'], inicio:['ministerios'], carregaTudo:false }
+    ministerios: { itens:['[data-view="ministerios"]'], inicio:['ministerios'], carregaTudo:false },
+    // conteúdo do site: no Batismo vê só a página de inscrição (foto e data), sem a lista de inscritos
+    site:        { itens:['[data-view="batismo"]','[data-view="ministerios"]','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]'],
+                   inicio:['banners'], carregaTudo:false, batismoSoPagina:true }
   };
+  let PERFIL={};
 
   const app=$('.app'), sidebar=$('#sidebar'), overlay=$('#overlay');
   const abreSidebar=v=>{ sidebar.classList.toggle('aberto',v); overlay.classList.toggle('on',v); };
@@ -486,11 +490,11 @@
   const card=(rot,num,agua)=>'<div class="card"><div class="rot">'+rot+'</div><div class="num'+(agua?' agua':'')+'">'+num+'</div></div>';
 
   function renderBatismo(){
-    $('#titulo').textContent='Inscrições de Batismo';
+    $('#titulo').textContent=PERFIL.batismoSoPagina?'Batismo':'Inscrições de Batismo';
     const comp=BATISMO.filter(i=>i.camiseta_opcao==='comprar');
     const pagos=comp.filter(i=>i.pagamento_status==='aprovado').length;
     const brl=v=>'R$ '+v.toFixed(2).replace('.',',');
-    let html='<div class="cards">'+
+    let html=PERFIL.batismoSoPagina?'':'<div class="cards">'+
       card('Total de inscrições',BATISMO.length,true)+
       card('Comprando camiseta',comp.length)+
       card('Só no batismo',BATISMO.length-comp.length)+
@@ -507,6 +511,7 @@
           '<div class="fld"><label>Trocar foto</label><input type="file" id="bx-foto" accept="image/*"></div>'+
           '<button class="btn-primary" id="bx-salvar">Salvar página</button> <span class="sub2" id="bx-st"></span>'+
         '</div></div></details>';
+    if(PERFIL.batismoSoPagina){ $('#view').innerHTML=html; $('#bxPagina').open=true; carregarPaginaBatismo(); return; }
     if(!BATISMO.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição ainda.</div></div>'; $('#view').innerHTML=html; carregarPaginaBatismo(); return; }
     html+='<div class="tabela batismo"><div class="lin cab"><span>Nome</span><span>Célula</span><span>Telefone</span><span>Camiseta</span><span>Pagamento</span></div>';
     BATISMO.forEach(i=>{
@@ -2297,6 +2302,7 @@ ${serve ? `
       await sb.auth.signOut(); setTimeout(()=>location.replace('login.html'),1800); return;
     }
     $('#quem').textContent=user.email;
+    PERFIL=perf;
 
     // A tela de Ministérios busca os dados dela sozinha, então perfis restritos
     // a ela não precisam (nem devem) carregar membros, contribuições e afins.
