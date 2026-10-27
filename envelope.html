@@ -122,15 +122,26 @@
 <main class="wrap hero">
   <span class="eyebrow">Contribuições</span>
   <h1>Envelope Virtual</h1>
-  <p class="intro">Seu envelope de dízimo — como o de papel, agora digital. Digite seu CPF, registre a entrega do mês (dízimo, primícia ou oferta) e a tesouraria dá o "visto".</p>
+  <p class="intro">Seu envelope de dízimo — como o de papel, agora digital. Digite seu CPF e e-mail, confirme com o código que chega no e-mail, registre a entrega do mês (dízimo, primícia ou oferta) e a tesouraria dá o "visto".</p>
 
   <!-- Portão: CPF -->
   <section class="sec" id="gate">
-    <div class="card">
+    <div class="card" id="passo1">
       <label for="cpf">Seu CPF</label>
       <input id="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" autocomplete="off">
+      <label for="email" style="margin-top:14px">Seu e-mail</label>
+      <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com">
       <div class="vmsg" id="gateMsg"></div>
-      <button class="btn" id="abrir" style="margin-top:8px">Abrir meu envelope</button>
+      <button class="btn" id="abrir" style="margin-top:8px">Enviar código</button>
+      <p style="font-size:.8rem;color:var(--cinza,#8b8b95);margin-top:10px;line-height:1.5">Membro: use o e-mail do seu cadastro. Ainda não é membro: use seu e-mail, e ele fica ligado a este CPF.</p>
+    </div>
+    <div class="card" id="passo2" style="display:none">
+      <p style="margin-bottom:14px;line-height:1.5">Enviamos um código para <b id="emailMostra"></b>. Digite abaixo. Pode levar um minutinho, confira também o spam.</p>
+      <label for="codigo">Código</label>
+      <input id="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="······" style="text-align:center;letter-spacing:.4em;font-size:1.3rem">
+      <div class="vmsg" id="codMsg"></div>
+      <button class="btn" id="entrar" style="margin-top:8px">Abrir meu envelope</button>
+      <button class="btn btn-ghost" id="reenviar">Reenviar código</button>
     </div>
   </section>
 
@@ -216,19 +227,67 @@
   function mesLabel(iso){ var d=String(iso||'').slice(0,10).split('-'); if(d.length<2) return ''; return MESES_LB[parseInt(d[1],10)-1]+'/'+d[0]; }
   var CK = '<span class="ck"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>';
 
+  // sessão compartilhada com a carteirinha (mesma verificação por e-mail); não mistura com o login do painel
+  const sbe = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {auth:{storageKey:'fonte-carteirinha'}});
+  var emailAtual='';
   el('cpf').addEventListener('input', e=>{ e.target.value=maskCpf(e.target.value); });
   el('valor').addEventListener('input', e=>{ e.target.value=maskMoney(e.target.value); });
   (function(){ var d=new Date(); el('comp').value = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })();
 
-  async function abrirEnvelope(){
-    var d=(el('cpf').value||'').replace(/\D/g,'');
-    var msg=el('gateMsg');
-    if(d.length!==11){ msg.className='vmsg erro'; msg.textContent='Confira seu CPF (11 dígitos).'; return; }
-    var b=el('abrir'); b.disabled=true; b.textContent='Abrindo…'; msg.textContent='';
+  function erroGate(m){ var msg=el('gateMsg'); msg.className='vmsg erro'; msg.textContent=m; }
+  // passo 1: confere CPF + e-mail e manda o código (pula se este aparelho já confirmou esse e-mail)
+  async function enviarCodigo(){
+    var d=(el('cpf').value||'').replace(/\D/g,''), email=(el('email').value||'').trim().toLowerCase();
+    el('gateMsg').textContent='';
+    if(d.length!==11){ erroGate('Confira seu CPF (11 dígitos).'); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ erroGate('Digite um e-mail válido.'); return; }
+    var b=el('abrir'); b.disabled=true; b.textContent='Verificando…';
     try{
-      const { data, error } = await sb.rpc('envelope_abrir', { p_cpf:d });
+      const r=await sbe.rpc('envelope_confere_email',{p_cpf:d, p_email:email});
+      if(r.error) throw r.error;
+      if(r.data==='sem_email'){ erroGate('Seu cadastro de membro ainda não tem e-mail. Fale com a liderança da Fonte para incluir e liberar o envelope.'); }
+      else if(r.data==='email_diferente'){ erroGate('Esse e-mail não é o ligado a este CPF. Confira, ou fale com a liderança da Fonte para atualizar.'); }
+      else{
+        currentCpf=d; emailAtual=email;
+        const s=await sbe.auth.getSession();
+        const sess=s.data&&s.data.session;
+        if(sess && (sess.user.email||'').toLowerCase()===email){ await abrirEnvelope(); }
+        else{
+          const o=await sbe.auth.signInWithOtp({email, options:{shouldCreateUser:true}});
+          if(o.error) throw o.error;
+          el('emailMostra').textContent=email; el('codigo').value=''; el('codMsg').textContent='';
+          el('passo1').style.display='none'; el('passo2').style.display='block'; el('codigo').focus();
+        }
+      }
+    }catch(err){
+      var lim=err && (err.status===429 || /rate limit|security purposes/i.test(err.message||''));
+      erroGate(lim?'Muitas tentativas seguidas. Espere um minuto e tente de novo.':'Não deu para verificar agora. Tente de novo.');
+    }
+    b.disabled=false; b.textContent='Enviar código';
+  }
+  // passo 2: confere o código
+  async function entrar(){
+    var token=(el('codigo').value||'').replace(/\D/g,''), msg=el('codMsg');
+    if(token.length<6){ msg.className='vmsg erro'; msg.textContent='Digite o código que chegou no seu e-mail.'; return; }
+    var b=el('entrar'); b.disabled=true; b.textContent='Conferindo…'; msg.textContent='';
+    const r=await sbe.auth.verifyOtp({email:emailAtual, token, type:'email'});
+    if(r.error){ msg.className='vmsg erro'; msg.textContent='Código inválido ou expirado. Confira o e-mail ou peça um novo código.'; }
+    else await abrirEnvelope();
+    b.disabled=false; b.textContent='Abrir meu envelope';
+  }
+  async function reenviar(){
+    var b=el('reenviar'); b.disabled=true;
+    const r=await sbe.auth.signInWithOtp({email:emailAtual, options:{shouldCreateUser:true}});
+    var msg=el('codMsg'); msg.className='vmsg'+(r.error?' erro':'');
+    msg.textContent=r.error?'Espere um minuto antes de pedir outro código.':'Enviamos um novo código.';
+    setTimeout(()=>{ b.disabled=false; },30000);
+  }
+  async function abrirEnvelope(){
+    var d=currentCpf;
+    try{
+      const { data, error } = await sbe.rpc('envelope_abrir_verificado', { p_cpf:d });
       if(error) throw error;
-      currentCpf = d; currentNome = data.nome || ''; ALL = data.contribuicoes || [];
+      currentNome = data.nome || ''; ALL = data.contribuicoes || [];
       el('dzNome').textContent = data.nome || 'Visitante';
       el('nomeWrap').style.display = data.nome ? 'none' : 'block';
       ANO = new Date().getFullYear();
@@ -236,8 +295,10 @@
       el('gate').style.display='none';
       el('envelope').style.display='block';
       window.scrollTo({top:0,behavior:'smooth'});
-    }catch(err){ msg.className='vmsg erro'; msg.textContent = err.message || 'Não deu para abrir agora. Tente de novo.'; }
-    b.disabled=false; b.textContent='Abrir meu envelope';
+    }catch(err){
+      el('passo2').style.display='none'; el('passo1').style.display='block';
+      erroGate(/Verifica/.test(err.message||'') ? 'Não foi possível confirmar que este e-mail é o deste CPF.' : 'Não deu para abrir agora. Tente de novo.');
+    }
   }
 
   function doAno(iso){ return parseInt(String(iso||'').slice(0,4),10); }
@@ -280,22 +341,27 @@
     if(!currentNome && !nome){ msg.className='vmsg erro'; msg.textContent='Informe seu nome.'; return; }
     var b=el('declarar'); b.disabled=true; b.textContent='Enviando…'; msg.textContent='';
     try{
-      const { error } = await sb.rpc('contribuicao_declarar', {
+      const { error } = await sbe.rpc('contribuicao_declarar_verificado', {
         p_cpf: currentCpf, p_nome: nome || null, p_tipo: el('tipo').value,
         p_competencia: comp+'-01', p_valor: valor, p_forma: el('forma').value, p_obs: null });
       if(error) throw error;
       el('valor').value='';
       toast('Contribuição registrada! A tesouraria vai confirmar.');
-      const { data } = await sb.rpc('envelope_abrir', { p_cpf: currentCpf });
+      const { data } = await sbe.rpc('envelope_abrir_verificado', { p_cpf: currentCpf });
       if(data){ ALL = data.contribuicoes || []; ANO = doAno(comp+'-01') || ANO; renderGrid(); }
     }catch(err){ msg.className='vmsg erro'; msg.textContent = err.message || 'Não deu para registrar agora.'; }
     b.disabled=false; b.textContent='Declarar entrega';
   }
 
-  el('abrir').onclick = abrirEnvelope;
-  el('cpf').addEventListener('keydown', e=>{ if(e.key==='Enter') abrirEnvelope(); });
+  el('abrir').onclick = enviarCodigo;
+  el('cpf').addEventListener('keydown', e=>{ if(e.key==='Enter') el('email').focus(); });
+  el('email').addEventListener('keydown', e=>{ if(e.key==='Enter') enviarCodigo(); });
+  el('entrar').onclick = entrar;
+  el('codigo').addEventListener('input', e=>{ e.target.value=e.target.value.replace(/\D/g,''); });
+  el('codigo').addEventListener('keydown', e=>{ if(e.key==='Enter') entrar(); });
+  el('reenviar').onclick = reenviar;
   el('declarar').onclick = declarar;
   el('anoPrev').onclick = ()=>{ ANO--; renderGrid(); };
   el('anoNext').onclick = ()=>{ ANO++; renderGrid(); };
-  el('trocar').onclick = ()=>{ el('envelope').style.display='none'; el('gate').style.display='block'; el('cpf').value=''; el('gateMsg').textContent=''; window.scrollTo({top:0,behavior:'smooth'}); };
+  el('trocar').onclick = ()=>{ el('envelope').style.display='none'; el('gate').style.display='block'; el('passo2').style.display='none'; el('passo1').style.display='block'; el('cpf').value=''; el('gateMsg').textContent=''; window.scrollTo({top:0,behavior:'smooth'}); };
 </script>

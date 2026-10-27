@@ -108,9 +108,9 @@
 
 <main class="wrap hero">
   <span class="eyebrow">Inscrição</span>
-  <div class="flyer"><img src="assets/batismo.jpg" alt="Batismo · Igreja Fonte"></div>
+  <div class="flyer"><img id="bFoto" src="assets/batismo.jpg" alt="Batismo · Igreja Fonte"></div>
   <h1>Batismo</h1>
-  <span class="chip"><span class="dot"></span> Domingo · 27 de setembro</span>
+  <span class="chip"><span class="dot"></span> <span id="bData">Domingo · 27 de setembro</span></span>
   <p class="intro"><b style="color:var(--luz);font-weight:600">Shalom!</b> O batismo é mais que um símbolo — é um marco de fé, renúncia e recomeço. É deixar para trás o velho eu e nascer para uma nova vida com Cristo.</p>
   <div class="versiculo">"Pois em um só corpo todos nós fomos batizados em um único Espírito: quer judeus, quer gregos, quer escravos, quer livres. E a todos nós foi dado beber de um único Espírito." — 1 Coríntios 12:13</div>
 
@@ -212,6 +212,19 @@
     {nome:'Reobote',cidade:'Cajamar'},
     {nome:'Transbordo',cidade:'Cajamar'}
   ];
+  // foto e data editadas no painel (site_config, chave 'batismo'); sem banco, fica o que está no HTML
+  sb.from('site_config').select('valor').eq('chave','batismo').maybeSingle().then(function(r){
+    var v=r && !r.error && r.data && r.data.valor; if(!v) return;
+    if(v.imagem_url) document.getElementById('bFoto').src=v.imagem_url;
+    if(v.data){
+      var dt=new Date(v.data+'T00:00:00');
+      var dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+      var meses=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+      var txt=dias[dt.getDay()]+' · '+dt.getDate()+' de '+meses[dt.getMonth()]+(dt.getFullYear()!==new Date().getFullYear()?' de '+dt.getFullYear():'');
+      document.getElementById('bData').textContent=txt+(v.hora?' · '+v.hora:'');
+    }
+  });
+
   (function(){
     var sel=document.getElementById('b-celula');
     function preencher(lista){

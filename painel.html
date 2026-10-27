@@ -496,7 +496,17 @@
       card('Camisetas · a receber',brl(comp.length*VALOR_CAMISETA))+
       card('Camisetas · recebido',brl(pagos*VALOR_CAMISETA))+
     '</div>';
-    if(!BATISMO.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição ainda.</div></div>'; $('#view').innerHTML=html; return; }
+    html+='<details class="secbox" id="bxPagina"><summary><span>Página de inscrição</span><span class="cnt" id="bxResumo">foto e data</span><span class="chev">▾</span></summary>'+
+      '<p class="view-sub">Foto e data que aparecem no topo da página de inscrição do batismo.</p>'+
+      '<div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;padding:4px 0 14px">'+
+        '<img id="bx-prev" alt="" style="width:160px;max-height:200px;object-fit:cover;border-radius:10px;border:var(--borda);background:var(--breu)">'+
+        '<div style="flex:1;min-width:220px">'+
+          '<div class="f2"><div class="fld"><label>Data do batismo</label><input type="date" id="bx-data"></div>'+
+            '<div class="fld"><label>Horário (opcional)</label><input id="bx-hora" maxlength="20" placeholder="Ex.: 10h"></div></div>'+
+          '<div class="fld"><label>Trocar foto</label><input type="file" id="bx-foto" accept="image/*"></div>'+
+          '<button class="btn-primary" id="bx-salvar">Salvar página</button> <span class="sub2" id="bx-st"></span>'+
+        '</div></div></details>';
+    if(!BATISMO.length){ html+='<div class="tabela"><div class="vazio">Nenhuma inscrição ainda.</div></div>'; $('#view').innerHTML=html; carregarPaginaBatismo(); return; }
     html+='<div class="tabela batismo"><div class="lin cab"><span>Nome</span><span>Célula</span><span>Telefone</span><span>Camiseta</span><span>Pagamento</span></div>';
     BATISMO.forEach(i=>{
       const pg=i.pagamento_status==='aprovado'?'<span class="pill ok">Pago</span>':i.pagamento_status==='pendente'?'<span class="pill pend">Pendente</span>':'<span class="pill na">—</span>';
@@ -505,6 +515,43 @@
     });
     html+='</div>';
     $('#view').innerHTML=html;
+    carregarPaginaBatismo();
+  }
+
+  // foto e data da página batismo.html (site_config, chave 'batismo')
+  async function carregarPaginaBatismo(){
+    let cfg={};
+    const r=await sb.from('site_config').select('valor').eq('chave','batismo').maybeSingle();
+    if(r.error){ $('#bx-st').textContent='Rode supabase/site-config.sql no Supabase para editar aqui.'; $('#bx-salvar').disabled=true; return; }
+    cfg=(r.data&&r.data.valor)||{};
+    const prev=$('#bx-prev'); prev.src=cfg.imagem_url||'assets/batismo.jpg';
+    $('#bx-data').value=cfg.data||''; $('#bx-hora').value=cfg.hora||'';
+    if(cfg.data) $('#bxResumo').textContent=cfg.data.split('-').reverse().join('/');
+    $('#bx-foto').onchange=function(){ const f=this.files[0]; if(f) prev.src=URL.createObjectURL(f); };
+    $('#bx-salvar').onclick=async function(){
+      const btn=this, st=$('#bx-st'); btn.disabled=true; st.textContent='Salvando…';
+      try{
+        let url=cfg.imagem_url||null;
+        const f=$('#bx-foto').files[0];
+        if(f){
+          if(!/^image\//.test(f.type)) throw new Error('Selecione uma imagem.');
+          if(f.size>10*1024*1024) throw new Error('Imagem muito grande (máx 10MB).');
+          st.textContent='Enviando foto…';
+          const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+          const path='batismo/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+          const up=await sb.storage.from('banners').upload(path,f,{upsert:false,contentType:f.type});
+          if(up.error) throw up.error;
+          url=sb.storage.from('banners').getPublicUrl(path).data.publicUrl;
+        }
+        const valor={data:$('#bx-data').value||null, hora:$('#bx-hora').value.trim()||null, imagem_url:url};
+        const {error}=await sb.from('site_config').upsert({chave:'batismo', valor, atualizado_em:new Date().toISOString()});
+        if(error) throw error;
+        cfg=valor; $('#bx-foto').value='';
+        if(valor.data) $('#bxResumo').textContent=valor.data.split('-').reverse().join('/');
+        st.textContent='Salvo. A página de batismo já mostra a nova foto e data.';
+      }catch(err){ st.textContent='Não foi possível salvar: '+(err.message||err); }
+      btn.disabled=false;
+    };
   }
 
   async function setAtivoMembro(id, ativo, cb){
