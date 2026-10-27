@@ -1280,7 +1280,7 @@ ${serve ? `
           (podeEditar?'<button class="mini-btn" data-bned="'+b.id+'">Editar</button>':'')+'</div>'+
       '</div>';
     let html='<div class="cards">'+card('Recorrentes ligados',autos.filter(b=>b.ativo).length+' de '+autos.length,true)+card('Avulsos no site',noSite)+'</div>';
-    html+='<p class="view-sub">O topo do site junta os banners avulsos com os recorrentes que estiverem ligados, em ordem de data (no mínimo 4 no carrossel, quando houver).</p>';
+    html+='<p class="view-sub">O topo do site junta os banners avulsos com os recorrentes que estiverem ligados, em ordem de data. Cada recorrente aparece uma vez, na data mais próxima.</p>';
     html+='<h4 style="font-size:.82rem;color:var(--cinza);font-weight:600;margin:22px 0 12px;letter-spacing:.06em;text-transform:uppercase">Recorrentes · data automática</h4>';
     if(!autos.length) html+='<div class="tabela"><div class="vazio">Rode o arquivo supabase/banners-automaticos.sql no Supabase para os recorrentes aparecerem aqui.</div></div>';
     autos.forEach(b=>{ html+=linha(b,AUTO_QUANDO[b.auto]||'',b.ativo?'No site':'Desligado',b.auto!=='agenda'); });

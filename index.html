@@ -994,13 +994,15 @@ function escolherSlides(r){
   const porData=(a,b)=>(a.inicio?d(a.inicio):Infinity)-(b.inicio?d(b.inicio):Infinity);
   const base=r.manuais.concat(especiais).sort(porData);
   if(base.length>=MIN)return base;
-  // completa com os cultos recorrentes ligados, do mais próximo para o mais distante
+  // completa com os cultos recorrentes ligados: cada um uma vez só, na data mais próxima
+  const vistos=new Set();
   const fillers=futuros.filter(e=>e.fixo).map(e=>{
-    if(/Quarta/.test(e.titulo))return on('quarta')&&comTextos('quarta',{...e,titulo:'Quarta Profética',img:'assets/banner-quarta.jpg'});
-    if(e.dow!=='Dom')return null;
-    return /Ceia/.test(e.titulo)
-      ?on('ceia')&&comTextos('ceia',{...e,titulo:'Santa Ceia',img:'assets/banner-ceia.jpg'})
-      :on('domingo')&&comTextos('domingo',{...e,titulo:'Domingo em Família',img:undefined});
+    const k=/Quarta/.test(e.titulo)?'quarta':e.dow!=='Dom'?null:/Ceia/.test(e.titulo)?'ceia':'domingo';
+    if(!k||vistos.has(k)||!on(k))return null;
+    vistos.add(k);
+    if(k==='quarta')return comTextos('quarta',{...e,titulo:'Quarta Profética',img:'assets/banner-quarta.jpg'});
+    if(k==='ceia')return comTextos('ceia',{...e,titulo:'Santa Ceia',img:'assets/banner-ceia.jpg'});
+    return comTextos('domingo',{...e,titulo:'Domingo em Família',img:undefined});
   }).filter(Boolean);
   return base.concat(fillers.slice(0,MIN-base.length)).sort(porData);
 }
