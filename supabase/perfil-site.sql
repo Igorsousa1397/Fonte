@@ -4,20 +4,10 @@
 -- Rodar uma vez no SQL Editor do Supabase, depois dos SQLs de banners, encontros,
 -- células, agenda, site-config e ministérios.
 
--- 1) aceita o papel novo em profiles.role (se houver uma regra de valores permitidos)
-do $$
-declare c record;
-begin
-  for c in select conname from pg_constraint
-           where conrelid = 'public.profiles'::regclass and contype = 'c'
-             and pg_get_constraintdef(oid) ilike '%role%'
-  loop
-    execute format('alter table public.profiles drop constraint %I', c.conname);
-  end loop;
-end $$;
+-- 1) profiles.role: sem regra de valores permitidos. (Uma versão anterior deste arquivo
+--    criava profiles_role_check, e isso quebrou a criação de usuários, porque a função que
+--    monta o profile de cada usuário novo grava um papel fora da lista.)
 alter table public.profiles drop constraint if exists profiles_role_check;
-alter table public.profiles add constraint profiles_role_check
-  check (role is null or role in ('admin', 'acao_social', 'ministerios', 'site')) not valid;
 
 -- 2) atalho: a pessoa logada tem algum destes papéis?
 create or replace function public.tem_papel(variadic p_papeis text[])
