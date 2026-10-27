@@ -28,16 +28,36 @@
   .msg a{color:var(--agua);font-weight:600}
   .voltar{display:inline-block;margin-top:18px;color:var(--sub);font-size:.85rem;text-decoration:none}
   .voltar:hover{color:var(--luz)}
+  .campo{margin-bottom:14px}
+  .passo2{display:none}
+  .gate.codigo .passo1{display:none}
+  .gate.codigo .passo2{display:block}
+  #codigo{text-align:center;font-size:1.5rem;letter-spacing:.4em;font-family:var(--display);font-weight:700}
+  .links{display:flex;justify-content:center;gap:18px;margin-top:14px}
+  .links button{background:none;border:none;color:var(--sub);font-size:.85rem;cursor:pointer;font-family:var(--corpo)}
+  .links button:hover{color:var(--luz)}
+  .links button:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
   <div class="gate">
     <img class="logo" src="assets/fonte-logo.png" alt="Fonte">
     <h1>Minha carteirinha</h1>
-    <p class="desc">Digite seu CPF para acessar sua carteirinha de membro.</p>
-    <label for="cpf">CPF</label>
-    <input id="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" autocomplete="off">
-    <button class="go" id="go">Ver minha carteirinha</button>
+    <div class="passo1">
+      <p class="desc">Digite seu CPF e o e-mail do seu cadastro. Vamos enviar um código para confirmar que é você.</p>
+      <div class="campo"><label for="cpf">CPF</label>
+      <input id="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" autocomplete="off"></div>
+      <div class="campo"><label for="email">E-mail</label>
+      <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com"></div>
+      <button class="go" id="go">Enviar código</button>
+    </div>
+    <div class="passo2">
+      <p class="desc">Enviamos um código para <b id="emailMostra"></b>. Digite abaixo. Pode levar um minutinho, confira também o spam.</p>
+      <label for="codigo">Código</label>
+      <input id="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="······">
+      <button class="go" id="entrar">Ver minha carteirinha</button>
+      <div class="links"><button id="reenviar">Reenviar código</button><button id="trocar">Trocar e-mail</button></div>
+    </div>
     <div class="msg" id="msg"></div>
     <a class="voltar" href="index.html">← Voltar ao site</a>
   </div>
@@ -45,7 +65,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/supabase.js"></script>
 <script>
-  var cpfEl=document.getElementById('cpf'), goEl=document.getElementById('go'), msgEl=document.getElementById('msg');
+  var cpfEl=document.getElementById('cpf'), emailEl=document.getElementById('email'), goEl=document.getElementById('go'), msgEl=document.getElementById('msg');
+  var codEl=document.getElementById('codigo'), entrarEl=document.getElementById('entrar'), gate=document.querySelector('.gate');
+  // sessão própria da carteirinha: não mistura com o login do painel
+  var sbc=supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {auth:{storageKey:'fonte-carteirinha'}});
+  var KEY_CPF='fonte-carteirinha-cpf';
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ v==null?localStorage.removeItem(k):localStorage.setItem(k,v); }catch(e){} }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function maskCpf(v){ v=(v||'').replace(/\D/g,'').slice(0,11);
     if(v.length>9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
@@ -172,6 +198,7 @@ ${serve ? `
   <div class="btns">
     <button class="b1" id="dlBtn">Salvar carteirinha</button>
     <button class="b2" onclick="location.href='index.html'">Voltar para o site</button>
+    <button class="b2" onclick="try{localStorage.removeItem('fonte-carteirinha');localStorage.removeItem('fonte-carteirinha-cpf')}catch(e){};location.href='carteirinha.html'">Sair deste aparelho</button>
   </div>
   <script>
     var CARD={nome:${JSON.stringify(m.nome||'')}, wa:${JSON.stringify(waNumber)}, cod:${JSON.stringify(cod)}};
@@ -281,24 +308,84 @@ ${serve ? `
     document.open(); document.write(doc); document.close();
   }
 
-  async function consultar(){
-    var cpf=(cpfEl.value||'').replace(/\D/g,'');
+  var cpfAtual='', emailAtual='';
+
+  // passo 1: confere CPF + e-mail no banco e manda o código
+  async function enviarCodigo(){
+    var cpf=(cpfEl.value||'').replace(/\D/g,''), email=(emailEl.value||'').trim().toLowerCase();
     if(cpf.length!==11){ showMsg('Digite um CPF válido (11 dígitos).','err'); return; }
-    goEl.disabled=true; var t=goEl.textContent; goEl.textContent='Buscando…'; msgEl.className='msg';
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ showMsg('Digite um e-mail válido.','err'); return; }
+    goEl.disabled=true; var t=goEl.textContent; goEl.textContent='Verificando…'; msgEl.className='msg';
     try{
-      var res=await sb.rpc('membro_carteirinha',{p_cpf:cpf});
+      var res=await sbc.rpc('membro_confere_email',{p_cpf:cpf, p_email:email});
       if(res.error) throw res.error;
-      var row=(res.data&&res.data[0])||null;
-      var st=row?row.status:'nao_encontrado';
-      if(st==='ok'){ abrir(row); return; }
-      if(st==='analise'){ showMsg('Seu cadastro foi recebido e está <b>em análise</b> pela liderança. Assim que for aprovado, sua carteirinha aparece aqui. 🙏','info'); }
+      var st=res.data;
+      if(st==='ok'){
+        var r=await sbc.auth.signInWithOtp({email:email, options:{shouldCreateUser:true}});
+        if(r.error) throw r.error;
+        cpfAtual=cpf; emailAtual=email;
+        document.getElementById('emailMostra').textContent=email;
+        gate.classList.add('codigo'); codEl.value=''; codEl.focus();
+      }
+      else if(st==='analise'){ showMsg('Seu cadastro foi recebido e está <b>em análise</b> pela liderança. Assim que for aprovado, sua carteirinha aparece aqui. 🙏','info'); }
       else if(st==='inativo'){ showMsg('Não encontramos um cadastro <b>ativo</b> com esse CPF. Fale com a liderança da Fonte para regularizar.','err'); }
+      else if(st==='sem_email'){ showMsg('Seu cadastro ainda não tem e-mail. Fale com a liderança da Fonte para incluir seu e-mail e liberar a carteirinha.','info'); }
+      else if(st==='email_diferente'){ showMsg('Esse e-mail não é o do seu cadastro. Confira e tente de novo, ou fale com a liderança da Fonte para atualizar.','err'); }
       else { showMsg('CPF não encontrado. Você já fez seu cadastro de membro? <a href="index.html#membro">Fazer meu cadastro</a>','err'); }
-    }catch(e){ showMsg('Não foi possível consultar agora. Tente novamente em instantes.','err'); }
+    }catch(e){
+      var lim=e && (e.status===429 || /rate limit|security purposes/i.test(e.message||''));
+      showMsg(lim?'Muitas tentativas seguidas. Espere um minuto e tente de novo.':'Não foi possível consultar agora. Tente novamente em instantes.','err');
+    }
     goEl.disabled=false; goEl.textContent=t;
   }
-  goEl.addEventListener('click',consultar);
-  cpfEl.addEventListener('keydown',function(e){ if(e.key==='Enter') consultar(); });
+
+  async function carregarCarteirinha(cpf){
+    var res=await sbc.rpc('membro_carteirinha_verificada',{p_cpf:cpf});
+    if(res.error) throw res.error;
+    var row=(res.data&&res.data[0])||null;
+    if(!row || row.status!=='ok') throw new Error('indisponivel');
+    lsSet(KEY_CPF,cpf);
+    abrir(row);
+  }
+
+  // passo 2: confere o código e abre a carteirinha
+  async function entrar(){
+    var token=(codEl.value||'').replace(/\D/g,'');
+    if(token.length<6){ showMsg('Digite o código que chegou no seu e-mail.','err'); return; }
+    entrarEl.disabled=true; var t=entrarEl.textContent; entrarEl.textContent='Conferindo…'; msgEl.className='msg';
+    try{
+      var r=await sbc.auth.verifyOtp({email:emailAtual, token:token, type:'email'});
+      if(r.error){ showMsg('Código inválido ou expirado. Confira o e-mail ou peça um novo código.','err'); entrarEl.disabled=false; entrarEl.textContent=t; return; }
+      await carregarCarteirinha(cpfAtual);
+      return;
+    }catch(e){ showMsg('Não foi possível abrir sua carteirinha agora. Tente novamente em instantes.','err'); }
+    entrarEl.disabled=false; entrarEl.textContent=t;
+  }
+
+  async function reenviar(){
+    var b=document.getElementById('reenviar'); b.disabled=true;
+    var r=await sbc.auth.signInWithOtp({email:emailAtual, options:{shouldCreateUser:true}});
+    if(r.error) showMsg('Espere um minuto antes de pedir outro código.','err');
+    else showMsg('Enviamos um novo código para '+esc(emailAtual)+'.','info');
+    setTimeout(function(){ b.disabled=false; },30000);
+  }
+
+  goEl.addEventListener('click',enviarCodigo);
+  cpfEl.addEventListener('keydown',function(e){ if(e.key==='Enter') emailEl.focus(); });
+  emailEl.addEventListener('keydown',function(e){ if(e.key==='Enter') enviarCodigo(); });
+  entrarEl.addEventListener('click',entrar);
+  codEl.addEventListener('keydown',function(e){ if(e.key==='Enter') entrar(); });
+  codEl.addEventListener('input',function(){ codEl.value=codEl.value.replace(/\D/g,''); });
+  document.getElementById('reenviar').addEventListener('click',reenviar);
+  document.getElementById('trocar').addEventListener('click',function(){ gate.classList.remove('codigo'); msgEl.className='msg'; emailEl.focus(); });
+
+  // já verificou neste aparelho: abre direto
+  (async function(){
+    var cpf=lsGet(KEY_CPF); if(!cpf) return;
+    var s=await sbc.auth.getSession();
+    if(!s.data || !s.data.session) return;
+    try{ await carregarCarteirinha(cpf); }catch(e){ lsSet(KEY_CPF,null); }
+  })();
 </script>
 </body>
 </html>

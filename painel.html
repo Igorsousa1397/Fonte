@@ -480,6 +480,7 @@
     const telHtml = telWa(m.telefone) || null;
     const linhas=[
       ['Telefone', m.telefone, telHtml],
+      ['E-mail', m.email],
       ['CPF', m.cpf],
       ['Nascimento', nasc],
       ['Estado civil', m.estado_civil],
@@ -542,6 +543,7 @@
       '<div class="lock-cap">Não editáveis</div>'+
       '<div class="det">'+lock('Telefone',m.telefone)+lock('CPF',m.cpf)+lock('Nascimento',nasc)+lock('Estado civil',m.estado_civil)+'</div>'+
       '<div class="mb-edit">'+
+        '<div class="fld"><label>E-mail <span style="color:var(--cinza);font-weight:400">(acesso à carteirinha)</span></label><input id="e-email" type="email" value="'+esc(m.email||'')+'" placeholder="membro@email.com"></div>'+
         '<div class="fld"><label>Célula</label><input id="e-cel" list="e-cel-list" value="'+esc(m.celula||'')+'"><datalist id="e-cel-list">'+celList+'</datalist></div>'+
         '<div class="fld"><label>Ministério</label><select id="e-min">'+minOpts+'</select></div>'+
         '<div class="fld"><label>Membro desde</label><div style="display:flex;gap:8px"><select id="e-desde-mes" style="flex:1">'+mesOpts+'</select><select id="e-desde-ano" style="flex:1">'+anoOpts+'</select></div></div>'+
@@ -564,7 +566,10 @@
     const mdMes=val('e-desde-mes'), mdAno=val('e-desde-ano');
     const membroDesde=(mdMes&&mdAno)?(mdAno+'-'+mdMes+'-01'):null;
     const penSel=$('#e-peniel')?$('#e-peniel').value:'';
+    const email=val('e-email').toLowerCase();
+    if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('E-mail inválido.'); return; }
     const patch={
+      email: email||null,
       celula: val('e-cel')||null,
       ministerio: (minSel && minSel!=='Não serve em nenhum') ? minSel : null,
       membro_desde: membroDesde,
@@ -1540,7 +1545,7 @@ ${serve ? `
   }
 
   async function reloadPessoas(){ const {data}=await sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}); APESSOAS=data||[]; }
-  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}); MEMBROS=data||[]; }
+  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,email,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}); MEMBROS=data||[]; }
 
   function renderAcaoPessoas(){
     $('#titulo').textContent='Ação Social · Pessoas';
@@ -1732,7 +1737,7 @@ ${serve ? `
       const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
         sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
         sb.from('contatos').select('id,nome,telefone,email,assunto,mensagem,created_at,resolvido,resolvido_em').order('created_at',{ascending:false}),
-        sb.from('membros').select('id,nome,cpf,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
+        sb.from('membros').select('id,nome,cpf,email,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
         sb.from('acao_itens').select('*').order('nome'),
         sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
         sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),
