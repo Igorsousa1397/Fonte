@@ -178,6 +178,7 @@
   .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
   .btn-del{background:transparent;border:1px solid rgba(224,80,80,.5);color:#e57373;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-del:hover{background:rgba(224,80,80,.12)}
+  .btn-val:disabled{opacity:.45;cursor:not-allowed}
   .btn-val{background:var(--agua);color:#06201e;border:none;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-val:hover{background:var(--agua-forte)}
   .btn-val.off{background:transparent;border:1px solid var(--neblina);color:var(--cinza-claro)}
@@ -433,6 +434,11 @@
   let BATISMO=[], CONTATOS=[], MEMBROS=[], AITENS=[], ARES=[], APESSOAS=[], ASOLIC=[], ADOACOES=[], CONTRIB=[], contribStatus='declarado', contribTipo='todos', acaoTab='estoque', acaoEstTab='todas', acaoResTab='pendente', acaoSolicTab='pendente', acaoDoacTab='pendente', contatoResTab='pendente';
   var _itDirty=false;
   let MININSC=[], MINCFG={}, minInscMin='todos', minSecAberta=false;
+  // filtros da lista de membros
+  const MF={status:'ativos', celula:'', ministerio:'', semEmail:false};
+  const SEM_CELULA=['ainda não participo','não participo de célula','não pertenço a nenhuma célula','não participo','nao participo','sem célula'];
+  const temCelula=c=>!!(c&&c.trim()) && SEM_CELULA.indexOf(c.trim().toLowerCase())<0;
+  const temMinisterio=x=>!!(x&&x.trim()) && x!=='Não serve em nenhum';
   // lista padrão; trocada pela do banco (ministerio_config) quando a tela Ministérios carrega
   let MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
 
@@ -565,7 +571,7 @@
     const { error }=await sb.from('membros').update({ativo}).eq('id',id);
     cb.disabled=false;
     if(error){ cb.checked=!ativo; return; }
-    const m=MEMBROS.find(x=>x.id===id); if(m) m.ativo=ativo;
+    const m=MEMBROS.find(x=>x.id===id); if(m){ m.ativo=ativo; if(ativo) m.arquivado=false; }   // reativar tira do arquivo (o banco faz o mesmo)
     renderMembros();
   }
   const WA_SVG='<svg class="wa-ic" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.1.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4z"/><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-2.9.9.9-2.8-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>';
@@ -608,13 +614,18 @@
       '<div class="msub">Cadastrado em '+dataBR(m.created_at)+'</div>'+
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
+      (!validado && !temCelula(m.celula) ? '<div class="sub2" style="margin-top:12px;color:#e0b341">Para validar e liberar a carteirinha, o membro precisa fazer parte de uma célula. Use "Editar dados" para informar a célula.</div>' : '')+
       '<div class="mb-acoes"><button class="btn-ghost" data-act="edit">Editar dados</button>'+(validado
-        ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>' : '<button class="btn-del" data-act="del">Excluir membro</button>'))
-        : '<button class="btn-val" data-val="1">Validar dados / OK</button>')+'</div>';
+        ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>' : ''))
+        : '<button class="btn-val" data-val="1"'+(temCelula(m.celula)?'':' disabled title="O membro precisa fazer parte de uma célula"')+'>Validar dados / OK</button>')+
+        (!ativo ? (m.arquivado ? '<button class="btn-ghost" data-act="desarq">Desarquivar</button>' : '<button class="btn-ghost" data-act="arq">Arquivar</button>')+'<button class="btn-del" data-act="del">Excluir membro</button>' : '')+
+      '</div>';
     const vb=$('#mbBody .btn-val[data-val]');
     if(vb) vb.onclick=()=>setValidadoMembro(m.id, true);
     const vr=$('#mbBody .btn-ghost[data-val="0"]'); if(vr) vr.onclick=()=>setValidadoMembro(m.id, false);
     const bDel=$('#mbBody .btn-del'); if(bDel) bDel.onclick=()=>excluirMembro(m);
+    const bArq=$('#mbBody [data-act="arq"]'); if(bArq) bArq.onclick=()=>arquivarMembro(m,true);
+    const bDes=$('#mbBody [data-act="desarq"]'); if(bDes) bDes.onclick=()=>arquivarMembro(m,false);
     const bCart=$('#mbBody [data-act="cart"]'); if(bCart) bCart.onclick=()=>abrirCarteirinha(m);
     const bEdit=$('#mbBody [data-act="edit"]'); if(bEdit) bEdit.onclick=()=>abreMembroEdit(m);
     const fBtn=$('#mbFotoBtn'), fFile=$('#mbFotoFile');
@@ -710,10 +721,20 @@
       abreMembro(m);
     }catch(e){ if(fBtn){ fBtn.disabled=false; fBtn.textContent='Adicionar foto'; } alert('Não foi possível enviar a foto: '+(e.message||e)); }
   }
+  async function arquivarMembro(m, arq){
+    if(arq && m.ativo!==false){ alert('Só é possível arquivar um membro inativo.'); return; }
+    if(arq && !confirm('Arquivar "'+(m.nome||'')+'"? Ele sai da lista de inativos e fica só em "Arquivados".')) return;
+    const {error}=await sb.from('membros').update({arquivado:arq}).eq('id',m.id);
+    if(error){ alert('Não foi possível '+(arq?'arquivar':'desarquivar')+': '+(error.message||error)); return; }
+    m.arquivado=arq; const mm=MEMBROS.find(x=>x.id===m.id); if(mm) mm.arquivado=arq;
+    fechaMembro(); renderMembros();
+  }
   async function setValidadoMembro(id, val){
+    const mv=MEMBROS.find(x=>x.id===id);
+    if(val && mv && !temCelula(mv.celula)){ alert('Para validar, o membro precisa fazer parte de uma célula. Edite os dados e informe a célula primeiro.'); return; }
     const vb=$('#mbBody .btn-val'); if(vb){ vb.disabled=true; vb.textContent='Salvando…'; }
     const {error}=await sb.from('membros').update({validado:val, validado_em: val?new Date().toISOString():null}).eq('id',id);
-    if(error){ if(vb){ vb.disabled=false; } alert('Não foi possível salvar a validação: '+(error.message||error)); return; }
+    if(error){ if(vb){ vb.disabled=false; vb.textContent='Validar dados / OK'; } alert('Não foi possível salvar a validação: '+(error.message||error)); return; }
     const m=MEMBROS.find(x=>x.id===id);
     if(m){ m.validado=val; m.validado_em=val?new Date().toISOString():null; abreMembro(m); }
     if($('#titulo') && $('#titulo').textContent==='Membros') renderMembros();
@@ -1011,33 +1032,69 @@ ${serve ? `
       +'</div>'
     +'</div>';
   }
+  function membrosFiltrados(){
+    return MEMBROS.filter(m=>{
+      const ativo=m.ativo!==false, arq=m.arquivado===true;
+      if(MF.status==='ativos' && (!ativo||arq)) return false;
+      if(MF.status==='inativos' && (ativo||arq)) return false;
+      if(MF.status==='arquivados' && !arq) return false;
+      if(MF.status==='todos' && arq) return false;
+      if(MF.celula==='__sem' && temCelula(m.celula)) return false;
+      if(MF.celula && MF.celula!=='__sem' && (m.celula||'')!==MF.celula) return false;
+      if(MF.ministerio==='__sem' && temMinisterio(m.ministerio)) return false;
+      if(MF.ministerio && MF.ministerio!=='__sem' && (m.ministerio||'')!==MF.ministerio) return false;
+      if(MF.semEmail && m.email) return false;
+      return true;
+    });
+  }
   function renderMembros(){
     $('#titulo').textContent='Membros';
-    const ativos=MEMBROS.filter(m=>m.ativo!==false).length;
-    const inativos=MEMBROS.length-ativos;
-    const pendentes=MEMBROS.filter(m=>m.validado!==true).length;
-    const semEmail=MEMBROS.filter(m=>m.ativo!==false && !m.email).length;
+    const vivos=MEMBROS.filter(m=>m.arquivado!==true);
+    const ativos=vivos.filter(m=>m.ativo!==false).length;
+    const inativos=vivos.length-ativos;
+    const arquivados=MEMBROS.length-vivos.length;
+    const pendentes=vivos.filter(m=>m.validado!==true).length;
+    const semEmail=vivos.filter(m=>m.ativo!==false && !m.email).length;
     let html='<div class="cards">'+card('Ativos',ativos,true)+card('Inativos',inativos)+card('Pendente de aprovação',pendentes)+card('Sem e-mail',semEmail)+'</div>';
     if(!MEMBROS.length){ html+='<div class="tabela"><div class="vazio">Nenhum cadastro de membro ainda.</div></div>'; $('#view').innerHTML=html; return; }
-    html+=metricasMembros(MEMBROS.filter(m=>m.ativo!==false));
-    html+='<div class="min-barra" style="justify-content:flex-end">'+
+    html+=metricasMembros(vivos.filter(m=>m.ativo!==false));
+    const celulas=Array.from(new Set(MEMBROS.map(m=>m.celula).filter(temCelula))).sort((a,b)=>a.localeCompare(b,'pt'));
+    const minis=Array.from(new Set(MEMBROS.map(m=>m.ministerio).filter(temMinisterio))).sort((a,b)=>a.localeCompare(b,'pt'));
+    const opt=(v,t,sel)=>'<option value="'+esc(v)+'"'+(v===sel?' selected':'')+'>'+esc(t)+'</option>';
+    const selStyle='background:var(--breu);border:var(--borda);border-radius:var(--raio-sm);padding:9px 12px;color:var(--luz);font-family:inherit;font-size:.88rem;max-width:220px';
+    const st=(k,t,n)=>'<button class="subtab'+(MF.status===k?' on':'')+'" data-mfst="'+k+'">'+t+(n!=null?' <span class="qtd">'+n+'</span>':'')+'</button>';
+    html+='<div class="subtabs" style="margin-top:6px">'+st('ativos','Ativos',ativos)+st('inativos','Inativos',inativos)+st('todos','Todos',vivos.length)+st('arquivados','Arquivados',arquivados)+'</div>';
+    const lista=membrosFiltrados();
+    html+='<div class="min-barra" style="flex-wrap:wrap">'+
+      '<select id="mfCel" style="'+selStyle+'">'+opt('','Todas as células',MF.celula)+opt('__sem','Sem célula',MF.celula)+celulas.map(c=>opt(c,c,MF.celula)).join('')+'</select>'+
+      '<select id="mfMin" style="'+selStyle+'">'+opt('','Todos os ministérios',MF.ministerio)+opt('__sem','Sem ministério',MF.ministerio)+minis.map(c=>opt(c,c,MF.ministerio)).join('')+'</select>'+
+      '<label class="chkline" style="margin:0"><input type="checkbox" id="mfEmail"'+(MF.semEmail?' checked':'')+'> Sem e-mail</label>'+
+      ((MF.celula||MF.ministerio||MF.semEmail)?'<button class="mini-btn" id="mfLimpar">Limpar filtros</button>':'')+
+      '<span class="min-conta" style="margin-left:auto">Exibindo <b>'+lista.length+'</b></span>'+
       (semEmail?'<button class="mini-btn" id="membSemEmailPdf">'+PDF_SVG+'Sem e-mail ('+semEmail+')</button>':'')+
       '<button class="mini-btn go" id="membPdf">'+PDF_SVG+'Exportar PDF</button></div>';
     html+='<div class="tabela membros"><div class="lin cab"><span>Nome</span><span>Célula</span><span>Telefone</span><span>Ministério</span><span>Ativo</span></div>';
-    MEMBROS.forEach(m=>{
-      const rua=[m.logradouro,m.numero].filter(Boolean).join(', ');
-      const loc=[m.cidade,m.uf].filter(Boolean).join('/');
-      const endereco=[rua,loc].filter(Boolean).join(' — ');
+    if(!lista.length) html+='<div class="vazio">Nenhum membro com esses filtros.</div>';
+    lista.forEach(m=>{
       const on=m.ativo!==false;
-      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+'</span><span class="col" data-l="Célula">'+(esc(m.celula)||'—')+'</span><span class="col" data-l="Telefone">'+(telWa(m.telefone)||'—')+'</span><span class="col" data-l="Ministério">'+(esc(m.ministerio)||'—')+'</span><span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
+      const semCel=!temCelula(m.celula);
+      html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+(m.arquivado?'<span class="tag-val" style="color:var(--cinza-claro);border-color:var(--neblina)">Arquivado</span>':'')+'</span>'+
+        '<span class="col" data-l="Célula">'+(semCel?'<span style="color:var(--cinza)">'+(esc(m.celula)||'—')+'</span>':esc(m.celula))+'</span>'+
+        '<span class="col" data-l="Telefone">'+(telWa(m.telefone)||'—')+'</span><span class="col" data-l="Ministério">'+(esc(m.ministerio)||'—')+'</span>'+
+        '<span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
+    $$('#view [data-mfst]').forEach(b=> b.onclick=()=>{ MF.status=b.dataset.mfst; renderMembros(); });
+    $('#mfCel').onchange=function(){ MF.celula=this.value; renderMembros(); };
+    $('#mfMin').onchange=function(){ MF.ministerio=this.value; renderMembros(); };
+    $('#mfEmail').onchange=function(){ MF.semEmail=this.checked; renderMembros(); };
+    const _lf=$('#mfLimpar'); if(_lf) _lf.onclick=()=>{ MF.celula=''; MF.ministerio=''; MF.semEmail=false; renderMembros(); };
     $$('#view .sw input').forEach(cb=> cb.onchange=()=>setAtivoMembro(cb.dataset.id, cb.checked, cb));
-    const _bp=$('#membPdf'); if(_bp) _bp.onclick=()=>exportarMembrosPdf(MEMBROS);
-    const _bs=$('#membSemEmailPdf'); if(_bs) _bs.onclick=()=>exportarSemEmailPdf(MEMBROS.filter(m=>m.ativo!==false && !m.email));
+    const _bp=$('#membPdf'); if(_bp) _bp.onclick=()=>exportarMembrosPdf(lista);
+    const _bs=$('#membSemEmailPdf'); if(_bs) _bs.onclick=()=>exportarSemEmailPdf(vivos.filter(m=>m.ativo!==false && !m.email));
     $$('#view .tabela.membros .lin[data-mid]').forEach(row=>{
-      row.onclick=e=>{ if(e.target.closest('.sw')) return; const m=MEMBROS.find(x=>x.id===row.dataset.mid); if(m) abreMembro(m); };
+      row.onclick=e=>{ if(e.target.closest('.sw')||e.target.closest('a')) return; const m=MEMBROS.find(x=>x.id===row.dataset.mid); if(m) abreMembro(m); };
     });
   }
 
@@ -2116,7 +2173,7 @@ ${serve ? `
   }
 
   async function reloadPessoas(){ const {data}=await sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}); APESSOAS=data||[]; }
-  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,email,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}); MEMBROS=data||[]; }
+  async function reloadMembros(){ const {data}=await sb.from('membros').select('id,nome,cpf,email,arquivado,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}); MEMBROS=data||[]; }
 
   function renderAcaoPessoas(){
     $('#titulo').textContent='Ação Social · Pessoas';
@@ -2315,7 +2372,7 @@ ${serve ? `
       const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
         sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
         sb.from('contatos').select('id,nome,telefone,email,assunto,mensagem,created_at,resolvido,resolvido_em').order('created_at',{ascending:false}),
-        sb.from('membros').select('id,nome,cpf,email,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
+        sb.from('membros').select('id,nome,cpf,email,arquivado,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
         sb.from('acao_itens').select('*').order('nome'),
         sb.from('acao_reservas').select('*, acao_reserva_itens(*)').order('created_at',{ascending:false}),
         sb.from('acao_pessoas').select('*').order('created_at',{ascending:false}),
