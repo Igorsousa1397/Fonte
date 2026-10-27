@@ -56,7 +56,7 @@
       <label for="codigo">Código</label>
       <input id="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="······">
       <button class="go" id="entrar">Ver minha carteirinha</button>
-      <div class="links"><button id="reenviar">Reenviar código</button><button id="trocar">Trocar e-mail</button></div>
+      <div class="links"><button id="reenviar">Reenviar código</button></div>
     </div>
     <div class="msg" id="msg"></div>
     <a class="voltar" href="index.html">← Voltar ao site</a>
@@ -377,7 +377,6 @@ ${serve ? `
   codEl.addEventListener('keydown',function(e){ if(e.key==='Enter') entrar(); });
   codEl.addEventListener('input',function(){ codEl.value=codEl.value.replace(/\D/g,''); });
   document.getElementById('reenviar').addEventListener('click',reenviar);
-  document.getElementById('trocar').addEventListener('click',function(){ gate.classList.remove('codigo'); msgEl.className='msg'; emailEl.focus(); });
 
   // já verificou neste aparelho: abre direto
   (async function(){
