@@ -1670,7 +1670,8 @@ ${serve ? `
           '<div class="bn-info"><b>'+esc(e.titulo)+(e.destaque?' <span class="mb-pill ok">Destaque</span>':'')+'</b>'+
             '<div class="sub2">'+esc(AG_TIPOS[e.tipo]||e.tipo)+(e.hora?' · '+esc(e.hora):'')+(e.imagem_url?' · com flyer':'')+(e.link?' · com botão':'')+(passou(e)?' · já passou':'')+'</div></div>'+
           '<div class="bn-acoes"><label class="sw"><input type="checkbox" data-ag="'+e.id+'"'+(e.ativo?' checked':'')+'><span class="track"></span></label>'+
-            '<button class="mini-btn" data-aged="'+e.id+'">Editar</button></div>'+
+            '<button class="mini-btn" data-aged="'+e.id+'">Editar</button>'+
+            '<button class="lin-del" style="margin-left:0" data-agdel="'+e.id+'" title="Excluir evento" aria-label="Excluir evento"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button></div>'+
         '</div>';
       });
     });
@@ -1678,6 +1679,7 @@ ${serve ? `
     $('#agPass').onchange=function(){ agPassados=this.checked; renderAgendaPainel(); };
     $('#agNovo').onclick=()=>abreEvento(null);
     $$('#view [data-aged]').forEach(bt=> bt.onclick=()=>abreEvento(AGEV.find(x=>x.id===bt.dataset.aged)));
+    $$('#view [data-agdel]').forEach(bt=> bt.onclick=()=>{ const ev=AGEV.find(x=>x.id===bt.dataset.agdel); if(ev) excluirEvento(ev); });
     $$('#view .sw input[data-ag]').forEach(cb=> cb.onchange=async()=>{
       cb.disabled=true;
       const {error}=await sb.from('agenda').update({ativo:cb.checked}).eq('id',cb.dataset.ag);
