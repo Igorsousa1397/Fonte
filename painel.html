@@ -178,6 +178,8 @@
   .mb-acoes{margin-top:18px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
   .btn-del{background:transparent;border:1px solid rgba(224,80,80,.5);color:#e57373;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-del:hover{background:rgba(224,80,80,.12)}
+  .lin-del{background:transparent;border:1px solid rgba(224,80,80,.4);color:#e57373;border-radius:8px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;margin-left:10px;vertical-align:middle;cursor:pointer}
+  .lin-del:hover{background:rgba(224,80,80,.12)}
   .btn-val:disabled{opacity:.45;cursor:not-allowed}
   .btn-val{background:var(--agua);color:#06201e;border:none;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-val:hover{background:var(--agua-forte)}
@@ -1126,7 +1128,7 @@ ${serve ? `
       html+='<div class="lin'+(on?'':' off')+'" data-mid="'+m.id+'"><span class="col" data-l="Nome">'+esc(m.nome)+tagFaixa(faixaDe(m.data_nascimento))+'<span class="sub">'+dataBR(m.created_at)+'</span>'+(m.validado?'':'<span class="tag-val">A validar</span>')+(m.arquivado?'<span class="tag-val" style="color:var(--cinza-claro);border-color:var(--neblina)">Arquivado</span>':'')+'</span>'+
         '<span class="col" data-l="Célula">'+(semCel?'<span style="color:var(--cinza)">'+(esc(m.celula)||'—')+'</span>':esc(m.celula))+'</span>'+
         '<span class="col" data-l="Telefone">'+(telWa(m.telefone)||'—')+'</span><span class="col" data-l="Ministério">'+(esc(m.ministerio)||'—')+'</span>'+
-        '<span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label></span></div>';
+        '<span class="col" data-l="Ativo"><label class="sw"><input type="checkbox" data-id="'+m.id+'"'+(on?' checked':'')+'><span class="track"></span></label>'+(on?'':'<button class="lin-del" data-del="'+m.id+'" title="Excluir membro" aria-label="Excluir membro"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button>')+'</span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
@@ -1142,10 +1144,11 @@ ${serve ? `
     _mb.oninput=()=>{ MF.busca=_mb.value; const pos=_mb.selectionStart; clearTimeout(window._mbT);
       window._mbT=setTimeout(()=>{ renderMembros(); const n=$('#mfBusca'); if(n){ n.focus(); n.setSelectionRange(pos,pos); } },200); };
     $$('#view .sw input').forEach(cb=> cb.onchange=()=>setAtivoMembro(cb.dataset.id, cb.checked, cb));
+    $$('#view .lin-del').forEach(b=> b.onclick=()=>{ const m=MEMBROS.find(x=>x.id===b.dataset.del); if(m) excluirMembro(m); });
     const _bp=$('#membPdf'); if(_bp) _bp.onclick=()=>exportarMembrosPdf(lista);
     const _bs=$('#membSemEmailPdf'); if(_bs) _bs.onclick=()=>exportarSemEmailPdf(vivos.filter(m=>m.ativo!==false && !m.email));
     $$('#view .tabela.membros .lin[data-mid]').forEach(row=>{
-      row.onclick=e=>{ if(e.target.closest('.sw')||e.target.closest('a')) return; const m=MEMBROS.find(x=>x.id===row.dataset.mid); if(m) abreMembro(m); };
+      row.onclick=e=>{ if(e.target.closest('.sw')||e.target.closest('a')||e.target.closest('.lin-del')) return; const m=MEMBROS.find(x=>x.id===row.dataset.mid); if(m) abreMembro(m); };
     });
   }
 
