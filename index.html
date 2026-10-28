@@ -1515,7 +1515,7 @@ document.getElementById('enviaContato').onclick=async()=>{
   };
   preencherCelulasMembro();
 
-  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
+  const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Líder de ministério','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
   const mMin=el('m-min');
   const preencherMin=lista=>{ if(!mMin) return; const atual=mMin.value;
     mMin.innerHTML='<option value="">Não sirvo em nenhum</option>'+lista.map(x=>`<option>${escH(x)}</option>`).join(''); mMin.value=atual; };

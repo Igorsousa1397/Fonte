@@ -451,9 +451,11 @@
   const tagFaixa=k=>k?'<span class="tag-faixa" style="--c:'+FAIXAS[k].cor+'">'+FAIXAS[k].rot+'</span>':'';
   const SEM_CELULA=['ainda não participo','não participo de célula','não pertenço a nenhuma célula','não participo','nao participo','sem célula'];
   const temCelula=c=>!!(c&&c.trim()) && SEM_CELULA.indexOf(c.trim().toLowerCase())<0;
+  const LIDER_MIN='Líder de ministério';   // libera a carteirinha sem célula
+  const podeValidar=m=>temCelula(m.celula) || (m.ministerio||'').trim()===LIDER_MIN;
   const temMinisterio=x=>!!(x&&x.trim()) && x!=='Não serve em nenhum';
   // lista padrão; trocada pela do banco (ministerio_config) quando a tela Ministérios carrega
-  let MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
+  let MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Líder de ministério','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Voluntários'];
 
   // Perfis de acesso (profiles.role no Supabase).
   //   itens  = seletores do menu que o perfil vê (ausente = vê tudo)
@@ -627,10 +629,10 @@
       '<div class="msub">Cadastrado em '+dataBR(m.created_at)+'</div>'+
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
-      (!validado && !temCelula(m.celula) ? '<div class="sub2" style="margin-top:12px;color:#e0b341">Para validar e liberar a carteirinha, o membro precisa fazer parte de uma célula. Use "Editar dados" para informar a célula.</div>' : '')+
+      (!validado && !podeValidar(m) ? '<div class="sub2" style="margin-top:12px;color:#e0b341">Para validar e liberar a carteirinha, o membro precisa fazer parte de uma célula (ou ser Líder de ministério). Use "Editar dados" para informar a célula.</div>' : '')+
       '<div class="mb-acoes"><button class="btn-ghost" data-act="edit">Editar dados</button>'+(validado
         ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>'+(m.carteirinha_enviada_em ? '' : '<button class="btn-ghost" data-act="mail"'+(m.email?'':' disabled title="Sem e-mail no cadastro"')+'>Enviar carteirinha por e-mail</button>') : ''))
-        : '<button class="btn-val" data-val="1"'+(temCelula(m.celula)?'':' disabled title="O membro precisa fazer parte de uma célula"')+'>Validar dados / OK</button>')+
+        : '<button class="btn-val" data-val="1"'+(podeValidar(m)?'':' disabled title="O membro precisa fazer parte de uma célula ou ser Líder de ministério"')+'>Validar dados / OK</button>')+
         (!ativo ? (m.arquivado ? '<button class="btn-ghost" data-act="desarq">Desarquivar</button>' : '<button class="btn-ghost" data-act="arq">Arquivar</button>')+'<button class="btn-del" data-act="del">Excluir membro</button>' : '')+
       '</div><div class="sub2" id="mbMailSt" style="margin-top:10px">'+(validado && m.carteirinha_enviada_em ? 'Carteirinha enviada por e-mail em '+dataBR(m.carteirinha_enviada_em)+'.' : '')+'</div>';
     const vb=$('#mbBody .btn-val[data-val]');
@@ -763,7 +765,7 @@
   }
   async function setValidadoMembro(id, val){
     const mv=MEMBROS.find(x=>x.id===id);
-    if(val && mv && !temCelula(mv.celula)){ alert('Para validar, o membro precisa fazer parte de uma célula. Edite os dados e informe a célula primeiro.'); return; }
+    if(val && mv && !podeValidar(mv)){ alert('Para validar, o membro precisa fazer parte de uma célula ou ser Líder de ministério. Edite os dados primeiro.'); return; }
     const vb=$('#mbBody .btn-val'); if(vb){ vb.disabled=true; vb.textContent='Salvando…'; }
     const {error}=await sb.from('membros').update({validado:val, validado_em: val?new Date().toISOString():null}).eq('id',id);
     if(error){ if(vb){ vb.disabled=false; vb.textContent='Validar dados / OK'; } alert('Não foi possível salvar a validação: '+(error.message||error)); return; }
@@ -801,9 +803,9 @@
     const serve=!!(m.ministerio && m.ministerio!=='Não serve em nenhum');
     const avCard=m.foto_url ? '<div class="av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="av ini">'+esc(iniciais)+'</div>';
     const avCracha=m.foto_url ? '<div class="cr-av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
-    const rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
+    const rowsCartao=[['Célula',temCelula(m.celula)?m.celula:''],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
-    const rowsCracha=[['Célula',m.celula],['Membro desde',desde]]
+    const rowsCracha=[['Célula',temCelula(m.celula)?m.celula:''],['Membro desde',desde]]
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
     const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>

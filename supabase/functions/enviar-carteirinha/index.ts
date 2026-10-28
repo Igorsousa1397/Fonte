@@ -1,5 +1,6 @@
 // Envia a carteirinha de membro por e-mail (Resend), chamada pelo painel ao validar o membro.
-// Só um admin logado pode chamar. O membro precisa estar validado, ativo, com célula e e-mail.
+// Só um admin logado pode chamar. O membro precisa estar validado, ativo, com célula (ou ser
+// Líder de ministério) e e-mail.
 // Envia uma vez só: grava membros.carteirinha_enviada_em e recusa um segundo envio.
 //
 // Segredos (Supabase → Edge Functions → Secrets):
@@ -11,6 +12,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const SITE = "https://igrejaapostolicafonte.com.br";
 const REMETENTE = "Igreja Fonte <carteirinha@mail.igrejaapostolicafonte.com.br>";
 const SEM_CELULA = ["ainda não participo", "não participo de célula", "não pertenço a nenhuma célula", "não participo", "nao participo", "sem célula"];
+const LIDER_MIN = "Líder de ministério"; // libera a carteirinha sem célula
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 const cors = {
@@ -54,7 +56,8 @@ Deno.serve(async (req) => {
   if (m.validado !== true) return resposta(422, { erro: "O membro ainda não foi validado" });
   if (m.ativo === false || m.arquivado === true) return resposta(422, { erro: "O membro está inativo" });
   const cel = (m.celula ?? "").trim();
-  if (!cel || SEM_CELULA.includes(cel.toLowerCase())) return resposta(422, { erro: "O membro não faz parte de uma célula" });
+  const liderMin = String(m.ministerio ?? "").trim() === LIDER_MIN;
+  if (!liderMin && (!cel || SEM_CELULA.includes(cel.toLowerCase()))) return resposta(422, { erro: "O membro não faz parte de uma célula" });
 
   const partes = String(m.nome ?? "").trim().split(/\s+/);
   const primeiroNome = partes[0] ?? "";
@@ -88,7 +91,7 @@ Deno.serve(async (req) => {
             <div style="color:#f5f5f6;font:700 20px/1.2 Arial,sans-serif;margin-bottom:2px">${esc(m.nome)}</div>
             <div style="color:#8b8b95;font:11px Arial,sans-serif;letter-spacing:1px;margin-bottom:10px">IGREJA APOSTÓLICA FONTE</div>
             <table role="presentation" cellpadding="0" cellspacing="0">
-              ${linha("Célula", cel)}${linha("Ministério", ministerio)}${linha("Nascimento", nasc)}${linha("Membro desde", desde)}
+              ${linha("Célula", cel && !SEM_CELULA.includes(cel.toLowerCase()) ? cel : "—")}${linha("Ministério", ministerio)}${linha("Nascimento", nasc)}${linha("Membro desde", desde)}
             </table>
           </td></tr>
       <tr><td colspan="3" style="padding-top:16px;border-top:1px solid #2a2a31;color:#7ad4cf;font:700 13px monospace;letter-spacing:1px">${cod}
