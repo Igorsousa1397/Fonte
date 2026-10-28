@@ -1111,7 +1111,7 @@ ${serve ? `
       '<select id="mfCel" style="'+selStyle+'">'+opt('','Todas as células',MF.celula)+opt('__sem','Sem célula',MF.celula)+celulas.map(c=>opt(c,c,MF.celula)).join('')+'</select>'+
       '<select id="mfMin" style="'+selStyle+'">'+opt('','Todos os ministérios',MF.ministerio)+opt('__sem','Sem ministério',MF.ministerio)+minis.map(c=>opt(c,c,MF.ministerio)).join('')+'</select>'+
       '<select id="mfFaixa" style="'+selStyle+'">'+opt('','Todas as idades',MF.faixa)+opt('adultos','Sem Baby, Kids e Juniores',MF.faixa)+opt('baby','Baby (até 4 anos)',MF.faixa)+opt('kids','Kids (5 a 7)',MF.faixa)+opt('juniores','Juniores (8 a 12)',MF.faixa)+'</select>'+
-      '<select id="mfPeniel" style="'+selStyle+'">'+opt('','Peniel: todos',MF.peniel)+opt('sim','Fez o Peniel',MF.peniel)+opt('nao','Não fez o Peniel',MF.peniel)+'</select>'+
+      '<select id="mfPeniel" style="'+selStyle+'">'+opt('','Peniel: todos',MF.peniel)+opt('sim','Peniel: sim',MF.peniel)+opt('nao','Peniel: não',MF.peniel)+'</select>'+
       '<label class="chkline" style="margin:0"><input type="checkbox" id="mfEmail"'+(MF.semEmail?' checked':'')+'> Sem e-mail</label>'+
       '<label class="chkline" style="margin:0"><input type="checkbox" id="mfVal"'+(MF.aValidar?' checked':'')+'> A validar</label>'+
       ((MF.celula||MF.ministerio||MF.semEmail||MF.aValidar||MF.busca||MF.faixa||MF.peniel)?'<button class="mini-btn" id="mfLimpar">Limpar filtros</button>':'')+
