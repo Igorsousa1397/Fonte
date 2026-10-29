@@ -1070,7 +1070,7 @@ document.getElementById('topo').style.display=lista.length?'':'none';   // tudo 
 lista.forEach((e,i)=>{
   const dias=e.inicio?diasAte(e.inicio):null;
   const conta=dias>1?`faltam ${dias} dias`:dias===1?'é amanhã':dias===0?'é hoje':'acontecendo agora';
-  const cta=e.link?`<a class="btn btn-claro" href="${e.link}" target="_blank" rel="noopener">${e.cta||'Inscrever-se'} <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7M11 4L4 11"/></svg></a><a class="btn btn-fantasma" href="#agenda">Ver agenda</a>`
+  const cta=e.link?`<a class="btn btn-claro" href="${e.link}"${e.link.startsWith('#')?'':' target="_blank" rel="noopener"'}>${e.cta||'Inscrever-se'} <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7M11 4L4 11"/></svg></a><a class="btn btn-fantasma" href="#agenda">Ver agenda</a>`
     :`<a class="btn btn-claro" href="#agenda">Ver na agenda</a>`;
   const s=document.createElement('div');s.className='slide'+(i===0?' on':'')+(e.img?' slide-foto':'');
   if(e.id)s.dataset.enc=e.id;
