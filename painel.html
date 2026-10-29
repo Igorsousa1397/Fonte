@@ -180,6 +180,17 @@
   .btn-del:hover{background:rgba(224,80,80,.12)}
   .lin-del{background:transparent;border:1px solid rgba(224,80,80,.4);color:#e57373;border-radius:8px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;margin-left:10px;vertical-align:middle;cursor:pointer}
   .lin-del:hover{background:rgba(224,80,80,.12)}
+  .esc-topo{justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:6px}
+  .esc-mes{display:flex;align-items:center;gap:12px}.esc-mes b{font-family:var(--display);font-size:1.1rem;min-width:150px;text-align:center}
+  .esc-card{align-items:flex-start}
+  .esc-pessoas{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .esc-chip{display:inline-flex;align-items:center;gap:6px;background:var(--grafite-2);border:var(--borda);border-radius:100px;padding:4px 6px 4px 12px;font-size:.84rem}
+  .esc-chip i{font-style:normal;color:var(--agua);font-size:.78rem}
+  .esc-chip button{background:none;border:none;color:var(--cinza);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px}
+  .esc-chip button:hover{color:#f87171}
+  .esc-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .esc-add select,.esc-add input{background:var(--grafite);border:var(--borda);color:var(--luz);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:.85rem;flex:1 1 160px;min-width:0}
+  .esc-mins{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
   .btn-val:disabled{opacity:.45;cursor:not-allowed}
   .btn-val{background:var(--agua);color:#06201e;border:none;border-radius:var(--raio-sm);padding:10px 16px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.9rem}
   .btn-val:hover{background:var(--agua-forte)}
@@ -325,9 +336,14 @@
       <button class="nav-item" data-view="membros">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Membros</span>
       </button>
-      <button class="nav-item" data-view="ministerios">
+      <button class="nav-item" id="btn-min" data-toggle="min">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span class="lbl">Ministérios</span>
+        <svg class="chev" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
       </button>
+      <div class="subnav" id="subnav-min">
+        <button class="sub-item" data-min="inscricoes">Inscrições</button>
+        <button class="sub-item" data-min="escalas">Escalas</button>
+      </div>
       <button class="nav-item" data-view="encontros">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="lbl">Encontros</span>
       </button>
@@ -462,15 +478,17 @@
   //   abre   = subnav que já vem expandida
   //   inicio = [view, sub] em que o painel abre
   // Atenção: isto só monta o menu. Quem barra o acesso aos dados é o RLS no banco.
-  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','[data-view="ministerios"]','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]',
+  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]',
     '#btn-fin','#subnav-fin','#btn-acao','#subnav-acao','#btn-contato','#subnav'];
   const PERFIS={
     admin:       {},
     acao_social: { itens:['#btn-acao','#subnav-acao'], abre:'#subnav-acao', inicio:['acao','solicitacoes'] },
-    ministerios: { itens:['[data-view="ministerios"]'], inicio:['ministerios'], carregaTudo:false },
+    ministerios: { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','inscricoes'], carregaTudo:false, ocultos:['[data-min="escalas"]'] },
+    // líder de um ministério (profiles.ministerio): só a escala do ministério dele
+    lider_ministerio: { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','escalas'], carregaTudo:false, ocultos:['[data-min="inscricoes"]'] },
     // conteúdo do site: no Batismo vê só a página de inscrição (foto e data), sem a lista de inscritos
-    site:        { itens:['[data-view="batismo"]','[data-view="ministerios"]','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]'],
-                   inicio:['banners'], carregaTudo:false, batismoSoPagina:true }
+    site:        { itens:['[data-view="batismo"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]'],
+                   inicio:['banners'], carregaTudo:false, batismoSoPagina:true, ocultos:['[data-min="escalas"]'] }
   };
   let PERFIL={};
 
@@ -487,6 +505,8 @@
     $$('.nav-item').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
     const bc=$('#btn-contato'); if(bc) bc.classList.toggle('on', view==='contato');
     const bf=$('#btn-fin'); if(bf) bf.classList.toggle('on', view==='financeiro');
+    const bm=$('#btn-min'); if(bm) bm.classList.toggle('on', view==='ministerios');
+    $$('#subnav-min .sub-item').forEach(b=>b.classList.toggle('on', view==='ministerios' && b.dataset.min===(sub||'inscricoes')));
     const ba=$('#btn-acao'); if(ba) ba.classList.toggle('on', view==='acao');
     $$('#subnav-acao .sub-item').forEach(b=>b.classList.toggle('on', view==='acao' && b.dataset.acao===(sub||'estoque')));
     $$('#subnav .sub-item').forEach(b=>b.classList.toggle('on', view==='contato' && b.dataset.assunto===(sub||'__todos')));
@@ -501,7 +521,7 @@
     if(view==='acao')      renderAcao(sub);
     if(view==='contato')   renderContatos(sub);
     if(view==='contribuicoes') renderContribuicoes();
-    if(view==='ministerios') renderMinisterios();
+    if(view==='ministerios') (sub==='escalas' ? renderEscalas() : renderMinisterios());
     if(view==='encontros') renderEncontros();
     if(view==='banners') renderBanners();
     if(view==='celulas') renderCelulas();
@@ -1866,6 +1886,162 @@ ${serve ? `
     });
   }
 
+  // ---------- Escalas dos ministérios ----------
+  // O líder (perfil lider_ministerio) monta a escala do mês do ministério dele; o admin
+  // escolhe o ministério e liga/desliga quais ministérios têm escala.
+  const ESC_MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const ESC_SEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const ESC={ min:null, ano:new Date().getFullYear(), mes:new Date().getMonth(), linhas:[], membros:[], extras:[], cfg:[], editaMins:false };
+  const escIso=(a,m,d)=>a+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const escChave=c=>c.data+'|'+c.hora+'|'+c.titulo;
+  const escDataBR=iso=>{ const p=iso.split('-'); return p[2]+'/'+p[1]; };
+  const escDow=iso=>ESC_SEM[new Date(iso+'T00:00:00').getDay()];
+
+  // cultos fixos do mês + datas que já têm gente escalada + datas extras adicionadas agora
+  function escCultos(){
+    const fim=new Date(ESC.ano, ESC.mes+1, 0).getDate(), lista=[];
+    for(let d=1; d<=fim; d++){
+      const iso=escIso(ESC.ano,ESC.mes,d), w=new Date(ESC.ano,ESC.mes,d).getDay();
+      if(w===0){ const t=d<=7?'Domingo de Ceia':'Culto da Família'; lista.push({data:iso,hora:'10h',titulo:t},{data:iso,hora:'18h30',titulo:t}); }
+      if(w===3) lista.push({data:iso,hora:'20h',titulo:'Quarta Profética'});
+    }
+    const vistos=new Set(lista.map(escChave));
+    ESC.linhas.concat(ESC.extras).forEach(l=>{ const c={data:l.data,hora:l.hora||'',titulo:l.titulo||''}; if(!vistos.has(escChave(c))){ vistos.add(escChave(c)); lista.push(c); } });
+    const horaN=h=>{ const m=/^(\d{1,2})h?(\d{2})?/.exec(h||''); return m?(+m[1])*60+(+(m[2]||0)):-1; };
+    return lista.sort((a,b)=>a.data<b.data?-1:a.data>b.data?1:horaN(a.hora)-horaN(b.hora));
+  }
+
+  async function renderEscalas(){
+    $('#titulo').textContent='Escalas · Ministérios';
+    const lider=!!PERFIL.ministerio;
+    $('#view').innerHTML='<div class="carregando">Carregando…</div>';
+    if(!lider){
+      const r=await sb.from('ministerio_config').select('nome,escala');
+      if(r.error){ $('#view').innerHTML='<div class="vazio">Não foi possível carregar as escalas. Rode o <b>supabase/escalas.sql</b> no Supabase.<br><span class="sub2">'+esc(r.error.message)+'</span></div>'; return; }
+      ESC.cfg=(r.data||[]).sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+      const comEscala=ESC.cfg.filter(c=>c.escala).map(c=>c.nome);
+      if(!ESC.min || comEscala.indexOf(ESC.min)<0) ESC.min=comEscala[0]||null;
+    } else ESC.min=PERFIL.ministerio;
+
+    let html='';
+    if(!lider){
+      const comEscala=ESC.cfg.filter(c=>c.escala);
+      html+='<div class="min-barra" style="justify-content:space-between;flex-wrap:wrap;gap:10px">'+
+        (comEscala.length?'<select id="escMin" style="background:var(--grafite);border:var(--borda);color:var(--luz);border-radius:var(--raio-sm);padding:10px 12px;font-family:inherit;min-width:220px">'+
+          comEscala.map(c=>'<option'+(c.nome===ESC.min?' selected':'')+'>'+esc(c.nome)+'</option>').join('')+'</select>':'<span class="sub2">Nenhum ministério com escala ainda.</span>')+
+        '<button class="mini-btn" id="escCfg">'+(ESC.editaMins?'Fechar':'Ministérios com escala')+'</button></div>';
+      if(ESC.editaMins){
+        html+='<div class="secbox" style="padding:14px 16px"><div class="sub2" style="margin-bottom:10px">Marque os ministérios que usam escala. Só eles aparecem aqui e podem ter líder com acesso.</div>'+
+          '<div class="esc-mins">'+ESC.cfg.map(c=>'<label class="chkline" style="margin:0"><input type="checkbox" data-escmin="'+esc(c.nome)+'"'+(c.escala?' checked':'')+'> '+esc(c.nome)+'</label>').join('')+'</div></div>';
+      }
+    } else {
+      html+='<div class="sub2" style="margin-bottom:6px">Ministério</div><h2 style="font-family:var(--display);font-size:1.4rem;margin-bottom:8px">'+esc(ESC.min||'—')+'</h2>';
+    }
+    if(!ESC.min){ $('#view').innerHTML=html+(lider?'<div class="vazio">Seu acesso ainda não tem um ministério definido. Fale com a administração.</div>':''); escLigar(); return; }
+
+    const ini=escIso(ESC.ano,ESC.mes,1), fim=escIso(ESC.ano,ESC.mes,new Date(ESC.ano,ESC.mes+1,0).getDate());
+    const [rl, rm]=await Promise.all([
+      sb.from('escalas').select('*').eq('ministerio',ESC.min).gte('data',ini).lte('data',fim),
+      sb.rpc('escala_membros',{p_ministerio:ESC.min})
+    ]);
+    if(rl.error||rm.error){ $('#view').innerHTML=html+'<div class="vazio">Não foi possível carregar a escala.<br><span class="sub2">'+esc((rl.error||rm.error).message)+'</span></div>'; escLigar(); return; }
+    ESC.linhas=rl.data||[]; ESC.membros=rm.data||[];
+    const nomeDe=id=>{ const m=ESC.membros.find(x=>x.id===id); return m?m.nome:'(fora do ministério)'; };
+    const funcoes=[...new Set(ESC.linhas.map(l=>l.funcao).filter(Boolean))].sort();
+
+    html+='<div class="min-barra esc-topo"><div class="esc-mes"><button class="mini-btn" id="escAnt" aria-label="Mês anterior">‹</button><b>'+ESC_MESES[ESC.mes]+' '+ESC.ano+'</b><button class="mini-btn" id="escProx" aria-label="Próximo mês">›</button></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="mini-btn" id="escZap">Copiar texto WhatsApp</button><button class="mini-btn" id="escPdf">'+PDF_SVG+'Exportar PDF</button><button class="mini-btn go" id="escExtra">+ Adicionar data</button></div></div>';
+    if(!ESC.membros.length) html+='<div class="aviso-box">Nenhum membro ativo tem <b>'+esc(ESC.min)+'</b> como ministério no cadastro. Ajuste em Membros → Editar dados para poder escalar.</div>';
+    html+='<datalist id="escFuncoes">'+funcoes.map(f=>'<option value="'+esc(f)+'">').join('')+'</datalist>';
+    const opts='<option value="">Escolher pessoa…</option>'+ESC.membros.map(m=>'<option value="'+m.id+'">'+esc(m.nome)+'</option>').join('');
+    escCultos().forEach((c,i)=>{
+      const pessoas=ESC.linhas.filter(l=>escChave({data:l.data,hora:l.hora,titulo:l.titulo})===escChave(c));
+      const passou=c.data<escIso(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+      html+='<div class="bn-card esc-card'+(passou?' off':'')+'">'+
+        '<div class="bn-thumb vazio" style="width:64px;height:64px;flex-direction:column;font-family:var(--display);color:var(--luz)"><b style="font-size:1.3rem">'+(+c.data.slice(8))+'</b><span style="font-size:.7rem;color:var(--cinza)">'+escDow(c.data)+'</span></div>'+
+        '<div class="bn-info" style="flex:1;min-width:0"><b>'+esc(c.titulo||'Escala')+'</b><div class="sub2">'+(c.hora?esc(c.hora):'Dia todo')+' · '+pessoas.length+' escalado'+(pessoas.length===1?'':'s')+'</div>'+
+          '<div class="esc-pessoas">'+pessoas.map(l=>'<span class="esc-chip">'+esc(nomeDe(l.membro_id))+(l.funcao?' <i>'+esc(l.funcao)+'</i>':'')+'<button data-escdel="'+l.id+'" aria-label="Tirar da escala">×</button></span>').join('')+'</div>'+
+          (ESC.membros.length?'<div class="esc-add"><select data-escsel="'+i+'">'+opts+'</select><input data-escfun="'+i+'" list="escFuncoes" maxlength="40" placeholder="Função (opcional)"><button class="mini-btn go" data-escadd="'+i+'">Escalar</button></div>':'')+
+        '</div></div>';
+    });
+    $('#view').innerHTML=html;
+    escLigar();
+  }
+
+  function escLigar(){
+    const cultos=ESC.min?escCultos():[];
+    const sel=$('#escMin'); if(sel) sel.onchange=()=>{ ESC.min=sel.value; ESC.extras=[]; renderEscalas(); };
+    const cfg=$('#escCfg'); if(cfg) cfg.onclick=()=>{ ESC.editaMins=!ESC.editaMins; renderEscalas(); };
+    $$('#view [data-escmin]').forEach(cb=> cb.onchange=async()=>{
+      cb.disabled=true;
+      const {error}=await sb.rpc('ministerio_set_escala',{p_nome:cb.dataset.escmin, p_escala:cb.checked});
+      if(error){ cb.checked=!cb.checked; cb.disabled=false; alert('Erro: '+error.message); return; }
+      renderEscalas();
+    });
+    const mesDe=d=>{ ESC.mes+=d; if(ESC.mes<0){ ESC.mes=11; ESC.ano--; } if(ESC.mes>11){ ESC.mes=0; ESC.ano++; } ESC.extras=[]; renderEscalas(); };
+    const a=$('#escAnt'); if(a) a.onclick=()=>mesDe(-1);
+    const p=$('#escProx'); if(p) p.onclick=()=>mesDe(1);
+    const ex=$('#escExtra'); if(ex) ex.onclick=()=>{
+      const dia=prompt('Dia do mês ('+ESC_MESES[ESC.mes]+'):'); if(!dia) return;
+      const d=parseInt(dia,10), fim=new Date(ESC.ano,ESC.mes+1,0).getDate();
+      if(!(d>=1&&d<=fim)){ alert('Dia inválido.'); return; }
+      const titulo=(prompt('Nome do culto ou evento:','Evento')||'').trim(); if(!titulo) return;
+      const hora=(prompt('Horário (opcional, ex.: 19h30):','')||'').trim();
+      ESC.extras.push({data:escIso(ESC.ano,ESC.mes,d), hora, titulo}); renderEscalas();
+    };
+    $$('#view [data-escadd]').forEach(b=> b.onclick=async()=>{
+      const i=b.dataset.escadd, c=cultos[i], mid=$('#view [data-escsel="'+i+'"]').value;
+      const funcao=($('#view [data-escfun="'+i+'"]').value||'').trim()||null;
+      if(!mid){ alert('Escolha a pessoa.'); return; }
+      if(ESC.linhas.some(l=>l.membro_id===mid && escChave({data:l.data,hora:l.hora,titulo:l.titulo})===escChave(c))){ alert('Essa pessoa já está nesta escala.'); return; }
+      b.disabled=true;
+      const {error}=await sb.from('escalas').insert({ministerio:ESC.min, data:c.data, hora:c.hora, titulo:c.titulo, membro_id:mid, funcao});
+      if(error){ b.disabled=false; alert('Erro: '+error.message); return; }
+      renderEscalas();
+    });
+    $$('#view [data-escdel]').forEach(b=> b.onclick=async()=>{
+      b.disabled=true;
+      const {error}=await sb.from('escalas').delete().eq('id',b.dataset.escdel);
+      if(error){ b.disabled=false; alert('Erro: '+error.message); return; }
+      renderEscalas();
+    });
+    const z=$('#escZap'); if(z) z.onclick=escCopiarTexto;
+    const pdf=$('#escPdf'); if(pdf) pdf.onclick=escExportarPdf;
+  }
+
+  // só os cultos com alguém escalado, em ordem, com nome/função/telefone
+  function escGrupos(){
+    const nome=id=>ESC.membros.find(x=>x.id===id)||{nome:'(fora do ministério)',telefone:''};
+    return escCultos().map(c=>{
+      const rs=ESC.linhas.filter(l=>escChave({data:l.data,hora:l.hora,titulo:l.titulo})===escChave(c))
+        .map(l=>({nome:nome(l.membro_id).nome, telefone:nome(l.membro_id).telefone, funcao:l.funcao||''}))
+        .sort((a,b)=>(a.funcao||'~').localeCompare(b.funcao||'~','pt')||a.nome.localeCompare(b.nome,'pt'));
+      return [escDow(c.data)+' '+escDataBR(c.data)+(c.hora?' · '+c.hora:'')+' · '+(c.titulo||'Escala'), rs];
+    }).filter(g=>g[1].length);
+  }
+  function escCopiarTexto(){
+    const g=escGrupos(); if(!g.length){ alert('Ninguém escalado neste mês ainda.'); return; }
+    const txt='*Escala '+ESC.min+' · '+ESC_MESES[ESC.mes]+' '+ESC.ano+'*\n\n'+
+      g.map(x=>'📅 *'+x[0]+'*\n'+x[1].map(p=>'• '+p.nome+(p.funcao?' ('+p.funcao+')':'')).join('\n')).join('\n\n')+
+      '\n\nQualquer imprevisto, avise o líder com antecedência 🙏';
+    const ok=()=>{ const z=$('#escZap'); if(z){ z.textContent='Texto copiado ✓'; setTimeout(()=>{ if(z.isConnected) z.textContent='Copiar texto WhatsApp'; },2200); } };
+    if(navigator.clipboard) navigator.clipboard.writeText(txt).then(ok,()=>prompt('Copie o texto:',txt)); else prompt('Copie o texto:',txt);
+  }
+  function escExportarPdf(){
+    const g=escGrupos(); if(!g.length){ alert('Ninguém escalado neste mês ainda.'); return; }
+    const pessoas=new Set(); g.forEach(x=>x[1].forEach(p=>pessoas.add(p.nome)));
+    const corpo=secoesPdf(g,'escalado',
+      '<th class="c-n">#</th><th>Nome</th><th>Função</th><th class="c-t">Telefone</th>',
+      (p,i)=>'<td class="c-n">'+(i+1)+'</td><td><b>'+esc(p.nome)+'</b></td><td>'+(esc(p.funcao)||'—')+'</td><td class="c-t">'+(esc(p.telefone)||'—')+'</td>');
+    abrirRelatorioPdf({
+      arquivo:'Escala-'+ESC.min.replace(/\s+/g,'-')+'-'+ESC_MESES[ESC.mes]+'-'+ESC.ano,
+      titulo:'Escala · '+ESC.min,
+      filtro:ESC_MESES[ESC.mes]+' de '+ESC.ano,
+      resumo:[['cultos',g.length],['pessoas',pessoas.size]],
+      corpo:corpo
+    });
+  }
+
   function exportarMembrosPdf(lista){
     if(!lista || !lista.length){ alert('Não há membros para exportar.'); return; }
     const grupos=agrupaPor(lista,'celula','Sem célula');
@@ -2377,6 +2553,15 @@ ${serve ? `
     if(abre) irPara('financeiro','geral');
   };
   $$('#subnav-fin .sub-item').forEach(b=> b.onclick=()=>irPara('financeiro', b.dataset.fin));
+  $('#btn-min').onclick=function(){
+    if(app.classList.contains('recolhido')) setRecolhido(false);
+    const abre=!$('#subnav-min').classList.contains('aberto');
+    $('#subnav-min').classList.toggle('aberto',abre);
+    this.classList.toggle('aberto',abre);
+    const primeiro=[...$$('#subnav-min .sub-item')].find(b=>b.style.display!=='none');
+    if(abre && primeiro) irPara('ministerios', primeiro.dataset.min);
+  };
+  $$('#subnav-min .sub-item').forEach(b=> b.onclick=()=>irPara('ministerios', b.dataset.min));
   $('#btn-acao').onclick=function(){
     if(app.classList.contains('recolhido')) setRecolhido(false);
     const abre=!$('#subnav-acao').classList.contains('aberto');
@@ -2423,6 +2608,10 @@ ${serve ? `
     }
     $('#quem').textContent=user.email;
     PERFIL=perf;
+    if(perfil.role==='lider_ministerio'){   // em separado: a coluna só existe depois do escalas.sql
+      const r=await sb.from('profiles').select('ministerio').eq('id',user.id).single();
+      PERFIL=Object.assign({}, perf, {ministerio:(r.data&&r.data.ministerio)||''});
+    }
 
     // A tela de Ministérios busca os dados dela sozinha, então perfis restritos
     // a ela não precisam (nem devem) carregar membros, contribuições e afins.
@@ -2453,7 +2642,8 @@ ${serve ? `
         if(perf.itens.indexOf(sel)>=0) return;
         var e=$(sel); if(e) e.style.display='none';
       });
-      if(perf.abre){ var sn=$(perf.abre); if(sn) sn.classList.add('aberto'); }
+      if(perf.abre){ var sn=$(perf.abre); if(sn){ sn.classList.add('aberto'); if(sn.previousElementSibling) sn.previousElementSibling.classList.add('aberto'); } }
+      (perf.ocultos||[]).forEach(function(sel){ var e=$(sel); if(e) e.style.display='none'; });
     }
     const inicio = perf.inicio || [window.innerWidth<=860 ? 'membros' : 'batismo'];
     irPara(inicio[0], inicio[1]);
