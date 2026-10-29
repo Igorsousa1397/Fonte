@@ -835,7 +835,7 @@
             <option>Viúvo(a)</option>
           </select>
         </div>
-        <div class="campo"><label>Membro desde <span style="color:var(--cinza);font-weight:400">(opcional)</span></label>
+        <div class="campo"><label>Membro desde</label>
           <div style="display:flex;gap:10px">
             <select id="m-desde-mes" style="flex:1"></select>
             <select id="m-desde-ano" style="flex:1"></select>
@@ -1518,7 +1518,7 @@ document.getElementById('enviaContato').onclick=async()=>{
   const MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Líder de ministério','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastor auxiliar','Voluntários'];
   const mMin=el('m-min');
   const preencherMin=lista=>{ if(!mMin) return; const atual=mMin.value;
-    mMin.innerHTML='<option value="">Não sirvo em nenhum</option>'+lista.map(x=>`<option>${escH(x)}</option>`).join(''); mMin.value=atual; };
+    mMin.innerHTML='<option value="">Selecione…</option><option value="Não serve em nenhum">Não sirvo em nenhum</option>'+lista.map(x=>`<option>${escH(x)}</option>`).join(''); mMin.value=atual; };
   preencherMin(MINISTERIOS);
   // lista cadastrada no painel substitui a de cima
   sb.rpc('ministerios_lista').then(({data,error})=>{ if(!error && data && data.length) preencherMin(data.map(x=>typeof x==='string'?x:Object.values(x)[0]).sort((a,b)=>a.localeCompare(b,'pt'))); });
@@ -1618,6 +1618,15 @@ document.getElementById('enviaContato').onclick=async()=>{
     const email=g('m-email').toLowerCase();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast('Preencha um e-mail válido. É por ele que você acessa sua carteirinha.'); return; }
     if(!el('m-peniel').value){ toast('Informe se você já passou pelo Encontro Peniel.'); return; }
+    const telDig=g('m-tel').replace(/\D/g,'');
+    if(!(telDig.length===10||telDig.length===11)){ toast('Preencha um telefone válido com DDD, ex: (11) 90000-0000.'); el('m-tel').focus(); return; }
+    if(!g('m-celula')){ toast('Escolha a sua célula (ou "Ainda não participo").'); el('m-celula').focus(); return; }
+    if(!g('m-min')){ toast('Informe se você serve em algum ministério.'); el('m-min').focus(); return; }
+    if(!estadoCivil){ toast('Escolha o seu estado civil.'); el('m-estado').focus(); return; }
+    if(!membroDesde){ toast('Informe o mês e o ano em que você se tornou membro.'); el(mdMes?'m-desde-ano':'m-desde-mes').focus(); return; }
+    if(g('m-cep').replace(/\D/g,'').length!==8){ toast('Preencha um CEP válido (8 dígitos).'); el('m-cep').focus(); return; }
+    if(!g('m-num')){ toast('Preencha o número do endereço.'); el('m-num').focus(); return; }
+    if(!g('m-log')){ toast('Preencha o endereço.'); el('m-log').focus(); return; }
     if(!fotoFile){ toast('Adicione uma foto do rosto. Ela vai na sua carteirinha de membro.'); return; }
     btn.disabled=true; const txt=btn.textContent; btn.textContent='Enviando…';
     try{
