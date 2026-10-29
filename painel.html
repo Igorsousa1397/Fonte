@@ -485,6 +485,8 @@
     acao_social: { itens:['#btn-acao','#subnav-acao'], abre:'#subnav-acao', inicio:['acao','solicitacoes'] },
     ministerios: { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','inscricoes'], carregaTudo:false, ocultos:['[data-min="escalas"]'] },
     // líder de um ministério (profiles.ministerio): só a escala do ministério dele
+    // escalas: monta a escala de qualquer ministério com escala, sem o resto do painel
+    escalas:     { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','escalas'], carregaTudo:false, ocultos:['[data-min="inscricoes"]'] },
     lider_ministerio: { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','escalas'], carregaTudo:false, ocultos:['[data-min="inscricoes"]'] },
     // conteúdo do site: no Batismo vê só a página de inscrição (foto e data), sem a lista de inscritos
     site:        { itens:['[data-view="batismo"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]'],
@@ -1929,8 +1931,8 @@ ${serve ? `
       html+='<div class="min-barra" style="justify-content:space-between;flex-wrap:wrap;gap:10px">'+
         (comEscala.length?'<select id="escMin" style="background:var(--grafite);border:var(--borda);color:var(--luz);border-radius:var(--raio-sm);padding:10px 12px;font-family:inherit;min-width:220px">'+
           comEscala.map(c=>'<option'+(c.nome===ESC.min?' selected':'')+'>'+esc(c.nome)+'</option>').join('')+'</select>':'<span class="sub2">Nenhum ministério com escala ainda.</span>')+
-        '<button class="mini-btn" id="escCfg">'+(ESC.editaMins?'Fechar':'Ministérios com escala')+'</button></div>';
-      if(ESC.editaMins){
+        (PERFIL.itens?'':'<button class="mini-btn" id="escCfg">'+(ESC.editaMins?'Fechar':'Ministérios com escala')+'</button>')+'</div>';
+      if(ESC.editaMins && !PERFIL.itens){   // ligar/desligar ministérios: só admin
         html+='<div class="secbox" style="padding:14px 16px"><div class="sub2" style="margin-bottom:10px">Marque os ministérios que usam escala. Só eles aparecem aqui e podem ter líder com acesso.</div>'+
           '<div class="esc-mins">'+ESC.cfg.map(c=>'<label class="chkline" style="margin:0"><input type="checkbox" data-escmin="'+esc(c.nome)+'"'+(c.escala?' checked':'')+'> '+esc(c.nome)+'</label>').join('')+'</div></div>';
       }
