@@ -1003,10 +1003,10 @@ calcProximo();
 
 /* ---- hero ----
    Junta os banners avulsos do painel (tabela `banners`) com os recorrentes ligados lá
-   (coluna `auto`: agenda, quarta, domingo, ceia), em ordem de data, até no mínimo 4.
+   (coluna `auto`: agenda, quarta, domingo, ceia), em ordem de data, até 5.
    Sem conseguir ler o banco, mostra os recorrentes com os textos padrão. */
 function escolherSlides(r){
-  const MIN=4;
+  const MAX=5;   // até 5 avisos no carrossel
   const on=k=>!r.ok||!!r.autos[k];
   const comTextos=(k,e)=>{const a=r.autos[k];if(!a)return e;
     return {...e,titulo:escH(a.titulo),texto:a.descricao!=null?escH(a.descricao):undefined,img:a.imagem_url?escH(a.imagem_url):undefined};};
@@ -1016,7 +1016,7 @@ function escolherSlides(r){
   const especiais=on('agenda')?futuros.filter(e=>(!e.fixo||e.img) && d(e.inicio).getMonth()===mes && d(e.inicio).getFullYear()===ano):[];
   const porData=(a,b)=>(a.inicio?d(a.inicio):Infinity)-(b.inicio?d(b.inicio):Infinity);
   const base=r.manuais.concat(especiais).sort(porData);
-  if(base.length>=MIN)return base;
+  if(base.length>=MAX)return base.slice(0,MAX);
   // completa com os cultos recorrentes ligados: cada um uma vez só, na data mais próxima
   const vistos=new Set();
   const fillers=futuros.filter(e=>e.fixo).map(e=>{
@@ -1027,7 +1027,7 @@ function escolherSlides(r){
     if(k==='ceia')return comTextos('ceia',{...e,titulo:'Santa Ceia',img:'assets/banner-ceia.jpg'});
     return comTextos('domingo',{...e,titulo:'Domingo em Família',img:undefined});
   }).filter(Boolean);
-  return base.concat(fillers.slice(0,MIN-base.length)).sort(porData);
+  return base.concat(fillers.slice(0,MAX-base.length)).sort(porData);
 }
 const track=document.getElementById('track'),dotsBox=document.getElementById('dots');
 function textoSlide(e){
