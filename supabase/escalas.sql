@@ -93,7 +93,8 @@ drop policy if exists ministerio_config_lider_select on public.ministerio_config
 create policy ministerio_config_lider_select on public.ministerio_config for select to authenticated
   using (tem_papel('lider_ministerio'));
 
--- 6) para dar o perfil a um líder: crie o usuário em Authentication → Users → Add user,
+-- 6) (líder de vários ministérios: rode também escalas-lider-varios.sql e use o exemplo de lá)
+--    para dar o perfil a um líder: crie o usuário em Authentication → Users → Add user,
 --    troque o e-mail e o ministério (escrito igual ao da lista) e rode só este trecho.
 -- insert into public.profiles (id, role, ministerio)
 -- select id, 'lider_ministerio', 'Louvor' from auth.users where email = 'lider@exemplo.com'

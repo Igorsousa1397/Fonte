@@ -1913,7 +1913,7 @@ ${serve ? `
 
   async function renderEscalas(){
     $('#titulo').textContent='Escalas · Ministérios';
-    const lider=!!PERFIL.ministerio;
+    const lider=!!PERFIL.ministerios;
     $('#view').innerHTML='<div class="carregando">Carregando…</div>';
     if(!lider){
       const r=await sb.from('ministerio_config').select('nome,escala');
@@ -1921,7 +1921,7 @@ ${serve ? `
       ESC.cfg=(r.data||[]).sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
       const comEscala=ESC.cfg.filter(c=>c.escala).map(c=>c.nome);
       if(!ESC.min || comEscala.indexOf(ESC.min)<0) ESC.min=comEscala[0]||null;
-    } else ESC.min=PERFIL.ministerio;
+    } else if(PERFIL.ministerios.indexOf(ESC.min)<0) ESC.min=PERFIL.ministerios[0]||null;
 
     let html='';
     if(!lider){
@@ -1935,7 +1935,10 @@ ${serve ? `
           '<div class="esc-mins">'+ESC.cfg.map(c=>'<label class="chkline" style="margin:0"><input type="checkbox" data-escmin="'+esc(c.nome)+'"'+(c.escala?' checked':'')+'> '+esc(c.nome)+'</label>').join('')+'</div></div>';
       }
     } else {
-      html+='<div class="sub2" style="margin-bottom:6px">Ministério</div><h2 style="font-family:var(--display);font-size:1.4rem;margin-bottom:8px">'+esc(ESC.min||'—')+'</h2>';
+      html+='<div class="sub2" style="margin-bottom:6px">Ministério</div>'+(PERFIL.ministerios.length>1
+        ? '<select id="escMin" style="background:var(--grafite);border:var(--borda);color:var(--luz);border-radius:var(--raio-sm);padding:10px 12px;font-family:inherit;min-width:220px;margin-bottom:8px">'+
+            PERFIL.ministerios.map(m=>'<option'+(m===ESC.min?' selected':'')+'>'+esc(m)+'</option>').join('')+'</select>'
+        : '<h2 style="font-family:var(--display);font-size:1.4rem;margin-bottom:8px">'+esc(ESC.min||'—')+'</h2>');
     }
     if(!ESC.min){ $('#view').innerHTML=html+(lider?'<div class="vazio">Seu acesso ainda não tem um ministério definido. Fale com a administração.</div>':''); escLigar(); return; }
 
@@ -2608,9 +2611,12 @@ ${serve ? `
     }
     $('#quem').textContent=user.email;
     PERFIL=perf;
-    if(perfil.role==='lider_ministerio'){   // em separado: a coluna só existe depois do escalas.sql
-      const r=await sb.from('profiles').select('ministerio').eq('id',user.id).single();
-      PERFIL=Object.assign({}, perf, {ministerio:(r.data&&r.data.ministerio)||''});
+    if(perfil.role==='lider_ministerio'){   // em separado: as colunas só existem depois dos SQLs de escalas
+      let r=await sb.from('profiles').select('ministerio,ministerios').eq('id',user.id).single();
+      if(r.error) r=await sb.from('profiles').select('ministerio').eq('id',user.id).single();
+      const d=r.data||{};
+      const lista=(d.ministerios&&d.ministerios.length) ? d.ministerios : (d.ministerio ? [d.ministerio] : []);
+      PERFIL=Object.assign({}, perf, {ministerios:lista});
     }
 
     // A tela de Ministérios busca os dados dela sozinha, então perfis restritos
