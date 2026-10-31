@@ -1105,7 +1105,7 @@ document.getElementById('prev').onclick=()=>irPara(atual-1);
 /* ---- cards inscrição (encontros ligados/desligados no painel → encontro_config) ---- */
 const boxIns=document.getElementById('inscricoes');
 function renderInscricoes(){
-const encontros=AGENDA.filter(e=>e.link);
+const encontros=AGENDA.filter(e=>e.link&&e.id);   // só os encontros (Submergidos, Peniel); evento da agenda com link (ex.: batismo) fica fora
 document.getElementById('eventos').style.display=encontros.length?'':'none';
 if(encontros.length===1)document.getElementById('insc-sub').textContent='Um momento para mergulhar mais fundo. Garanta sua vaga direto no app do encontro.';
 encontros.forEach(e=>{

@@ -294,19 +294,63 @@
 
   var btn=document.getElementById('b-enviar');
 
-  function sucesso(comprar){
-    var form=document.querySelector('.form');
-    form.innerHTML =
-      '<div style="text-align:center;padding:26px 4px">'+
-        '<div style="width:56px;height:56px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:var(--agua-fundo);border:1px solid var(--agua-forte)">'+
-          '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7ad4cf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+
-        '</div>'+
-        '<div style="font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:8px">Inscrição recebida!</div>'+
-        '<p style="color:var(--cinza-claro)">Sua inscrição para o batismo foi registrada com sucesso.'+
-          (comprar ? '<br>Em breve você receberá as instruções para o pagamento da camiseta.' : '')+
-        '</p>'+
+  var ICONE_OK='<div style="width:56px;height:56px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:var(--agua-fundo);border:1px solid var(--agua-forte)">'+
+    '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7ad4cf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>';
+  function cartao(titulo,texto,extra){
+    document.querySelector('.form').innerHTML=
+      '<div style="text-align:center;padding:26px 4px">'+ICONE_OK+
+        '<div style="font-family:var(--display);font-size:1.5rem;font-weight:700;margin-bottom:8px">'+titulo+'</div>'+
+        '<p style="color:var(--cinza-claro)">'+texto+'</p>'+(extra||'')+
       '</div>';
   }
+  // botões de pagamento da camiseta (Mercado Pago, mesmo modelo do app do encontro)
+  function botoesPagar(){
+    return '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px">'+
+      '<button class="btn" type="button" data-pagar="pix" style="width:auto;margin:0">Pagar com PIX · R$ 42,00</button>'+
+      '<button class="btn" type="button" data-pagar="credito" style="width:auto;margin:0;background:transparent;color:var(--luz);border:1px solid var(--neblina)">Pagar no cartão</button>'+
+      '</div><p class="aviso" id="b-pag-st" style="margin-top:12px">Você será levado ao Mercado Pago para concluir o pagamento.</p>';
+  }
+  function ligarPagar(tel){
+    document.querySelectorAll('[data-pagar]').forEach(function(b){
+      b.onclick=function(){ pagar(tel,b.getAttribute('data-pagar'),b); };
+    });
+  }
+  async function pagar(tel,tipo,b){
+    var st=document.getElementById('b-pag-st');
+    document.querySelectorAll('[data-pagar]').forEach(function(x){x.disabled=true;});
+    var orig=b.textContent; b.textContent='Abrindo pagamento…';
+    try{
+      var r=await fetch(SUPABASE_URL+'/functions/v1/pagamento-batismo',{method:'POST',
+        headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON},
+        body:JSON.stringify({telefone:tel,tipo:tipo})});
+      var d=await r.json().catch(function(){return {};});
+      if(d.init_point){ try{sessionStorage.setItem('batismo_tel',tel);}catch(e){} window.location.href=d.init_point; return; }
+      throw {msg:d.erro};
+    }catch(err){
+      document.querySelectorAll('[data-pagar]').forEach(function(x){x.disabled=false;});
+      b.textContent=orig;
+      if(st) st.textContent=((err&&err.msg)||'Não foi possível abrir o pagamento agora.')+' Tente de novo em instantes.';
+    }
+  }
+
+  function sucesso(comprar,tel){
+    if(!comprar){ cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada com sucesso.'); return; }
+    cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada.<br>Agora é só pagar a camiseta (R$ 42,00):',botoesPagar());
+    ligarPagar(tel);
+  }
+
+  // volta do Mercado Pago: ?pago=true | pending | false
+  (function(){
+    var pago=new URLSearchParams(location.search).get('pago'); if(!pago) return;
+    var tel=''; try{tel=sessionStorage.getItem('batismo_tel')||'';}catch(e){}
+    if(pago==='true') cartao('Pagamento confirmado!','Sua inscrição e a camiseta do batismo estão garantidas. Nos vemos no batismo!');
+    else if(pago==='pending') cartao('Pagamento em análise','Assim que o Mercado Pago confirmar, sua camiseta fica paga. Não precisa fazer nada.');
+    else {
+      cartao('Pagamento não concluído','Sua inscrição está feita, mas a camiseta ainda não foi paga.',tel?botoesPagar():'<p class="aviso" style="margin-top:12px">Fale com a equipe do batismo para concluir o pagamento.</p>');
+      if(tel) ligarPagar(tel);
+    }
+    document.querySelector('.form').scrollIntoView({block:'center'});
+  })();
 
   btn.onclick=async function(){
     var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
@@ -333,8 +377,6 @@
       return;
     }
 
-    // FUTURO (Mercado Pago): se comprar, criar pagamento e redirecionar:
-    //   window.location.href = init_point;  // vindo de uma edge function
-    sucesso(comprar);
+    sucesso(comprar,tel);
   };
 </script>
