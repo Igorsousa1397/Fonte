@@ -1018,7 +1018,8 @@ function escolherSlides(r){
   // eventos especiais do MÊS atual (têm flyer OU não são culto fixo)
   const especiais=on('agenda')?futuros.filter(e=>(!e.fixo||e.img) && d(e.inicio).getMonth()===mes && d(e.inicio).getFullYear()===ano):[];
   const porData=(a,b)=>(a.inicio?d(a.inicio):Infinity)-(b.inicio?d(b.inicio):Infinity);
-  const base=r.manuais.concat(especiais).sort(porData);
+  // evento da agenda que já tem banner no mesmo dia não vira um segundo slide
+  const base=r.manuais.concat(especiais.filter(e=>!r.manuais.some(m=>m.inicio&&m.inicio===e.inicio))).sort(porData);
   if(base.length>=MAX)return base.slice(0,MAX);
   // completa com os cultos recorrentes ligados: cada um uma vez só, na data mais próxima
   const vistos=new Set();
