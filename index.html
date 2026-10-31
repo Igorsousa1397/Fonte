@@ -103,10 +103,11 @@
       linear-gradient(180deg,#0c0c0e 0%, #0a0a0b 100%)}
   .slide-foto{align-items:stretch}
   .slide-foto .slide-inner{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:48px}
-  .foto-topo{flex:0 1 auto;align-self:center;height:auto;width:auto;
-     max-height:clamp(340px,calc(90vh - 320px),500px);max-width:min(52%,620px);
+  /* toda arte do carrossel no mesmo quadro 16:9; flyer em pé aparece inteiro, com fundo escuro */
+  .foto-topo{flex:0 0 auto;align-self:center;width:min(52%,620px);height:auto;aspect-ratio:16/9;
+     object-fit:cover;background:#0c0c0e;
      display:block;border-radius:var(--raio);border:var(--borda);box-shadow:0 24px 60px -28px #000}
-  .foto-topo.retrato{max-height:clamp(440px,calc(90vh - 220px),600px);max-width:min(40%,430px)}
+  .foto-topo.retrato{object-fit:contain}
   .slide-txt{width:100%}
   .slide-foto .slide-txt{width:auto;flex:1;min-width:0;max-width:600px}
   .slide-inner{position:relative;width:100%;max-width:var(--largura);margin:0 auto;
@@ -512,11 +513,13 @@
     .passos{grid-template-columns:1fr 1fr}
     .foot-grid{grid-template-columns:1fr;gap:30px}
     #mapa{height:360px}
-    .hero-track{min-height:0}
-    .slide.on{position:relative}
+    /* slides empilhados na mesma célula: o carrossel fica com a altura do maior e não pula */
+    .hero-track{min-height:0;display:grid}
+    .slide{position:relative;grid-area:1/1;align-items:flex-start}
+    .slide-inner{padding-bottom:96px}   /* espaço das setas e pontinhos, sem cobrir os botões */
     .slide-foto .slide-inner{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:20px}
     .slide-foto .slide-txt{max-width:100%}
-    .slide-foto .foto-topo{max-width:100%;max-height:min(56vh,460px)}
+    .slide-foto .foto-topo{width:100%;max-width:100%}
   }
   /* celular pequeno */
   @media(max-width:560px){
