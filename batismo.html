@@ -371,6 +371,14 @@
       p_camiseta_numero:camiseta, p_comprar:comprar
     });
 
+    if(res.error && res.error.code==='23505'){
+      // telefone já inscrito: não cria outra; se for comprar a camiseta, deixa pagar a inscrição que já existe
+      if(comprar){
+        cartao('Você já está inscrito','Este telefone já tem inscrição no batismo.<br>Se ainda não pagou a camiseta (R$ 42,00), pague por aqui:',botoesPagar());
+        ligarPagar(tel);
+      } else cartao('Você já está inscrito','Este telefone já tem inscrição no batismo. Não precisa se inscrever de novo.');
+      return;
+    }
     if(res.error){
       btn.disabled=false; btn.innerHTML=label;
       toast('Não foi possível enviar: '+res.error.message);
