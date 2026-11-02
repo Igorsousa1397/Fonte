@@ -145,6 +145,12 @@
     </div>
 
     <div class="campo">
+      <label for="b-email">E-mail</label>
+      <input id="b-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com">
+      <p class="aviso" style="margin-top:6px">Para receber a confirmação da inscrição e o link de pagamento.</p>
+    </div>
+
+    <div class="campo">
       <label>Qual o tamanho da sua camiseta? <span class="req">*</span></label>
       <div class="selrow" id="b-tam">
         <button type="button" class="selbtn" data-v="P">P</button>
@@ -310,21 +316,22 @@
       '<button class="btn" type="button" data-pagar="credito" style="width:auto;margin:0;background:transparent;color:var(--luz);border:1px solid var(--neblina)">Pagar no cartão</button>'+
       '</div><p class="aviso" id="b-pag-st" style="margin-top:12px">Você será levado ao Mercado Pago para concluir o pagamento.</p>';
   }
-  function ligarPagar(tel){
+  // ref = {telefone} logo após a inscrição, ou {id} quando vem do link enviado pela equipe (?pagar=<id>)
+  function ligarPagar(ref){
     document.querySelectorAll('[data-pagar]').forEach(function(b){
-      b.onclick=function(){ pagar(tel,b.getAttribute('data-pagar'),b); };
+      b.onclick=function(){ pagar(ref,b.getAttribute('data-pagar'),b); };
     });
   }
-  async function pagar(tel,tipo,b){
+  async function pagar(ref,tipo,b){
     var st=document.getElementById('b-pag-st');
     document.querySelectorAll('[data-pagar]').forEach(function(x){x.disabled=true;});
     var orig=b.textContent; b.textContent='Abrindo pagamento…';
     try{
       var r=await fetch(SUPABASE_URL+'/functions/v1/pagamento-batismo',{method:'POST',
         headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON},
-        body:JSON.stringify({telefone:tel,tipo:tipo})});
+        body:JSON.stringify(Object.assign({tipo:tipo},ref))});
       var d=await r.json().catch(function(){return {};});
-      if(d.init_point){ try{sessionStorage.setItem('batismo_tel',tel);}catch(e){} window.location.href=d.init_point; return; }
+      if(d.init_point){ try{sessionStorage.setItem('batismo_ref',JSON.stringify(ref));}catch(e){} window.location.href=d.init_point; return; }
       throw {msg:d.erro};
     }catch(err){
       document.querySelectorAll('[data-pagar]').forEach(function(x){x.disabled=false;});
@@ -336,25 +343,32 @@
   function sucesso(comprar,tel){
     if(!comprar){ cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada com sucesso.'); return; }
     cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada.<br>Agora é só pagar a camiseta (R$ 42,00):',botoesPagar());
-    ligarPagar(tel);
+    ligarPagar({telefone:tel});
   }
 
   // volta do Mercado Pago: ?pago=true | pending | false
+  // link de cobrança enviado pela equipe no WhatsApp: ?pagar=<id da inscrição>
   (function(){
-    var pago=new URLSearchParams(location.search).get('pago'); if(!pago) return;
-    var tel=''; try{tel=sessionStorage.getItem('batismo_tel')||'';}catch(e){}
-    if(pago==='true') cartao('Pagamento confirmado!','Sua inscrição e a camiseta do batismo estão garantidas. Nos vemos no batismo!');
-    else if(pago==='pending') cartao('Pagamento em análise','Assim que o Mercado Pago confirmar, sua camiseta fica paga. Não precisa fazer nada.');
-    else {
-      cartao('Pagamento não concluído','Sua inscrição está feita, mas a camiseta ainda não foi paga.',tel?botoesPagar():'<p class="aviso" style="margin-top:12px">Fale com a equipe do batismo para concluir o pagamento.</p>');
-      if(tel) ligarPagar(tel);
+    var q=new URLSearchParams(location.search), pago=q.get('pago'), pagarId=q.get('pagar');
+    if(!pago && !pagarId) return;
+    if(pagarId && !pago){
+      cartao('Pagamento da camiseta','Sua inscrição para o batismo está feita.<br>Falta só pagar a camiseta (R$ 42,00):',botoesPagar());
+      ligarPagar({id:pagarId});
+    } else {
+      var ref=null; try{ref=JSON.parse(sessionStorage.getItem('batismo_ref')||'null');}catch(e){}
+      if(pago==='true') cartao('Pagamento confirmado!','Sua inscrição e a camiseta do batismo estão garantidas. Nos vemos no batismo!');
+      else if(pago==='pending') cartao('Pagamento em análise','Assim que o Mercado Pago confirmar, sua camiseta fica paga. Não precisa fazer nada.');
+      else {
+        cartao('Pagamento não concluído','Sua inscrição está feita, mas a camiseta ainda não foi paga.',ref?botoesPagar():'<p class="aviso" style="margin-top:12px">Fale com a equipe do batismo para concluir o pagamento.</p>');
+        if(ref) ligarPagar(ref);
+      }
     }
     document.querySelector('.form').scrollIntoView({block:'center'});
   })();
 
   btn.onclick=async function(){
     var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
-    var nome=g('b-nome'), celula=g('b-celula'), tel=g('b-tel'), camiseta=g('b-camiseta');
+    var nome=g('b-nome'), celula=g('b-celula'), tel=g('b-tel'), camiseta=g('b-camiseta'), email=g('b-email').toLowerCase();
     var fonte=g('b-fonte'), igrejaNome=g('b-igreja-nome');
     var opt=document.querySelector('#b-opcoes .cbx:checked');
     if(!nome||!celula||!fonte||!tel||!camiseta||!opt){
@@ -362,6 +376,7 @@
     }
     if(fonte==='Não' && !igrejaNome){ toast('Informe o nome da sua igreja.'); return; }
     if(tel.replace(/\D/g,'').length<10){ toast('Informe um telefone válido com DDD.'); return; }
+    if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('Confira o e-mail informado.'); return; }
     var igreja = (fonte==='Sim') ? 'Igreja Fonte' : igrejaNome;
     var comprar = (opt.value==='comprar');
     btn.disabled=true; var label=btn.innerHTML; btn.textContent='Enviando…';
@@ -375,7 +390,7 @@
       // telefone já inscrito: não cria outra; se for comprar a camiseta, deixa pagar a inscrição que já existe
       if(comprar){
         cartao('Você já está inscrito','Este telefone já tem inscrição no batismo.<br>Se ainda não pagou a camiseta (R$ 42,00), pague por aqui:',botoesPagar());
-        ligarPagar(tel);
+        ligarPagar({telefone:tel});
       } else cartao('Você já está inscrito','Este telefone já tem inscrição no batismo. Não precisa se inscrever de novo.');
       return;
     }
@@ -385,6 +400,14 @@
       return;
     }
 
+    if(email) enviarEmail(tel,email);
     sucesso(comprar,tel);
   };
+
+  // e-mail de confirmação (com o link de pagamento, se comprou a camiseta); falha aqui não atrapalha a inscrição
+  function enviarEmail(tel,email){
+    fetch(SUPABASE_URL+'/functions/v1/pagamento-batismo',{method:'POST',
+      headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON},
+      body:JSON.stringify({acao:'email',telefone:tel,email:email})}).catch(function(){});
+  }
 </script>

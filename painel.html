@@ -560,11 +560,21 @@
     BATISMO.forEach(i=>{
       const pg=i.pagamento_status==='aprovado'?'<span class="pill ok">Pago</span>':i.pagamento_status==='pendente'?'<span class="pill pend">Pendente</span>':'<span class="pill na">—</span>';
       const cam=i.camiseta_opcao==='comprar'?('Comprar · '+esc(i.camiseta_numero)):(esc(i.camiseta_numero)+' (usar)');
-      html+='<div class="lin"><span class="col" data-l="Nome">'+esc(i.nome)+'<span class="sub">'+dataBR(i.created_at)+'</span></span><span class="col" data-l="Célula">'+esc(i.celula)+'</span><span class="col" data-l="Telefone">'+(telWa(i.telefone)||esc(i.telefone)||'—')+'</span><span class="col" data-l="Camiseta">'+cam+'</span><span class="col" data-l="Pagamento">'+pg+'</span></div>';
+      html+='<div class="lin"><span class="col" data-l="Nome">'+esc(i.nome)+'<span class="sub">'+dataBR(i.created_at)+'</span></span><span class="col" data-l="Célula">'+esc(i.celula)+'</span><span class="col" data-l="Telefone">'+(telWa(i.telefone,msgCobranca(i))||esc(i.telefone)||'—')+'</span><span class="col" data-l="Camiseta">'+cam+'</span><span class="col" data-l="Pagamento">'+pg+'</span></div>';
     });
     html+='</div>';
     $('#view').innerHTML=html;
     carregarPaginaBatismo();
+  }
+
+  // camiseta comprada e ainda não paga: o WhatsApp já abre com a cobrança e o link de pagamento desta inscrição
+  function msgCobranca(i){
+    if(i.camiseta_opcao!=='comprar'||i.pagamento_status==='aprovado'||!i.id) return '';
+    const nome=String(i.nome||'').trim().split(/\s+/)[0];
+    return 'Shalom'+(nome?', '+nome:'')+'! Aqui é da Igreja Fonte. 💧\n\n'+
+      'Sua inscrição para o batismo está feita, mas o pagamento da camiseta (R$ '+VALOR_CAMISETA.toFixed(2).replace('.',',')+') ainda está pendente.\n\n'+
+      'Você pode pagar por PIX ou cartão neste link:\n'+location.origin+'/batismo.html?pagar='+i.id+'\n\n'+
+      'Qualquer dúvida, é só responder esta mensagem.';
   }
 
   // foto e data da página batismo.html (site_config, chave 'batismo')
@@ -614,7 +624,7 @@
   const WA_SVG='<svg class="wa-ic" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.1.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.4z"/><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.5A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-2.9.9.9-2.8-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>';
   const PDF_SVG='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
   function waNum(tel){ let d=(tel||'').replace(/\D/g,''); if(!d) return ''; if(d.length<=11) d='55'+d; return d; }
-  function telWa(tel){ const n=waNum(tel); return n ? '<a class="tel-wpp" href="https://wa.me/'+n+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+WA_SVG+esc(tel)+'</a>' : ''; }
+  function telWa(tel,texto){ const n=waNum(tel); return n ? '<a class="tel-wpp" href="https://wa.me/'+n+(texto?'?text='+encodeURIComponent(texto):'')+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+WA_SVG+esc(tel)+'</a>' : ''; }
   function abreMembro(m){
     const peniel=m.passou_peniel===true?'Sim':m.passou_peniel===false?'Não':'—';
     const ativo=m.ativo!==false;
@@ -2625,7 +2635,7 @@ ${serve ? `
     // a ela não precisam (nem devem) carregar membros, contribuições e afins.
     if(perf.carregaTudo!==false){
       const [rb, rc, rm, ai, ar, ap, co] = await Promise.all([
-        sb.from('inscricoes_batismo').select('nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
+        sb.from('inscricoes_batismo').select('id,nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false}),
         sb.from('contatos').select('id,nome,telefone,email,assunto,mensagem,created_at,resolvido,resolvido_em').order('created_at',{ascending:false}),
         sb.from('membros').select('id,nome,cpf,email,arquivado,carteirinha_enviada_em,celula,telefone,ministerio,passou_peniel,cep,logradouro,numero,complemento,bairro,cidade,uf,ativo,created_at,data_nascimento,foto_url,validado,validado_em,estado_civil,membro_desde').order('created_at',{ascending:false}),
         sb.from('acao_itens').select('*').order('nome'),
