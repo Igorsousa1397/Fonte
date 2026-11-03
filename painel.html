@@ -382,6 +382,12 @@
         <button class="sub-item" data-min="inscricoes">Inscrições</button>
         <button class="sub-item" data-min="escalas">Escalas</button>
       </div>
+      <button class="nav-item" data-view="validar" id="nav-validar" style="display:none">
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="lbl">Membros</span>
+      </button>
+      <button class="nav-item" data-view="parcerias">
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg><span class="lbl">Parcerias</span>
+      </button>
     </nav>
     <div class="sb-rodape">
       <span class="quem" id="quem">…</span>
@@ -478,7 +484,7 @@
   //   abre   = subnav que já vem expandida
   //   inicio = [view, sub] em que o painel abre
   // Atenção: isto só monta o menu. Quem barra o acesso aos dados é o RLS no banco.
-  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]',
+  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]',
     '#btn-fin','#subnav-fin','#btn-acao','#subnav-acao','#btn-contato','#subnav'];
   const PERFIS={
     admin:       {},
@@ -489,8 +495,10 @@
     escalas:     { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','escalas'], carregaTudo:false, ocultos:['[data-min="inscricoes"]'] },
     lider_ministerio: { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','escalas'], carregaTudo:false, ocultos:['[data-min="inscricoes"]'] },
     // conteúdo do site: no Batismo vê só a página de inscrição (foto e data), sem a lista de inscritos
-    site:        { itens:['[data-view="batismo"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]'],
-                   inicio:['banners'], carregaTudo:false, batismoSoPagina:true, ocultos:['[data-min="escalas"]'] }
+    site:        { itens:['[data-view="batismo"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]'],
+                   inicio:['banners'], carregaTudo:false, batismoSoPagina:true, ocultos:['[data-min="escalas"]'] },
+    // estabelecimento parceiro: só confere se a pessoa é membro ativo (busca por nome/CPF ou QR da carteirinha)
+    parceiro:    { itens:[], mostrar:['#nav-validar'], inicio:['validar'], carregaTudo:false }
   };
   let PERFIL={};
 
@@ -528,6 +536,8 @@
     if(view==='banners') renderBanners();
     if(view==='celulas') renderCelulas();
     if(view==='agenda') renderAgendaPainel();
+    if(view==='parcerias') renderParcerias();
+    if(view==='validar') renderValidar();
   }
 
   const card=(rot,num,agua)=>'<div class="card"><div class="rot">'+rot+'</div><div class="num'+(agua?' agua':'')+'">'+num+'</div></div>';
@@ -1447,7 +1457,7 @@ ${serve ? `
       renderBanners();
     });
   }
-  function fechaBanner(){ $('#bnBg').classList.remove('on'); }
+  function fechaBanner(){ paraLeitorQR(); $('#bnBg').classList.remove('on'); }   // também desliga a câmera do leitor de QR
   function abreBanner(b){
     const e=b||{ativo:true}, auto=!!(b&&b.auto);
     $('#bnBody').innerHTML=
@@ -1509,6 +1519,187 @@ ${serve ? `
     const {error}=await sb.from('banners').delete().eq('id',b.id);
     if(error){ alert('Erro: '+error.message); return; }
     fechaBanner(); renderBanners();
+  }
+
+  /* ===================== PARCERIAS (página parcerias.html) ===================== */
+  let PARCERIAS=[];
+  async function renderParcerias(){
+    $('#titulo').textContent='Parcerias';
+    $('#view').innerHTML='<div class="carregando">Carregando…</div>';
+    const {data,error}=await sb.from('parcerias').select('*').order('ordem').order('nome');
+    if(error){ $('#view').innerHTML='<div class="vazio">Rode o arquivo supabase/parcerias.sql no Supabase para editar as parcerias aqui.</div>'; return; }
+    PARCERIAS=data||[];
+    let html='<div class="cards">'+card('Parceiros no site',PARCERIAS.filter(p=>p.ativo).length,true)+card('Desligados',PARCERIAS.filter(p=>!p.ativo).length)+'</div>';
+    html+='<p class="view-sub">Estabelecimentos que aparecem na página <a href="parcerias.html" target="_blank" style="color:var(--agua)">Parcerias</a>, com os benefícios para membros Fonte. O membro apresenta a carteirinha para receber o benefício.</p>';
+    html+='<div class="min-barra" style="justify-content:flex-end;margin-top:18px"><button class="mini-btn go" id="pcNovo">+ Novo parceiro</button></div>';
+    if(!PARCERIAS.length) html+='<div class="tabela"><div class="vazio">Nenhum parceiro ainda.</div></div>';
+    PARCERIAS.forEach(p=>{
+      const ben=String(p.beneficios||'').split('\n').map(t=>t.trim()).filter(Boolean).join(' · ');
+      html+='<div class="bn-card'+(p.ativo?'':' off')+'">'+
+        (p.logo_url?'<img class="bn-thumb" src="'+esc(p.logo_url)+'" alt="" style="object-fit:contain;background:var(--breu)">':'<div class="bn-thumb vazio">sem logo</div>')+
+        '<div class="bn-info"><b>'+esc(p.nome)+'</b><div class="sub2">'+esc(p.periodo||'Sem período')+' · '+(p.ativo?'No site':'Desligado')+'</div>'+
+          (ben?'<div class="sub2">'+esc(ben)+'</div>':'')+'</div>'+
+        '<div class="bn-acoes"><label class="sw"><input type="checkbox" data-pc="'+p.id+'"'+(p.ativo?' checked':'')+'><span class="track"></span></label>'+
+          '<button class="mini-btn" data-pced="'+p.id+'">Editar</button>'+
+          '<button class="mini-btn warn" data-pcdel="'+p.id+'">Excluir</button></div>'+
+      '</div>';
+    });
+    $('#view').innerHTML=html;
+    $('#pcNovo').onclick=()=>abreParceria(null);
+    $$('#view [data-pced]').forEach(bt=> bt.onclick=()=>abreParceria(PARCERIAS.find(x=>x.id===bt.dataset.pced)));
+    $$('#view [data-pcdel]').forEach(bt=> bt.onclick=()=>excluirParceria(PARCERIAS.find(x=>x.id===bt.dataset.pcdel)));
+    $$('#view .sw input[data-pc]').forEach(cb=> cb.onchange=async()=>{
+      cb.disabled=true;
+      const {error}=await sb.from('parcerias').update({ativo:cb.checked}).eq('id',cb.dataset.pc);
+      if(error){ cb.checked=!cb.checked; cb.disabled=false; alert('Erro: '+error.message); return; }
+      renderParcerias();
+    });
+  }
+  // usa o mesmo modal dos banners (#bnBg)
+  function abreParceria(p){
+    const e=p||{ativo:true,ordem:(PARCERIAS.length+1)};
+    const fld=(id,rot,val,ph,extra)=>'<div class="fld"><label>'+rot+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+ph+'"'+(extra||'')+'></div>';
+    $('#bnBody').innerHTML=
+      '<h2>'+(p?'Editar parceiro':'Novo parceiro')+'</h2><div class="msub">Aparece na página Parcerias do site</div>'+
+      '<div class="f2">'+fld('pc-nome','Nome',e.nome,'Ex.: Baruc Autocar',' maxlength="80"')+fld('pc-cat','Categoria (opcional)',e.categoria,'Ex.: Seminovos',' maxlength="40"')+'</div>'+
+      '<div class="fld"><label>Benefícios para membros</label><textarea id="pc-ben" rows="3" maxlength="400" placeholder="Um benefício por linha">'+esc(e.beneficios||'')+'</textarea><div class="ithint">Aparecem no modal que abre no botão Ver mais.</div></div>'+
+      '<div class="fld"><label>Detalhes do benefício (opcional)</label><input id="pc-obs" maxlength="160" value="'+esc(e.observacao||'')+'" placeholder="Ex.: Na compra do seu seminovo."></div>'+
+      '<div class="f2">'+fld('pc-periodo','Período',e.periodo,'Ex.: Novembro de 2026',' maxlength="40"')+fld('pc-ordem','Ordem na página',e.ordem,'1',' type="number" min="0"')+'</div>'+
+      '<div class="f2">'+fld('pc-site','Site (opcional)',e.site,'https://…')+fld('pc-ig','Instagram (opcional)',e.instagram,'@perfil',' maxlength="40"')+'</div>'+
+      '<div class="f2">'+fld('pc-wa','WhatsApp (opcional)',e.whatsapp,'(11) 90000-0000',' maxlength="20" inputmode="tel"')+fld('pc-end','Endereço (opcional)',e.endereco,'Rua, número · bairro · cidade',' maxlength="120"')+'</div>'+
+      '<div class="fld"><label>Logo</label><input type="file" id="pc-logo" accept="image/*">'+
+        '<img class="bn-prev" id="pc-prev" alt="" style="object-fit:contain;background:var(--breu)"><div class="ithint" id="pc-logo-st">'+(e.logo_url?'Já tem logo. Escolha outra só se quiser trocar.':'De preferência PNG com fundo transparente. Até 5MB.')+'</div></div>'+
+      '<label class="chkline"><input type="checkbox" id="pc-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
+      '<div class="modal-actions"><button class="btn-primary" id="pc-salvar">Salvar</button><button class="btn-ghost" id="pc-cancelar">Cancelar</button>'+
+        (p?'<button class="btn-danger" id="pc-excluir">Excluir</button>':'')+'</div>';
+    const prev=$('#pc-prev');
+    if(e.logo_url){ prev.src=e.logo_url; prev.style.display='block'; }
+    $('#pc-logo').onchange=function(){ const f=this.files[0]; if(!f) return; prev.src=URL.createObjectURL(f); prev.style.display='block'; $('#pc-logo-st').textContent='Nova logo escolhida: '+f.name; };
+    $('#pc-cancelar').onclick=fechaBanner;
+    $('#pc-salvar').onclick=()=>salvarParceria(p);
+    if(p) $('#pc-excluir').onclick=()=>excluirParceria(p);
+    $('#bnBg').classList.add('on');
+  }
+  async function salvarParceria(p){
+    const v=id=>($('#'+id).value||'').trim();
+    const nome=v('pc-nome'), site=v('pc-site');
+    if(!nome){ alert('Preencha o nome.'); return; }
+    if(site && !/^https?:\/\//i.test(site)){ alert('O site precisa começar com https://'); return; }
+    const btn=$('#pc-salvar'); btn.disabled=true; btn.textContent='Salvando…';
+    try{
+      let url=p?p.logo_url:null;
+      const f=$('#pc-logo').files[0];
+      if(f){
+        if(!/^image\//.test(f.type)) throw new Error('Selecione uma imagem.');
+        if(f.size>5*1024*1024) throw new Error('Imagem muito grande (máx 5MB).');
+        btn.textContent='Enviando logo…';
+        const ext=(f.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'')||'png';
+        const path='parcerias/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+        const up=await sb.storage.from('banners').upload(path,f,{upsert:false,contentType:f.type});
+        if(up.error) throw up.error;
+        url=sb.storage.from('banners').getPublicUrl(path).data.publicUrl;
+      }
+      const reg={nome, categoria:v('pc-cat')||null, beneficios:v('pc-ben')||null, observacao:v('pc-obs')||null, periodo:v('pc-periodo')||null,
+        ordem:parseInt(v('pc-ordem'),10)||0, site:site||null, instagram:v('pc-ig').replace(/^@/,'')||null,
+        whatsapp:v('pc-wa')||null, endereco:v('pc-end')||null, logo_url:url, ativo:$('#pc-ativo').checked};
+      const {error}= p ? await sb.from('parcerias').update(reg).eq('id',p.id) : await sb.from('parcerias').insert(reg);
+      if(error) throw error;
+      fechaBanner(); renderParcerias();
+    }catch(err){ alert('Não foi possível salvar: '+(err.message||err)); btn.disabled=false; btn.textContent='Salvar'; }
+  }
+  async function excluirParceria(p){
+    if(!confirm('Excluir o parceiro "'+p.nome+'"? Isso não pode ser desfeito. Se for só por um tempo, use a chave para desligar.')) return;
+    const {error}=await sb.from('parcerias').delete().eq('id',p.id);
+    if(error){ alert('Erro: '+error.message); return; }
+    fechaBanner(); renderParcerias();
+  }
+
+  /* ===================== VALIDAR MEMBRO (perfil parceiro) ===================== */
+  // Busca por nome/CPF e leitura do QR da carteirinha. As rpcs só devolvem nome, foto e situação.
+  const MES_PT=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  let QR_STREAM=null, QR_LENDO=false;
+  function situacaoPill(m){ return m.valido?'<span class="pill ok">Ativo</span>':'<span class="pill pend">'+esc(m.motivo||'Não validado')+'</span>'; }
+  function iniciaisDe(n){ return String(n||'?').trim().split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase(); }
+  function renderValidar(){
+    $('#titulo').textContent='Membros';
+    $('#view').innerHTML=
+      '<p class="view-sub">Confira se a pessoa é membro ativo da Igreja Fonte antes de aplicar o benefício.</p>'+
+      '<div class="min-barra" style="gap:10px;flex-wrap:wrap;margin:16px 0">'+
+        '<input id="vl-busca" placeholder="Buscar por nome ou CPF" autocomplete="off" style="flex:1;min-width:220px;background:var(--breu);border:var(--borda);border-radius:11px;padding:12px 14px;color:var(--luz);font:inherit">'+
+        '<button class="mini-btn" id="vl-buscar">Buscar</button>'+
+        '<button class="mini-btn go" id="vl-qr">Validar QR code</button>'+
+      '</div><div id="vl-res"></div>';
+    const buscar=async()=>{
+      const t=$('#vl-busca').value.trim(), res=$('#vl-res');
+      const dig=t.replace(/\D/g,'');
+      if(dig.length!==11 && t.replace(/[^\p{L}]/gu,'').length<3){ res.innerHTML='<div class="tabela"><div class="vazio">Digite pelo menos 3 letras do nome ou o CPF completo.</div></div>'; return; }
+      res.innerHTML='<div class="carregando">Buscando…</div>';
+      const {data,error}=await sb.rpc('parceiro_busca_membro',{p_termo:t});
+      if(error){ res.innerHTML='<div class="tabela"><div class="vazio">Não foi possível buscar: '+esc(error.message)+'</div></div>'; return; }
+      const lista=data||[];
+      if(!lista.length){ res.innerHTML='<div class="tabela"><div class="vazio">Nenhum membro encontrado.</div></div>'; return; }
+      res.innerHTML=lista.map(m=>'<div class="bn-card">'+
+        (m.foto_url?'<img class="bn-thumb" src="'+esc(m.foto_url)+'" alt="" style="width:56px;height:56px;border-radius:12px">':'<div class="bn-thumb vazio" style="width:56px;height:56px;border-radius:12px">'+esc(iniciaisDe(m.nome))+'</div>')+
+        '<div class="bn-info"><b>'+esc(m.nome)+'</b><div class="sub2">'+esc(m.codigo||'')+'</div></div>'+
+        '<div class="bn-acoes">'+situacaoPill(m)+'</div></div>').join('');
+    };
+    $('#vl-buscar').onclick=buscar;
+    $('#vl-busca').onkeydown=e=>{ if(e.key==='Enter') buscar(); };
+    $('#vl-qr').onclick=abreLeitorQR;
+  }
+  function carregaJsQR(){
+    if(window.jsQR) return Promise.resolve();
+    return new Promise((ok,erro)=>{ const sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; sc.onload=ok; sc.onerror=erro; document.head.appendChild(sc); });
+  }
+  function paraLeitorQR(){ QR_LENDO=false; if(QR_STREAM){ QR_STREAM.getTracks().forEach(t=>t.stop()); QR_STREAM=null; } }
+  async function abreLeitorQR(){
+    $('#bnBody').innerHTML='<h2>Validar QR code</h2><div class="msub">Aponte a câmera para o QR da carteirinha de membro</div>'+
+      '<div style="position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:1/1;margin-top:12px">'+
+        '<video id="vl-video" playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>'+
+        '<div style="position:absolute;inset:16%;border:3px solid var(--agua);border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35)"></div>'+
+        '<div id="vl-cam" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--cinza-claro);font-size:.9rem">Abrindo a câmera…</div>'+
+      '</div>'+
+      '<div class="ithint" style="margin-top:10px">Se a câmera não ler, busque a pessoa pelo nome ou CPF.</div>';
+    $('#bnBg').classList.add('on');
+    try{
+      await carregaJsQR();
+      QR_STREAM=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+      const v=$('#vl-video'); v.srcObject=QR_STREAM; await v.play();
+      $('#vl-cam').style.display='none'; QR_LENDO=true;
+      const cv=document.createElement('canvas'), cx=cv.getContext('2d',{willReadFrequently:true});
+      const ler=()=>{
+        if(!QR_LENDO || !$('#bnBg').classList.contains('on')){ paraLeitorQR(); return; }
+        if(v.readyState===v.HAVE_ENOUGH_DATA){
+          cv.width=v.videoWidth; cv.height=v.videoHeight; cx.drawImage(v,0,0,cv.width,cv.height);
+          const img=cx.getImageData(0,0,cv.width,cv.height), qr=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+          if(qr && qr.data){ paraLeitorQR(); mostraValidacao(qr.data); return; }
+        }
+        requestAnimationFrame(ler);
+      };
+      requestAnimationFrame(ler);
+    }catch(e){
+      paraLeitorQR();
+      const c=$('#vl-cam'); if(c) c.textContent='Não foi possível abrir a câmera. Libere o acesso à câmera no navegador.';
+    }
+  }
+  async function mostraValidacao(cod){
+    $('#bnBody').innerHTML='<div class="carregando">Conferindo…</div>';
+    const {data,error}=await sb.rpc('parceiro_valida_membro',{p_cod:cod});
+    const d=error?{valido:false,motivo:'Não foi possível conferir agora. Tente de novo.'}:(data||{});
+    let desde='';
+    if(d.membro_desde){ const p=String(d.membro_desde).split('-'); desde=(MES_PT[parseInt(p[1],10)-1]||'')+' de '+p[0]; }
+    const cor=d.valido?'#5ed39a':'#ff7a7a';
+    $('#bnBody').innerHTML='<div style="text-align:center;padding:6px 0">'+
+      (d.nome?(d.foto_url?'<img src="'+esc(d.foto_url)+'" alt="" style="width:120px;height:120px;border-radius:18px;object-fit:cover;margin:0 auto 12px;display:block">':'<div style="width:120px;height:120px;border-radius:18px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:var(--breu);color:var(--agua);font:800 2.4rem var(--display,inherit)">'+esc(iniciaisDe(d.nome))+'</div>'):'')+
+      '<div style="font-size:1.5rem;font-weight:800;color:'+cor+'">'+(d.valido?'✓ Membro ativo':'✕ Não validado')+'</div>'+
+      (d.nome?'<div style="font-size:1.15rem;font-weight:600;margin-top:4px">'+esc(d.nome)+'</div>':'')+
+      (d.valido&&desde?'<div class="sub2">Membro desde '+esc(desde)+'</div>':'')+
+      (!d.valido&&d.motivo?'<div class="sub2">'+esc(d.motivo)+'</div>':'')+
+      (d.codigo?'<div class="sub2">'+esc(d.codigo)+'</div>':'')+
+      (d.valido?'<div class="ithint" style="margin-top:12px">Confira se a foto e o nome são da pessoa que está apresentando a carteirinha.</div>':'')+
+      '<div class="modal-actions" style="justify-content:center"><button class="btn-primary" id="vl-outro">Validar outro QR</button><button class="btn-ghost" id="vl-fechar">Fechar</button></div></div>';
+    $('#vl-outro').onclick=abreLeitorQR;
+    $('#vl-fechar').onclick=fechaBanner;
   }
 
   /* ===================== CÉLULAS (mapa e lista do site) ===================== */
@@ -2662,6 +2853,7 @@ ${serve ? `
       });
       if(perf.abre){ var sn=$(perf.abre); if(sn){ sn.classList.add('aberto'); if(sn.previousElementSibling) sn.previousElementSibling.classList.add('aberto'); } }
       (perf.ocultos||[]).forEach(function(sel){ var e=$(sel); if(e) e.style.display='none'; });
+      (perf.mostrar||[]).forEach(function(sel){ var e=$(sel); if(e) e.style.display=''; });
     }
     const inicio = perf.inicio || [window.innerWidth<=860 ? 'membros' : 'batismo'];
     irPara(inicio[0], inicio[1]);

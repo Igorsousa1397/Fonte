@@ -1,0 +1,220 @@
+<!--
+  IGREJA FONTE · Cajamar — Parcerias
+  Estabelecimentos parceiros com benefícios para membros (tabela parcerias, editável no painel).
+  Mesmo design system do site (dark + acento água).
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parcerias · Igreja Fonte</title>
+<meta name="description" content="Estabelecimentos parceiros da Igreja Fonte com benefícios exclusivos para membros.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --abismo:#0a0a0b; --breu:#101013; --grafite:#17171b; --grafite-2:#1f1f25;
+    --neblina:#2a2a31; --cinza:#8b8b95; --cinza-claro:#b8b8c0; --luz:#f5f5f6;
+    --agua:#7ad4cf; --agua-forte:#4bb6b0; --agua-fundo:rgba(122,212,207,.10);
+    --display:"Bricolage Grotesque", system-ui, sans-serif;
+    --corpo:"Inter", system-ui, sans-serif;
+    --raio:16px; --raio-sm:11px; --borda:1px solid var(--neblina); --largura:960px;
+    --logo:url('assets/fonte-logo.png');
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--abismo);color:var(--luz);font-family:var(--corpo);line-height:1.6;
+       -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+  ::selection{background:var(--agua);color:#04201f}
+  .wrap{max-width:var(--largura);margin:0 auto;padding:0 22px}
+
+  header{position:sticky;top:0;z-index:20;background:rgba(10,10,11,.78);
+         backdrop-filter:saturate(140%) blur(14px);border-bottom:var(--borda)}
+  .nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:64px;max-width:var(--largura);margin:0 auto;padding:0 22px}
+  .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--cinza-claro);font-weight:500;grid-column:1;justify-self:start}
+  .voltar:hover{color:var(--luz)}
+  .marca{grid-column:2;justify-self:center;display:inline-flex;align-items:center}
+  .marca-logo{background:var(--logo) center/contain no-repeat;width:100px;height:50px}
+
+  .hero{padding:46px 0 8px}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cinza);font-weight:600}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,7vw,3.4rem);letter-spacing:-.03em;line-height:1;margin:14px 0 8px}
+  .intro{color:var(--cinza-claro);margin-top:14px;font-size:1.02rem;max-width:640px}
+
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin:34px 0 60px}
+  .parceiro{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden;display:flex;flex-direction:column;
+            align-items:center;text-align:center;padding:26px 22px 24px;gap:14px;position:relative;
+            opacity:0;transform:translateY(18px);animation:entra .6s cubic-bezier(.2,.8,.2,1) forwards;
+            transition:border-color .25s,transform .25s,box-shadow .25s}
+  .parceiro:hover{border-color:var(--agua-forte);transform:translateY(-4px);box-shadow:0 18px 40px -22px rgba(122,212,207,.45)}
+  @keyframes entra{to{opacity:1;transform:none}}
+  .parceiro .logo{height:150px;width:100%;display:flex;align-items:center;justify-content:center}
+  .parceiro .logo img{max-height:140px;max-width:85%;object-fit:contain;transition:transform .35s}
+  .parceiro:hover .logo img{transform:scale(1.05)}
+  .ini{font-family:var(--display);font-weight:800;font-size:2.6rem;color:var(--agua)}
+  .chip{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--neblina);border-radius:100px;
+        padding:5px 13px;font-size:.78rem;color:var(--agua);background:var(--agua-fundo);font-weight:600}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--agua);box-shadow:0 0 0 4px var(--agua-fundo);animation:pulsa 1.8s infinite}
+  @keyframes pulsa{50%{box-shadow:0 0 0 7px rgba(122,212,207,0)}}
+  .rot{font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--cinza-claro);font-weight:600}
+  .ver{margin-top:4px;background:var(--luz);color:#0a0a0b;border:none;border-radius:100px;padding:12px 26px;font:600 .95rem var(--corpo);
+       cursor:pointer;position:relative;transition:transform .15s,background .2s}
+  .ver:hover{background:#fff;transform:scale(1.04)}
+  .ver:active{transform:scale(.96)}
+  .vazio{border:var(--borda);border-radius:var(--raio);padding:40px 22px;text-align:center;color:var(--cinza);grid-column:1/-1}
+
+  /* explosão do "Ver mais" */
+  .faisca{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:60;will-change:transform,opacity}
+  .onda{position:fixed;width:20px;height:20px;border-radius:50%;border:2px solid var(--agua);pointer-events:none;z-index:59;
+        transform:translate(-50%,-50%) scale(0);animation:onda .6s ease-out forwards}
+  @keyframes onda{to{transform:translate(-50%,-50%) scale(14);opacity:0}}
+
+  /* modal do benefício */
+  .modal-bg{position:fixed;inset:0;z-index:50;background:rgba(5,5,7,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;
+            padding:18px;opacity:0;pointer-events:none;transition:opacity .3s}
+  .modal-bg.on{opacity:1;pointer-events:auto}
+  .modal{width:100%;max-width:440px;max-height:90vh;overflow:auto;background:var(--grafite);border:1px solid var(--agua-forte);border-radius:22px;
+         padding:28px 24px 24px;text-align:center;position:relative;transform:scale(.6) rotate(-3deg);opacity:0;
+         box-shadow:0 30px 80px -30px rgba(122,212,207,.5)}
+  .modal-bg.on .modal{animation:abre .55s cubic-bezier(.18,1.4,.4,1) forwards}
+  @keyframes abre{to{transform:none;opacity:1}}
+  .modal .x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:var(--borda);background:var(--breu);color:var(--cinza-claro);
+            cursor:pointer;font-size:1.1rem;line-height:1}
+  .modal .mlogo{max-height:110px;max-width:70%;margin:0 auto 10px;object-fit:contain}
+  .modal h2{font-family:var(--display);font-size:1.5rem;font-weight:800;line-height:1.15}
+  .modal .cat{color:var(--cinza);font-size:.88rem;margin:2px 0 12px}
+  .beneficios{list-style:none;display:flex;flex-direction:column;gap:10px;margin:18px 0 6px;text-align:left}
+  .beneficios li{display:flex;gap:12px;align-items:center;background:var(--agua-fundo);border:1px solid rgba(122,212,207,.25);border-radius:12px;
+                 padding:12px 14px;font-weight:600;font-size:1.02rem;opacity:0;transform:translateX(-12px)}
+  .modal-bg.on .beneficios li{animation:entraLado .45s ease forwards}
+  @keyframes entraLado{to{opacity:1;transform:none}}
+  .beneficios svg{flex:0 0 auto;color:var(--agua)}
+  .obs{color:var(--cinza-claro);font-size:.9rem;margin-top:10px}
+  .end{color:var(--cinza);font-size:.86rem;margin-top:12px}
+  .acoes{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:18px}
+  .acoes a{display:inline-flex;align-items:center;gap:7px;border:var(--borda);border-radius:100px;padding:9px 16px;
+           font-size:.88rem;color:var(--cinza-claro);transition:border-color .2s,color .2s}
+  .acoes a:hover{border-color:var(--agua-forte);color:var(--luz)}
+  .carteira{margin-top:18px;padding-top:14px;border-top:var(--borda);color:var(--cinza);font-size:.82rem}
+  @media(prefers-reduced-motion:reduce){.parceiro,.modal,.beneficios li{animation:none!important;opacity:1;transform:none}}
+
+  .aviso-legal{border-top:var(--borda);padding:22px 0 30px;color:var(--cinza);font-size:.84rem;line-height:1.55}
+  footer{border-top:var(--borda);background:var(--breu)}
+  .foot{max-width:var(--largura);margin:0 auto;padding:26px 22px;display:flex;justify-content:space-between;
+        gap:16px;flex-wrap:wrap;color:var(--cinza);font-size:.82rem}
+  .foot .dev-cred{color:var(--agua)}
+</style>
+
+<header>
+  <div class="nav">
+    <a class="voltar" href="index.html"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4l-6 5 6 5"/></svg> Voltar ao site</a>
+    <a class="marca" href="index.html"><span class="marca-logo" role="img" aria-label="Igreja Fonte"></span></a>
+  </div>
+</header>
+
+<main class="wrap hero">
+  <span class="eyebrow">Benefícios para membros</span>
+  <h1>Parcerias</h1>
+  <p class="intro"><b style="color:var(--luz);font-weight:600">Shalom!</b> Estabelecimentos parceiros da Igreja Fonte oferecem benefícios exclusivos para os membros da nossa igreja. Toque em <b style="color:var(--luz);font-weight:600">Ver mais</b> para descobrir o benefício.</p>
+
+  <div class="grade" id="grade"><div class="vazio">Carregando parceiros…</div></div>
+
+  <p class="aviso-legal">Esses benefícios são oferecidos por meio da parceria desses estabelecimentos com a Igreja Fonte. No entanto, a igreja não tem nenhuma responsabilidade pelos serviços prestados nem pela entrega dos produtos.</p>
+</main>
+
+<div class="modal-bg" id="mbg" role="dialog" aria-modal="true" aria-labelledby="mtitulo">
+  <div class="modal" id="modal"></div>
+</div>
+
+<footer>
+  <div class="foot">
+    <span>© 2026 Igreja Apostólica Fonte · Desenvolvido por <span class="dev-cred">iOS Tech</span></span>
+    <a href="index.html">Voltar ao site ↗</a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase.js"></script>
+<script>
+  // usado se a tabela ainda não existir (antes de rodar supabase/parcerias.sql)
+  var PADRAO=[{nome:'Baruc Autocar',categoria:'Seminovos',logo_url:'assets/parceiros/baruc.png',
+    beneficios:'Tanque cheio\nDocumentação grátis',periodo:'Novembro de 2026',observacao:'Na compra do seu seminovo.',site:'https://barucautocar.com.br/',
+    instagram:'baruc.autocar',whatsapp:'(11) 4448-5734',endereco:'Av. Ten. Marques, 4232 · Polvilho · Cajamar'}];
+
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  var CHECK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  var LISTA=[];
+
+  function iniciais(n){ return String(n||'?').trim().split(/\s+/).map(function(x){return x[0];}).slice(0,2).join('').toUpperCase(); }
+  function card(p,i){
+    return '<article class="parceiro" style="animation-delay:'+(i*0.12)+'s">'+
+      '<div class="logo">'+(p.logo_url?'<img src="'+esc(p.logo_url)+'" alt="'+esc(p.nome)+'" loading="lazy">':'<span class="ini">'+esc(iniciais(p.nome))+'</span>')+'</div>'+
+      (p.periodo?'<span class="chip"><span class="dot"></span>'+esc(p.periodo)+'</span>':'')+
+      '<div class="rot">Para membros Fonte</div>'+
+      '<button class="ver" data-i="'+i+'">Ver mais</button>'+
+    '</article>';
+  }
+
+  // explosão de faíscas saindo do botão
+  function explode(el){
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var r=el.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+    var onda=document.createElement('div'); onda.className='onda'; onda.style.left=cx+'px'; onda.style.top=cy+'px';
+    document.body.appendChild(onda); setTimeout(function(){onda.remove();},650);
+    var cores=['#7ad4cf','#4bb6b0','#f5f5f6','#b8f0ec','#ffffff'];
+    for(var k=0;k<34;k++){
+      var f=document.createElement('span'); f.className='faisca';
+      var tam=4+Math.random()*8; f.style.width=f.style.height=tam+'px';
+      f.style.background=cores[k%cores.length]; f.style.left=(cx-tam/2)+'px'; f.style.top=(cy-tam/2)+'px';
+      document.body.appendChild(f);
+      var ang=Math.random()*Math.PI*2, dist=80+Math.random()*170;
+      f.animate([{transform:'translate(0,0) scale(1)',opacity:1},
+                 {transform:'translate('+Math.cos(ang)*dist+'px,'+(Math.sin(ang)*dist+40)+'px) scale(0)',opacity:0}],
+                {duration:600+Math.random()*450,easing:'cubic-bezier(.1,.8,.3,1)',fill:'forwards'});
+      (function(n){setTimeout(function(){n.remove();},1100);})(f);
+    }
+  }
+
+  function abreModal(p){
+    var ben=String(p.beneficios||'').split('\n').map(function(t){return t.trim();}).filter(Boolean);
+    var wa=String(p.whatsapp||'').replace(/\D/g,''); if(wa && wa.length<=11) wa='55'+wa;
+    var ig=String(p.instagram||'').replace(/^@/,'').trim();
+    var site=/^https?:\/\//i.test(p.site||'')?p.site:'';
+    document.getElementById('modal').innerHTML=
+      '<button class="x" id="mx" aria-label="Fechar">✕</button>'+
+      (p.logo_url?'<img class="mlogo" src="'+esc(p.logo_url)+'" alt="">':'')+
+      '<h2 id="mtitulo">'+esc(p.nome)+'</h2>'+(p.categoria?'<div class="cat">'+esc(p.categoria)+'</div>':'')+
+      (p.periodo?'<span class="chip"><span class="dot"></span>'+esc(p.periodo)+'</span>':'')+
+      (ben.length?'<ul class="beneficios">'+ben.map(function(b,i){return '<li style="animation-delay:'+(0.25+i*0.12)+'s">'+CHECK+'<span>'+esc(b)+'</span></li>';}).join('')+'</ul>':'')+
+      (p.observacao?'<p class="obs">'+esc(p.observacao)+'</p>':'')+
+      (p.endereco?'<p class="end">'+esc(p.endereco)+'</p>':'')+
+      '<div class="acoes">'+
+        (site?'<a href="'+esc(site)+'" target="_blank" rel="noopener">Site</a>':'')+
+        (ig?'<a href="https://instagram.com/'+encodeURIComponent(ig)+'" target="_blank" rel="noopener">@'+esc(ig)+'</a>':'')+
+        (wa?'<a href="https://wa.me/'+wa+'" target="_blank" rel="noopener">WhatsApp</a>':'')+
+      '</div>'+
+      '<p class="carteira">Benefício exclusivo para membros Fonte, mediante apresentação da carteirinha de membro.</p>';
+    var bg=document.getElementById('mbg'); bg.classList.remove('on'); void bg.offsetWidth; bg.classList.add('on');
+    document.getElementById('mx').onclick=fechaModal;
+  }
+  function fechaModal(){ document.getElementById('mbg').classList.remove('on'); }
+  document.getElementById('mbg').addEventListener('click',function(e){ if(e.target.id==='mbg') fechaModal(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') fechaModal(); });
+  document.getElementById('grade').addEventListener('click',function(e){
+    var b=e.target.closest('.ver'); if(!b) return;
+    explode(b); setTimeout(function(){ abreModal(LISTA[+b.dataset.i]); },260);
+  });
+
+  (async function(){
+    var lista=PADRAO;
+    try{
+      var r=await sb.from('parcerias').select('*').eq('ativo',true).order('ordem').order('nome');
+      if(!r.error) lista=r.data||[];
+    }catch(e){}
+    LISTA=lista;
+    document.getElementById('grade').innerHTML=lista.length?lista.map(card).join(''):
+      '<div class="vazio">Em breve, novos parceiros por aqui.</div>';
+  })();
+</script>
