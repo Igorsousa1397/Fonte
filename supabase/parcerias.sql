@@ -54,3 +54,8 @@ where not exists (select 1 from public.parcerias where nome = 'My Life Decor');
 insert into public.parcerias (nome, categoria, logo_url, beneficios, ordem)
 select 'Camarote do Corte', 'Barbearia', 'assets/parceiros/camarote-do-corte.png', 'Benefícios a definir', 3
 where not exists (select 1 from public.parcerias where nome = 'Camarote do Corte');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, ordem)
+select 'Plant', 'Jardinagem e Paisagismo', 'assets/parceiros/plant.jpg',
+       E'Avaliação gratuita\n10% de desconto', 'Na contratação do serviço.', 'Novembro de 2026', 4
+where not exists (select 1 from public.parcerias where nome = 'Plant');
