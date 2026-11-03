@@ -42,7 +42,7 @@ where not exists (select 1 from public.parcerias where nome = 'Baruc Autocar');
 
 -- banner no carrossel (sem data: fica até ser desligado na aba Banners)
 insert into public.banners (titulo, descricao, imagem_url, link, cta, ativo)
-select 'Parcerias Fonte', 'Benefícios exclusivos para membros da Fonte em estabelecimentos parceiros.',
+select 'Parceiros Fonte', 'Benefícios exclusivos para membros da Fonte em estabelecimentos parceiros.',
        'assets/banners/parcerias.jpg', 'parcerias.html', 'Ver benefícios', true
 where not exists (select 1 from public.banners where link = 'parcerias.html');
 
@@ -70,3 +70,6 @@ update public.parcerias set categoria = 'Automóveis'       where nome = 'Baruc 
 update public.parcerias set categoria = 'Casa e Decoração' where nome = 'My Life Decor';
 update public.parcerias set categoria = 'Beleza'           where nome = 'Camarote do Corte';
 update public.parcerias set categoria = 'Paisagismo'       where nome = 'Plant';
+
+-- nome do banner
+update public.banners set titulo = 'Parceiros Fonte' where link = 'parcerias.html';
