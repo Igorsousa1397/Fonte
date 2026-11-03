@@ -59,3 +59,8 @@ insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao,
 select 'Plant', 'Jardinagem e Paisagismo', 'assets/parceiros/plant.jpg',
        E'Avaliação gratuita\n10% de desconto', 'Na contratação do serviço.', 'Novembro de 2026', 4
 where not exists (select 1 from public.parcerias where nome = 'Plant');
+
+-- contatos (também atualiza se os parceiros já tiverem sido cadastrados)
+update public.parcerias set instagram = 'mylifedecor', whatsapp = '(11) 98234-1714' where nome = 'My Life Decor';
+update public.parcerias set site = 'https://camarotedocortejc.com/', whatsapp = '(11) 97435-8961' where nome = 'Camarote do Corte';
+update public.parcerias set site = 'https://plantjardinagem.neocities.org/', whatsapp = '(11) 97179-2236' where nome = 'Plant';
