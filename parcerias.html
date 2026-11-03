@@ -43,6 +43,29 @@
   h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,7vw,3.4rem);letter-spacing:-.03em;line-height:1;margin:14px 0 8px}
   .intro{color:var(--cinza-claro);margin-top:14px;font-size:1.02rem;max-width:640px}
 
+  .explica{margin-top:26px;border:var(--borda);border-radius:var(--raio);background:linear-gradient(135deg,var(--grafite) 0%,#10201f 100%);overflow:hidden;position:relative}
+  .ex-trilho{display:flex;transition:transform .6s cubic-bezier(.2,.8,.2,1);touch-action:pan-y}
+  .ex-slide{flex:0 0 100%;display:flex;gap:22px;align-items:center;padding:30px 30px 18px}
+  .ex-ic{flex:0 0 auto;width:64px;height:64px;border-radius:18px;background:var(--agua-fundo);border:1px solid rgba(122,212,207,.3);color:var(--agua);
+         display:flex;align-items:center;justify-content:center}
+  .ex-slide.on .ex-ic{animation:salta .7s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes salta{0%{transform:scale(.5) rotate(-12deg);opacity:0}100%{transform:none;opacity:1}}
+  .ex-slide.on h2,.ex-slide.on p,.ex-slide.on .ex-num{animation:sobe .6s ease both}
+  .ex-slide.on h2{animation-delay:.08s}.ex-slide.on p{animation-delay:.16s}
+  @keyframes sobe{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .ex-num{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--agua);font-weight:600}
+  .ex-slide h2{font-family:var(--display);font-size:1.45rem;font-weight:800;line-height:1.15;margin:4px 0 6px}
+  .ex-slide p{color:var(--cinza-claro);font-size:.98rem;max-width:560px}
+  .ex-slide p b{color:var(--luz)}
+  .ex-slide p a{color:var(--agua);font-weight:600}
+  .ex-nav{display:flex;justify-content:space-between;align-items:center;padding:0 30px 20px}
+  .ex-dots{display:flex;gap:6px}
+  .ex-dots button{width:22px;height:4px;border-radius:4px;border:none;background:var(--neblina);cursor:pointer;padding:0;transition:width .3s,background .3s}
+  .ex-dots button.on{width:40px;background:var(--agua)}
+  .ex-setas{display:flex;gap:8px}
+  .ex-setas button{width:36px;height:36px;border-radius:50%;border:var(--borda);background:var(--breu);color:var(--luz);font-size:1.3rem;line-height:1;cursor:pointer}
+  .ex-setas button:hover{border-color:var(--agua-forte)}
+  @media(max-width:560px){.ex-slide{flex-direction:column;align-items:flex-start;gap:14px;padding:24px 22px 14px}.ex-nav{padding:0 22px 18px}}
   .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin:34px 0 60px}
   .parceiro{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden;display:flex;flex-direction:column;
             align-items:center;text-align:center;padding:26px 22px 24px;gap:14px;position:relative;
@@ -117,7 +140,34 @@
 <main class="wrap hero">
   <span class="eyebrow">Benefícios para membros</span>
   <h1>Parcerias</h1>
-  <p class="intro"><b style="color:var(--luz);font-weight:600">Shalom!</b> Estabelecimentos parceiros da Igreja Fonte oferecem benefícios exclusivos para os membros da nossa igreja. Toque em <b style="color:var(--luz);font-weight:600">Ver mais</b> para descobrir o benefício.</p>
+  <div class="explica" id="explica" aria-roledescription="carrossel" aria-label="O que são as parcerias">
+    <div class="ex-trilho" id="exTrilho">
+      <div class="ex-slide">
+        <div class="ex-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/></svg></div>
+        <div><span class="ex-num">01 · O que é</span><h2>Benefícios de quem é da casa</h2>
+        <p>Estabelecimentos parceiros da Igreja Fonte oferecem descontos e vantagens exclusivas para os membros da igreja.</p></div>
+      </div>
+      <div class="ex-slide">
+        <div class="ex-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M13 10h5M13 14h3"/></svg></div>
+        <div><span class="ex-num">02 · Como usar</span><h2>Mostre sua carteirinha</h2>
+        <p>No estabelecimento, apresente a carteirinha de membro Fonte. O parceiro lê o QR code e confirma que você é membro ativo.</p></div>
+      </div>
+      <div class="ex-slide">
+        <div class="ex-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg></div>
+        <div><span class="ex-num">03 · Todo mês</span><h2>Benefícios que se renovam</h2>
+        <p>Os benefícios podem mudar a cada mês. Toque em <b>Ver mais</b> em cada parceiro para conhecer a oferta da vez.</p></div>
+      </div>
+      <div class="ex-slide">
+        <div class="ex-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/><path d="M3 9h18"/></svg></div>
+        <div><span class="ex-num">04 · Seja parceiro</span><h2>Tem um negócio?</h2>
+        <p>Ofereça um benefício para a família Fonte e apareça aqui. <a href="index.html#contato">Fale com a gente</a>.</p></div>
+      </div>
+    </div>
+    <div class="ex-nav">
+      <div class="ex-dots" id="exDots"></div>
+      <div class="ex-setas"><button id="exAnt" aria-label="Anterior">‹</button><button id="exProx" aria-label="Próximo">›</button></div>
+    </div>
+  </div>
 
   <div class="grade" id="grade"><div class="vazio">Carregando parceiros…</div></div>
 
@@ -157,7 +207,6 @@
     return '<article class="parceiro" style="animation-delay:'+(i*0.12)+'s">'+
       '<div class="logo">'+(p.logo_url?'<img src="'+esc(p.logo_url)+'" alt="'+esc(p.nome)+'" loading="lazy">':'<span class="ini">'+esc(iniciais(p.nome))+'</span>')+'</div>'+
       (p.periodo?'<span class="chip"><span class="dot"></span>'+esc(p.periodo)+'</span>':'')+
-      '<div class="rot">Para membros Fonte</div>'+
       '<button class="ver" data-i="'+i+'">Ver mais</button>'+
     '</article>';
   }
@@ -211,6 +260,26 @@
     var b=e.target.closest('.ver'); if(!b) return;
     explode(b); setTimeout(function(){ abreModal(LISTA[+b.dataset.i]); },260);
   });
+
+  // carrossel "o que são as parcerias": troca sozinho, pausa no toque/mouse, arrasta no celular
+  (function(){
+    var tr=document.getElementById('exTrilho'), sl=tr.children, n=sl.length, i=0, timer=null, dots=document.getElementById('exDots');
+    for(var k=0;k<n;k++){ var d=document.createElement('button'); d.setAttribute('aria-label','Ir para '+(k+1)); (function(k){d.onclick=function(){vai(k);};})(k); dots.appendChild(d); }
+    function vai(k){
+      i=(k+n)%n; tr.style.transform='translateX('+(-100*i)+'%)';
+      for(var j=0;j<n;j++){ sl[j].classList.toggle('on',j===i); dots.children[j].classList.toggle('on',j===i); }
+      reinicia();
+    }
+    function reinicia(){ clearInterval(timer); timer=setInterval(function(){vai(i+1);},6000); }
+    document.getElementById('exProx').onclick=function(){vai(i+1);};
+    document.getElementById('exAnt').onclick=function(){vai(i-1);};
+    var box=document.getElementById('explica'), x0=null;
+    box.addEventListener('mouseenter',function(){clearInterval(timer);});
+    box.addEventListener('mouseleave',reinicia);
+    box.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;clearInterval(timer);},{passive:true});
+    box.addEventListener('touchend',function(e){ if(x0===null) return; var dx=e.changedTouches[0].clientX-x0; if(Math.abs(dx)>40) vai(i+(dx<0?1:-1)); else reinicia(); x0=null; });
+    vai(0);
+  })();
 
   (async function(){
     var lista=PADRAO;
