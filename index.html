@@ -492,8 +492,15 @@
     .cel-painel.poucas .cel-mais{display:none}
     #mapa{height:440px}
   }
+  /* telas médias: o menu de cima aperta para caber sem quebrar linha */
+  .links a{white-space:nowrap}
+  @media(max-width:1180px) and (min-width:961px){
+    .links{gap:14px}
+    .links a{font-size:.82rem}
+  }
   /* mobile (menu vira gaveta) */
-  @media(max-width:860px){
+  /* menu vira gaveta (antes do resto do layout mobile, para o menu de cima não apertar) */
+  @media(max-width:960px){
     .nav-left,.nav-right{display:none}
     .mlinks{display:flex;position:fixed;inset:66px 0 auto 0;flex-direction:column;gap:0;background:var(--breu);
            border-bottom:var(--borda);padding:8px 22px 18px;transform:translateY(-170%);
@@ -507,6 +514,8 @@
     .mlinks .btn{margin-top:14px;justify-content:center}
     .menu-btn{display:block}
     .nav-live-mobile{display:inline-flex;grid-column:3;justify-self:end;padding:9px 15px;font-size:.85rem}
+  }
+  @media(max-width:860px){
     .sec{padding:60px 0}
     .cultos,.insc-grid,.templos{grid-template-columns:1fr}
     .valores{grid-template-columns:1fr}
@@ -558,6 +567,7 @@
       <a href="#templos">Templos</a>
       <a href="#celulas">Células</a>
       <a href="acao-social.html">Ação Social</a>
+      <a href="parcerias.html">Parcerias</a>
     </nav>
     <a class="marca" href="#topo"><span class="marca-logo" role="img" aria-label="Igreja Fonte"></span></a>
     <nav class="links nav-right">
@@ -577,9 +587,9 @@
     <a href="#templos">Templos</a>
     <a href="#celulas">Células</a>
     <a href="acao-social.html">Ação Social</a>
+    <a href="parcerias.html">Parcerias</a>
     <a href="galeria.html">Fotos</a>
     <a href="batismo.html">Batismo</a>
-    <a href="parcerias.html">Parcerias</a>
     <a href="envelope.html">Envelope virtual</a>
     <a href="#contribuir">Contribuir</a>
     <a href="#membro">Seja membro</a>
