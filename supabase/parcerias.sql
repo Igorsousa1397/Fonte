@@ -50,3 +50,7 @@ insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao,
 select 'My Life Decor', 'Decoração', 'assets/parceiros/mylifedecor.png',
        '10% de desconto', 'Na contratação de qualquer serviço.', 'Novembro de 2026', 2
 where not exists (select 1 from public.parcerias where nome = 'My Life Decor');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, ordem)
+select 'Camarote do Corte', 'Barbearia', 'assets/parceiros/camarote-do-corte.png', 'Benefícios a definir', 3
+where not exists (select 1 from public.parcerias where nome = 'Camarote do Corte');
