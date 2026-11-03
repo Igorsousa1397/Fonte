@@ -70,8 +70,6 @@
   .fc{border:var(--borda);background:var(--grafite);color:var(--cinza-claro);border-radius:100px;padding:8px 16px;font:500 .86rem var(--corpo);cursor:pointer;transition:.2s}
   .fc:hover{border-color:var(--cinza);color:var(--luz)}
   .fc.on{background:var(--agua);border-color:var(--agua);color:#04211f;font-weight:700}
-  .cat-tag{position:absolute;top:12px;left:12px;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--agua);
-           background:var(--agua-fundo);border:1px solid rgba(122,212,207,.3);border-radius:100px;padding:4px 10px}
   .parceiro.oculto{display:none}
   .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin:18px 0 60px}
   .parceiro{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden;display:flex;flex-direction:column;
@@ -223,7 +221,6 @@
   function iniciais(n){ return String(n||'?').trim().split(/\s+/).map(function(x){return x[0];}).slice(0,2).join('').toUpperCase(); }
   function card(p,i){
     return '<article class="parceiro" data-cat="'+esc(p.categoria||'')+'" style="animation-delay:'+(i*0.12)+'s">'+
-      (p.categoria?'<span class="cat-tag">'+esc(p.categoria)+'</span>':'')+
       '<div class="logo">'+(p.logo_url?'<img src="'+esc(p.logo_url)+'" alt="'+esc(p.nome)+'" loading="lazy">':'<span class="ini">'+esc(iniciais(p.nome))+'</span>')+'</div>'+
       (p.periodo?'<span class="chip"><span class="dot"></span>'+esc(p.periodo)+'</span>':'')+
       '<button class="ver" data-i="'+i+'">Ver mais</button>'+
