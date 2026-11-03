@@ -66,7 +66,14 @@
   .ex-setas button{width:36px;height:36px;border-radius:50%;border:var(--borda);background:var(--breu);color:var(--luz);font-size:1.3rem;line-height:1;cursor:pointer}
   .ex-setas button:hover{border-color:var(--agua-forte)}
   @media(max-width:560px){.ex-slide{flex-direction:column;align-items:flex-start;gap:14px;padding:24px 22px 14px}.ex-nav{padding:0 22px 18px}}
-  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin:34px 0 60px}
+  .filtro{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px}
+  .fc{border:var(--borda);background:var(--grafite);color:var(--cinza-claro);border-radius:100px;padding:8px 16px;font:500 .86rem var(--corpo);cursor:pointer;transition:.2s}
+  .fc:hover{border-color:var(--cinza);color:var(--luz)}
+  .fc.on{background:var(--agua);border-color:var(--agua);color:#04211f;font-weight:700}
+  .cat-tag{position:absolute;top:12px;left:12px;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--agua);
+           background:var(--agua-fundo);border:1px solid rgba(122,212,207,.3);border-radius:100px;padding:4px 10px}
+  .parceiro.oculto{display:none}
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin:18px 0 60px}
   .parceiro{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden;display:flex;flex-direction:column;
             align-items:center;text-align:center;padding:26px 22px 24px;gap:14px;position:relative;
             opacity:0;transform:translateY(18px);animation:entra .6s cubic-bezier(.2,.8,.2,1) forwards;
@@ -179,6 +186,7 @@
     </div>
   </div>
 
+  <div class="filtro" id="filtro"></div>
   <div class="grade" id="grade"><div class="vazio">Carregando parceiros…</div></div>
 
   <p class="aviso-legal">Esses benefícios são oferecidos por meio da parceria desses estabelecimentos com a Igreja Fonte. No entanto, a igreja não tem nenhuma responsabilidade pelos serviços prestados nem pela entrega dos produtos.</p>
@@ -199,13 +207,13 @@
 <script src="assets/supabase.js"></script>
 <script>
   // usado se a tabela ainda não existir (antes de rodar supabase/parcerias.sql)
-  var PADRAO=[{nome:'Baruc Autocar',categoria:'Seminovos',logo_url:'assets/parceiros/baruc.png',
+  var PADRAO=[{nome:'Baruc Autocar',categoria:'Automóveis',logo_url:'assets/parceiros/baruc.png',
     beneficios:'Tanque cheio\nDocumentação grátis',periodo:'Novembro de 2026',observacao:'Na compra do seu seminovo.',site:'https://barucautocar.com.br/',
     instagram:'baruc.autocar',whatsapp:'(11) 4448-5734',endereco:'Av. Ten. Marques, 4232 · Polvilho · Cajamar'},
-    {nome:'My Life Decor',categoria:'Decoração',logo_url:'assets/parceiros/mylifedecor.png',instagram:'mylifedecor',whatsapp:'(11) 98234-1714',
+    {nome:'My Life Decor',categoria:'Casa e Decoração',logo_url:'assets/parceiros/mylifedecor.png',instagram:'mylifedecor',whatsapp:'(11) 98234-1714',
     beneficios:'10% de desconto',periodo:'Novembro de 2026',observacao:'Na contratação de qualquer serviço.'},
-    {nome:'Camarote do Corte',categoria:'Barbearia',logo_url:'assets/parceiros/camarote-do-corte.png',site:'https://camarotedocortejc.com/',whatsapp:'(11) 97435-8961',beneficios:'Benefícios a definir'},
-    {nome:'Plant',categoria:'Jardinagem e Paisagismo',logo_url:'assets/parceiros/plant.jpg',site:'https://plantjardinagem.neocities.org/',whatsapp:'(11) 97179-2236',
+    {nome:'Camarote do Corte',categoria:'Beleza',logo_url:'assets/parceiros/camarote-do-corte.png',site:'https://camarotedocortejc.com/',whatsapp:'(11) 97435-8961',beneficios:'Benefícios a definir'},
+    {nome:'Plant',categoria:'Paisagismo',logo_url:'assets/parceiros/plant.jpg',site:'https://plantjardinagem.neocities.org/',whatsapp:'(11) 97179-2236',
     beneficios:'Avaliação gratuita\n10% de desconto',periodo:'Novembro de 2026',observacao:'Na contratação do serviço.'}];
 
   function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -214,11 +222,30 @@
 
   function iniciais(n){ return String(n||'?').trim().split(/\s+/).map(function(x){return x[0];}).slice(0,2).join('').toUpperCase(); }
   function card(p,i){
-    return '<article class="parceiro" style="animation-delay:'+(i*0.12)+'s">'+
+    return '<article class="parceiro" data-cat="'+esc(p.categoria||'')+'" style="animation-delay:'+(i*0.12)+'s">'+
+      (p.categoria?'<span class="cat-tag">'+esc(p.categoria)+'</span>':'')+
       '<div class="logo">'+(p.logo_url?'<img src="'+esc(p.logo_url)+'" alt="'+esc(p.nome)+'" loading="lazy">':'<span class="ini">'+esc(iniciais(p.nome))+'</span>')+'</div>'+
       (p.periodo?'<span class="chip"><span class="dot"></span>'+esc(p.periodo)+'</span>':'')+
       '<button class="ver" data-i="'+i+'">Ver mais</button>'+
     '</article>';
+  }
+
+  // filtro por categoria (as categorias vêm dos próprios parceiros)
+  function montaFiltro(lista){
+    var cats=[]; lista.forEach(function(p){ var c=(p.categoria||'').trim(); if(c && cats.indexOf(c)<0) cats.push(c); });
+    cats.sort(function(a,b){return a.localeCompare(b,'pt');});
+    var f=document.getElementById('filtro');
+    if(cats.length<2){ f.style.display='none'; return; }
+    f.innerHTML='<button class="fc on" data-cat="">Todos</button>'+cats.map(function(c){return '<button class="fc" data-cat="'+esc(c)+'">'+esc(c)+'</button>';}).join('');
+    f.onclick=function(e){
+      var b=e.target.closest('.fc'); if(!b) return;
+      f.querySelectorAll('.fc').forEach(function(x){x.classList.toggle('on',x===b);});
+      var cat=b.dataset.cat, vis=0;
+      document.querySelectorAll('.parceiro').forEach(function(c){
+        var mostra=!cat||c.dataset.cat===cat; c.classList.toggle('oculto',!mostra);
+        if(mostra){ c.style.animation='none'; void c.offsetWidth; c.style.animation=''; c.style.animationDelay=(vis*0.08)+'s'; vis++; }
+      });
+    };
   }
 
   // 1) todos os botões e cards tremem; 2) a tela pisca e a explosão sai do meio da página
@@ -316,5 +343,6 @@
     LISTA=lista;
     document.getElementById('grade').innerHTML=lista.length?lista.map(card).join(''):
       '<div class="vazio">Em breve, novos parceiros por aqui.</div>';
+    montaFiltro(lista);
   })();
 </script>

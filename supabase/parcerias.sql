@@ -64,3 +64,9 @@ where not exists (select 1 from public.parcerias where nome = 'Plant');
 update public.parcerias set instagram = 'mylifedecor', whatsapp = '(11) 98234-1714' where nome = 'My Life Decor';
 update public.parcerias set site = 'https://camarotedocortejc.com/', whatsapp = '(11) 97435-8961' where nome = 'Camarote do Corte';
 update public.parcerias set site = 'https://plantjardinagem.neocities.org/', whatsapp = '(11) 97179-2236' where nome = 'Plant';
+
+-- categorias amplas (a página tem filtro por categoria)
+update public.parcerias set categoria = 'Automóveis'       where nome = 'Baruc Autocar';
+update public.parcerias set categoria = 'Casa e Decoração' where nome = 'My Life Decor';
+update public.parcerias set categoria = 'Beleza'           where nome = 'Camarote do Corte';
+update public.parcerias set categoria = 'Paisagismo'       where nome = 'Plant';

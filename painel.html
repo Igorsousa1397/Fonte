@@ -1523,6 +1523,8 @@ ${serve ? `
 
   /* ===================== PARCERIAS (página parcerias.html) ===================== */
   let PARCERIAS=[];
+  // sugestões de categoria (a página agrupa os parceiros por ela; pode digitar outra)
+  const CATS_PARC=['Alimentação','Automóveis','Beleza','Casa e Decoração','Educação','Paisagismo','Saúde','Serviços','Vestuário'];
   async function renderParcerias(){
     $('#titulo').textContent='Parcerias';
     $('#view').innerHTML='<div class="carregando">Carregando…</div>';
@@ -1561,7 +1563,7 @@ ${serve ? `
     const fld=(id,rot,val,ph,extra)=>'<div class="fld"><label>'+rot+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+ph+'"'+(extra||'')+'></div>';
     $('#bnBody').innerHTML=
       '<h2>'+(p?'Editar parceiro':'Novo parceiro')+'</h2><div class="msub">Aparece na página Parcerias do site</div>'+
-      '<div class="f2">'+fld('pc-nome','Nome',e.nome,'Ex.: Baruc Autocar',' maxlength="80"')+fld('pc-cat','Categoria (opcional)',e.categoria,'Ex.: Seminovos',' maxlength="40"')+'</div>'+
+      '<div class="f2">'+fld('pc-nome','Nome',e.nome,'Ex.: Baruc Autocar',' maxlength="80"')+fld('pc-cat','Categoria',e.categoria,'Ex.: Automóveis',' maxlength="40" list="pc-cats"')+'<datalist id="pc-cats">'+CATS_PARC.map(c=>'<option value="'+esc(c)+'">').join('')+'</datalist>'+'</div>'+
       '<div class="fld"><label>Benefícios para membros</label><textarea id="pc-ben" rows="3" maxlength="400" placeholder="Um benefício por linha">'+esc(e.beneficios||'')+'</textarea><div class="ithint">Aparecem no modal que abre no botão Ver mais.</div></div>'+
       '<div class="fld"><label>Detalhes do benefício (opcional)</label><input id="pc-obs" maxlength="160" value="'+esc(e.observacao||'')+'" placeholder="Ex.: Na compra do seu seminovo."></div>'+
       '<div class="f2">'+fld('pc-periodo','Período',e.periodo,'Ex.: Novembro de 2026',' maxlength="40"')+fld('pc-ordem','Ordem na página',e.ordem,'1',' type="number" min="0"')+'</div>'+
