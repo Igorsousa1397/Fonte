@@ -76,10 +76,10 @@
   .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;margin:18px 0 60px}
   .parceiro{border:var(--borda);border-radius:var(--raio);background:var(--grafite);overflow:hidden;display:flex;flex-direction:column;
             align-items:center;text-align:center;padding:26px 22px 24px;gap:14px;position:relative;
-            opacity:0;transform:translateY(18px);animation:entra .6s cubic-bezier(.2,.8,.2,1) forwards;
+            animation:entra .6s cubic-bezier(.2,.8,.2,1) both;
             transition:border-color .25s,transform .25s,box-shadow .25s}
   .parceiro:hover{border-color:var(--agua-forte);transform:translateY(-4px);box-shadow:0 18px 40px -22px rgba(122,212,207,.45)}
-  @keyframes entra{to{opacity:1;transform:none}}
+  @keyframes entra{from{opacity:0;transform:translateY(18px)}}
   .parceiro .logo{height:150px;width:100%;display:flex;align-items:center;justify-content:center}
   .parceiro .logo img{max-height:140px;max-width:85%;object-fit:contain;border-radius:14px;transition:transform .35s}
   .parceiro:hover .logo img{transform:scale(1.05)}
@@ -105,7 +105,8 @@
          animation:flash .7s ease-out forwards}
   @keyframes flash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
   body.tremendo .ver{animation:treme .09s linear infinite}
-  body.tremendo .parceiro{animation:tremeCard .12s linear infinite}
+  body.tremendo .parceiro>*{animation:tremeCard .12s linear infinite}
+  body.tremendo .ver{animation:treme .09s linear infinite}
   body.tremendo .parceiro:hover{transform:none}
   @keyframes treme{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(-3px,2px) rotate(-3deg)}50%{transform:translate(3px,-2px) rotate(3deg)}75%{transform:translate(-2px,-3px) rotate(-2deg)}100%{transform:translate(2px,3px) rotate(2deg)}}
   @keyframes tremeCard{0%{transform:translate(0,0)}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,-2px)}100%{transform:translate(1px,2px)}}
