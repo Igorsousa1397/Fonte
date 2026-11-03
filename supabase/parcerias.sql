@@ -52,7 +52,7 @@ select 'My Life Decor', 'Decoração', 'assets/parceiros/mylifedecor.png',
 where not exists (select 1 from public.parcerias where nome = 'My Life Decor');
 
 insert into public.parcerias (nome, categoria, logo_url, beneficios, ordem)
-select 'Camarote do Corte', 'Barbearia', 'assets/parceiros/camarote-do-corte.png', 'Benefícios a definir', 3
+select 'Camarote do Corte', 'Beleza', 'assets/parceiros/camarote-do-corte.png', 'R$ 10 de desconto', 3
 where not exists (select 1 from public.parcerias where nome = 'Camarote do Corte');
 
 insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, ordem)
@@ -73,3 +73,6 @@ update public.parcerias set categoria = 'Paisagismo'       where nome = 'Plant';
 
 -- nome do banner
 update public.banners set titulo = 'Parceiros Fonte' where link = 'parcerias.html';
+
+-- benefício do Camarote do Corte
+update public.parcerias set beneficios = 'R$ 10 de desconto', observacao = 'Em qualquer corte de cabelo.', periodo = 'Novembro de 2026' where nome = 'Camarote do Corte';
