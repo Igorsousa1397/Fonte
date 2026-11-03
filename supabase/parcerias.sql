@@ -45,3 +45,8 @@ insert into public.banners (titulo, descricao, imagem_url, link, cta, ativo)
 select 'Parcerias Fonte', 'Benefícios exclusivos para membros da Fonte em estabelecimentos parceiros.',
        'assets/banners/parcerias.jpg', 'parcerias.html', 'Ver benefícios', true
 where not exists (select 1 from public.banners where link = 'parcerias.html');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, ordem)
+select 'My Life Decor', 'Decoração', 'assets/parceiros/mylifedecor.png',
+       '10% de desconto', 'Na contratação de qualquer serviço.', 'Novembro de 2026', 2
+where not exists (select 1 from public.parcerias where nome = 'My Life Decor');

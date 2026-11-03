@@ -51,7 +51,7 @@
   .parceiro:hover{border-color:var(--agua-forte);transform:translateY(-4px);box-shadow:0 18px 40px -22px rgba(122,212,207,.45)}
   @keyframes entra{to{opacity:1;transform:none}}
   .parceiro .logo{height:150px;width:100%;display:flex;align-items:center;justify-content:center}
-  .parceiro .logo img{max-height:140px;max-width:85%;object-fit:contain;transition:transform .35s}
+  .parceiro .logo img{max-height:140px;max-width:85%;object-fit:contain;border-radius:14px;transition:transform .35s}
   .parceiro:hover .logo img{transform:scale(1.05)}
   .ini{font-family:var(--display);font-weight:800;font-size:2.6rem;color:var(--agua)}
   .chip{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--neblina);border-radius:100px;
@@ -82,7 +82,7 @@
   @keyframes abre{to{transform:none;opacity:1}}
   .modal .x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:var(--borda);background:var(--breu);color:var(--cinza-claro);
             cursor:pointer;font-size:1.1rem;line-height:1}
-  .modal .mlogo{max-height:110px;max-width:70%;margin:0 auto 10px;object-fit:contain}
+  .modal .mlogo{max-height:110px;max-width:70%;margin:0 auto 10px;object-fit:contain;border-radius:12px}
   .modal h2{font-family:var(--display);font-size:1.5rem;font-weight:800;line-height:1.15}
   .modal .cat{color:var(--cinza);font-size:.88rem;margin:2px 0 12px}
   .beneficios{list-style:none;display:flex;flex-direction:column;gap:10px;margin:18px 0 6px;text-align:left}
@@ -141,7 +141,9 @@
   // usado se a tabela ainda não existir (antes de rodar supabase/parcerias.sql)
   var PADRAO=[{nome:'Baruc Autocar',categoria:'Seminovos',logo_url:'assets/parceiros/baruc.png',
     beneficios:'Tanque cheio\nDocumentação grátis',periodo:'Novembro de 2026',observacao:'Na compra do seu seminovo.',site:'https://barucautocar.com.br/',
-    instagram:'baruc.autocar',whatsapp:'(11) 4448-5734',endereco:'Av. Ten. Marques, 4232 · Polvilho · Cajamar'}];
+    instagram:'baruc.autocar',whatsapp:'(11) 4448-5734',endereco:'Av. Ten. Marques, 4232 · Polvilho · Cajamar'},
+    {nome:'My Life Decor',categoria:'Decoração',logo_url:'assets/parceiros/mylifedecor.png',
+    beneficios:'10% de desconto',periodo:'Novembro de 2026',observacao:'Na contratação de qualquer serviço.'}];
 
   function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   var CHECK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
