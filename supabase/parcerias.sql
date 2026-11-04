@@ -76,3 +76,9 @@ update public.banners set titulo = 'Parceiros Fonte' where link = 'parcerias.htm
 
 -- benefício do Camarote do Corte
 update public.parcerias set beneficios = 'R$ 10 de desconto', observacao = 'Em qualquer corte de cabelo.', periodo = 'Novembro de 2026' where nome = 'Camarote do Corte';
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, ordem)
+select 'Tha Store', 'Vestuário', 'assets/parceiros/tha-store.jpg',
+       E'10% de desconto em compras à vista\nCompras acima de R$ 200 à vista ganham 1 blusinha',
+       'Moda feminina. Fale com a Thais.', 'Novembro de 2026', 'tha.store_modafeminina', '(11) 99718-7584', 5
+where not exists (select 1 from public.parcerias where nome = 'Tha Store');
