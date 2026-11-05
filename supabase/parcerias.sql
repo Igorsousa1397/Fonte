@@ -104,3 +104,6 @@ select 'Studio Diane Oliveira', 'Beleza', 'assets/parceiros/diane-oliveira.png',
        '10% de desconto', 'Em qualquer procedimento.', 'Novembro de 2026',
        'dianeoliveirapmu', '(11) 95434-2863', 'Rua das Orquídeas, 431 · Portal dos Ipês', 9
 where not exists (select 1 from public.parcerias where nome = 'Studio Diane Oliveira');
+
+-- My Life Decor: subnicho de móveis planejados
+update public.parcerias set categoria = 'Móveis Planejados' where nome = 'My Life Decor';
