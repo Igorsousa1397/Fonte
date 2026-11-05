@@ -2116,10 +2116,11 @@ ${serve ? `
     return lista.sort((a,b)=>a.data<b.data?-1:a.data>b.data?1:horaN(a.hora)-horaN(b.hora));
   }
 
-  async function renderEscalas(){
+  // manter=true: atualização depois de escalar/tirar alguém — sem "Carregando…" e sem voltar ao topo
+  async function renderEscalas(manter){
     $('#titulo').textContent='Escalas · Ministérios';
-    const lider=!!PERFIL.ministerios;
-    $('#view').innerHTML='<div class="carregando">Carregando…</div>';
+    const lider=!!PERFIL.ministerios, rolagem=window.scrollY;
+    if(manter!==true) $('#view').innerHTML='<div class="carregando">Carregando…</div>';
     if(!lider){
       const r=await sb.from('ministerio_config').select('nome,escala');
       if(r.error){ $('#view').innerHTML='<div class="vazio">Não foi possível carregar as escalas. Rode o <b>supabase/escalas.sql</b> no Supabase.<br><span class="sub2">'+esc(r.error.message)+'</span></div>'; return; }
@@ -2163,9 +2164,15 @@ ${serve ? `
     html+='<datalist id="escFuncoes">'+funcoes.map(f=>'<option value="'+esc(f)+'">').join('')+'</datalist>';
     // por culto: só quem ainda não está escalado nele
     const opts=ja=>'<option value="">Escolher pessoa…</option>'+ESC.membros.filter(m=>ja.indexOf(m.id)<0).map(m=>'<option value="'+m.id+'">'+esc(m.nome)+'</option>').join('');
-    escCultos().forEach((c,i)=>{
+    // dias que já passaram ficam ocultos (dá para mostrar pelo botão)
+    const hoje=escIso(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+    const todos=escCultos(), nPassados=new Set(todos.filter(c=>c.data<hoje).map(c=>c.data)).size;
+    if(nPassados) html+='<div style="margin:0 0 12px"><button class="mini-btn" id="escPassados">'+(ESC.verPassados?'Ocultar dias que já passaram':'Mostrar '+nPassados+' dia'+(nPassados===1?'':'s')+' que já passaram')+'</button></div>';
+    if(todos.length && todos.every(c=>c.data<hoje) && !ESC.verPassados) html+='<div class="vazio">Todos os cultos deste mês já passaram.</div>';
+    todos.forEach((c,i)=>{
+      const passou=c.data<hoje;
+      if(passou && !ESC.verPassados) return;
       const pessoas=ESC.linhas.filter(l=>escChave({data:l.data,hora:l.hora,titulo:l.titulo})===escChave(c));
-      const passou=c.data<escIso(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
       html+='<div class="bn-card esc-card'+(passou?' off':'')+'">'+
         '<div class="bn-thumb vazio" style="width:64px;height:64px;flex-direction:column;font-family:var(--display);color:var(--luz)"><b style="font-size:1.3rem">'+(+c.data.slice(8))+'</b><span style="font-size:.7rem;color:var(--cinza)">'+escDow(c.data)+'</span></div>'+
         '<div class="bn-info" style="flex:1;min-width:0"><b>'+esc(c.titulo||'Escala')+'</b><div class="sub2">'+(c.hora?esc(c.hora):'Dia todo')+' · '+pessoas.length+' escalado'+(pessoas.length===1?'':'s')+'</div>'+
@@ -2174,10 +2181,12 @@ ${serve ? `
         '</div></div>';
     });
     $('#view').innerHTML=html;
+    if(manter===true) window.scrollTo(0,rolagem);
     escLigar();
   }
 
   function escLigar(){
+    const vp=$('#escPassados'); if(vp) vp.onclick=()=>{ ESC.verPassados=!ESC.verPassados; renderEscalas(true); };
     const cultos=ESC.min?escCultos():[];
     const sel=$('#escMin'); if(sel) sel.onchange=()=>{ ESC.min=sel.value; ESC.extras=[]; renderEscalas(); };
     const cfg=$('#escCfg'); if(cfg) cfg.onclick=()=>{ ESC.editaMins=!ESC.editaMins; renderEscalas(); };
@@ -2196,7 +2205,7 @@ ${serve ? `
       if(!(d>=1&&d<=fim)){ alert('Dia inválido.'); return; }
       const titulo=(prompt('Nome do culto ou evento:','Evento')||'').trim(); if(!titulo) return;
       const hora=(prompt('Horário (opcional, ex.: 19h30):','')||'').trim();
-      ESC.extras.push({data:escIso(ESC.ano,ESC.mes,d), hora, titulo}); renderEscalas();
+      ESC.extras.push({data:escIso(ESC.ano,ESC.mes,d), hora, titulo}); renderEscalas(true);
     };
     $$('#view [data-escadd]').forEach(b=> b.onclick=async()=>{
       const i=b.dataset.escadd, c=cultos[i], mid=$('#view [data-escsel="'+i+'"]').value;
@@ -2206,13 +2215,13 @@ ${serve ? `
       b.disabled=true;
       const {error}=await sb.from('escalas').insert({ministerio:ESC.min, data:c.data, hora:c.hora, titulo:c.titulo, membro_id:mid, funcao});
       if(error){ b.disabled=false; alert('Erro: '+error.message); return; }
-      renderEscalas();
+      renderEscalas(true);
     });
     $$('#view [data-escdel]').forEach(b=> b.onclick=async()=>{
       b.disabled=true;
       const {error}=await sb.from('escalas').delete().eq('id',b.dataset.escdel);
       if(error){ b.disabled=false; alert('Erro: '+error.message); return; }
-      renderEscalas();
+      renderEscalas(true);
     });
     const z=$('#escZap'); if(z) z.onclick=escCopiarTexto;
     const pdf=$('#escPdf'); if(pdf) pdf.onclick=escExportarPdf;
