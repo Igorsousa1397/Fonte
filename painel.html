@@ -2161,7 +2161,8 @@ ${serve ? `
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="mini-btn" id="escZap">Copiar texto WhatsApp</button><button class="mini-btn" id="escPdf">'+PDF_SVG+'Exportar PDF</button><button class="mini-btn go" id="escExtra">+ Adicionar data</button></div></div>';
     if(!ESC.membros.length) html+='<div class="aviso-box">Nenhum membro ativo tem <b>'+esc(ESC.min)+'</b> como ministério no cadastro. Ajuste em Membros → Editar dados para poder escalar.</div>';
     html+='<datalist id="escFuncoes">'+funcoes.map(f=>'<option value="'+esc(f)+'">').join('')+'</datalist>';
-    const opts='<option value="">Escolher pessoa…</option>'+ESC.membros.map(m=>'<option value="'+m.id+'">'+esc(m.nome)+'</option>').join('');
+    // por culto: só quem ainda não está escalado nele
+    const opts=ja=>'<option value="">Escolher pessoa…</option>'+ESC.membros.filter(m=>ja.indexOf(m.id)<0).map(m=>'<option value="'+m.id+'">'+esc(m.nome)+'</option>').join('');
     escCultos().forEach((c,i)=>{
       const pessoas=ESC.linhas.filter(l=>escChave({data:l.data,hora:l.hora,titulo:l.titulo})===escChave(c));
       const passou=c.data<escIso(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
@@ -2169,7 +2170,7 @@ ${serve ? `
         '<div class="bn-thumb vazio" style="width:64px;height:64px;flex-direction:column;font-family:var(--display);color:var(--luz)"><b style="font-size:1.3rem">'+(+c.data.slice(8))+'</b><span style="font-size:.7rem;color:var(--cinza)">'+escDow(c.data)+'</span></div>'+
         '<div class="bn-info" style="flex:1;min-width:0"><b>'+esc(c.titulo||'Escala')+'</b><div class="sub2">'+(c.hora?esc(c.hora):'Dia todo')+' · '+pessoas.length+' escalado'+(pessoas.length===1?'':'s')+'</div>'+
           '<div class="esc-pessoas">'+pessoas.map(l=>'<span class="esc-chip">'+esc(nomeDe(l.membro_id))+(l.funcao?' <i>'+esc(l.funcao)+'</i>':'')+'<button data-escdel="'+l.id+'" aria-label="Tirar da escala">×</button></span>').join('')+'</div>'+
-          (ESC.membros.length?'<div class="esc-add"><select data-escsel="'+i+'">'+opts+'</select><input data-escfun="'+i+'" list="escFuncoes" maxlength="40" placeholder="Função (opcional)"><button class="mini-btn go" data-escadd="'+i+'">Escalar</button></div>':'')+
+          (!ESC.membros.length?'':ESC.membros.every(m=>pessoas.some(l=>l.membro_id===m.id))?'<div class="sub2" style="margin-top:8px">Todo o ministério já está escalado neste culto.</div>':'<div class="esc-add"><select data-escsel="'+i+'">'+opts(pessoas.map(l=>l.membro_id))+'</select><input data-escfun="'+i+'" list="escFuncoes" maxlength="40" placeholder="Função (opcional)"><button class="mini-btn go" data-escadd="'+i+'">Escalar</button></div>')+
         '</div></div>';
     });
     $('#view').innerHTML=html;
