@@ -98,3 +98,9 @@ select 'Hashtag Vistos', 'Serviços', 'assets/parceiros/hashtag-vistos.png',
        '25% de desconto na consultoria', 'Visto americano e passaporte. Fale com o Danilo.', 'Novembro de 2026',
        'hashtagvistos', '(11) 99175-2090', 'Av. Marquês de São Vicente, 446 · Loja 611', 8
 where not exists (select 1 from public.parcerias where nome = 'Hashtag Vistos');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, endereco, ordem)
+select 'Studio Diane Oliveira', 'Beleza', 'assets/parceiros/diane-oliveira.png',
+       '10% de desconto', 'Em qualquer procedimento.', 'Novembro de 2026',
+       'dianeoliveirapmu', '(11) 95434-2863', 'Rua das Orquídeas, 431 · Portal dos Ipês', 9
+where not exists (select 1 from public.parcerias where nome = 'Studio Diane Oliveira');

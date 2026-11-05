@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Gera assets/banners/parcerias.jpg com as logos de todos os parceiros (até 6: 3 por linha; 7+: 4 por linha).
+# Gera assets/banners/parcerias.jpg com as logos de todos os parceiros (até 6 ou 9: 3 por linha; senão 4 por linha).
 # Rodar na raiz do repositório: python3 scripts/banner-parceiros.py
 # Para um parceiro novo, adicione a logo em assets/parceiros/ e uma linha em LOGOS.
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -14,6 +14,7 @@ LOGOS=[
   ('assets/parceiros/bea-toledo.png',(24,27,42)),
   ('assets/parceiros/riso-e-luz.jpg',None),
   ('assets/parceiros/hashtag-vistos.png',(24,27,42)),
+  ('assets/parceiros/diane-oliveira.png',(255,255,255)),
 ]
 
 W,H=1600,900
@@ -30,7 +31,7 @@ painel=Image.composite(Image.new('RGB',(W,H),(10,11,18)),painel,grad)
 im.paste(painel,(0,0),mask)
 
 gap=22
-por_linha=3 if len(LOGOS)<=6 else 4          # 7 ou mais: 4 por linha
+por_linha=3 if len(LOGOS)<=6 or len(LOGOS)==9 else 4   # 9: grade 3x3; 7, 8 e 10+: 4 por linha
 linhas=[LOGOS[i:i+por_linha] for i in range(0,len(LOGOS),por_linha)]
 tile=min(236,(pw-60-(por_linha-1)*gap)//por_linha,(ph-120-(len(linhas)-1)*gap)//len(linhas))
 gy=py+(ph-(len(linhas)*tile+(len(linhas)-1)*gap))//2
@@ -44,7 +45,7 @@ for li,linha in enumerate(linhas):
             im.paste(lg.resize((tile,tile),Image.LANCZOS).convert('RGB'),(x,y),m)
         else:
             im.paste(Image.new('RGB',(tile,tile),fundo),(x,y),m)
-            s=tile-56; lg.thumbnail((s,s),Image.LANCZOS)
+            s=tile-(28 if lg.width>2*lg.height else 56); lg.thumbnail((s,s),Image.LANCZOS)
             im.paste(lg,(x+(tile-lg.width)//2,y+(tile-lg.height)//2),lg)
 
 av='/System/Library/Fonts/Avenir Next.ttc'
