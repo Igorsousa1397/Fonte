@@ -92,3 +92,9 @@ insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao,
 select 'Riso & Luz Decor', 'Festas e Eventos', 'assets/parceiros/riso-e-luz.jpg',
        '10% de desconto', 'Nos serviços de decoração. Fale com a Fran.', 'Novembro de 2026', 'risoeluzdecor', '(11) 94553-5536', 7
 where not exists (select 1 from public.parcerias where nome = 'Riso & Luz Decor');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, endereco, ordem)
+select 'Hashtag Vistos', 'Serviços', 'assets/parceiros/hashtag-vistos.png',
+       '25% de desconto na consultoria', 'Visto americano e passaporte. Fale com o Danilo.', 'Novembro de 2026',
+       'hashtagvistos', '(11) 99175-2090', 'Av. Marquês de São Vicente, 446 · Loja 611', 8
+where not exists (select 1 from public.parcerias where nome = 'Hashtag Vistos');

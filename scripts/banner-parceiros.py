@@ -13,6 +13,7 @@ LOGOS=[
   ('assets/parceiros/tha-store.jpg',None),
   ('assets/parceiros/bea-toledo.png',(24,27,42)),
   ('assets/parceiros/riso-e-luz.jpg',None),
+  ('assets/parceiros/hashtag-vistos.png',(24,27,42)),
 ]
 
 W,H=1600,900
