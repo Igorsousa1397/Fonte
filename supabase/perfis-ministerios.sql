@@ -10,13 +10,13 @@ update public.ministerio_config set escala = true where nome = 'Boas-vindas';
 
 insert into public.profiles (id, role, ministerios)
 select id, 'lider_ministerio', array['Boas-vindas']
-from auth.users where lower(email) = 'escalas.boasvinda@fonte.com'
+from auth.users where lower(email) = 'escalas.boasvindas@fonte.com'
 on conflict (id) do update set role = 'lider_ministerio', ministerios = excluded.ministerios;
 
 -- conferência: deve voltar uma linha com lider_ministerio e {Boas-vindas}
 select u.email, p.role, p.ministerios
 from auth.users u join public.profiles p on p.id = u.id
-where lower(u.email) = 'escalas.boasvinda@fonte.com';
+where lower(u.email) = 'escalas.boasvindas@fonte.com';
 
 -- Próximos ministérios: copie o bloco acima trocando o e-mail e o nome
 -- (escrito igual à lista de Ministérios do painel, ex.: 'Louvor', 'Mídia Técnica').
