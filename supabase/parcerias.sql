@@ -87,3 +87,8 @@ insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao,
 select 'Bea Toledo', 'Alimentação', 'assets/parceiros/bea-toledo.png',
        '15% de desconto', 'Em atendimento de personal chef.', 'Novembro de 2026', 'beatoledopersonalchef', '(11) 97342-5383', 6
 where not exists (select 1 from public.parcerias where nome = 'Bea Toledo');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, ordem)
+select 'Riso & Luz Decor', 'Festas e Eventos', 'assets/parceiros/riso-e-luz.jpg',
+       '10% de desconto', 'Nos serviços de decoração. Fale com a Fran.', 'Novembro de 2026', 'risoeluzdecor', '(11) 94553-5536', 7
+where not exists (select 1 from public.parcerias where nome = 'Riso & Luz Decor');

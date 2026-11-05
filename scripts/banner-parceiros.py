@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Gera assets/banners/parcerias.jpg com as logos de todos os parceiros (até 6; 7+ vira 3 linhas).
+# Gera assets/banners/parcerias.jpg com as logos de todos os parceiros (até 6: 3 por linha; 7+: 4 por linha).
 # Rodar na raiz do repositório: python3 scripts/banner-parceiros.py
 # Para um parceiro novo, adicione a logo em assets/parceiros/ e uma linha em LOGOS.
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -12,6 +12,7 @@ LOGOS=[
   ('assets/parceiros/plant.jpg',None),
   ('assets/parceiros/tha-store.jpg',None),
   ('assets/parceiros/bea-toledo.png',(24,27,42)),
+  ('assets/parceiros/riso-e-luz.jpg',None),
 ]
 
 W,H=1600,900
@@ -27,9 +28,10 @@ for y in range(H): gd.line((0,y,W,y),fill=int(60*y/H))
 painel=Image.composite(Image.new('RGB',(W,H),(10,11,18)),painel,grad)
 im.paste(painel,(0,0),mask)
 
-por_linha=3; gap=22
+gap=22
+por_linha=3 if len(LOGOS)<=6 else 4          # 7 ou mais: 4 por linha
 linhas=[LOGOS[i:i+por_linha] for i in range(0,len(LOGOS),por_linha)]
-tile=min(236,(ph-120-(len(linhas)-1)*gap)//len(linhas))
+tile=min(236,(pw-60-(por_linha-1)*gap)//por_linha,(ph-120-(len(linhas)-1)*gap)//len(linhas))
 gy=py+(ph-(len(linhas)*tile+(len(linhas)-1)*gap))//2
 for li,linha in enumerate(linhas):
     tot=len(linha)*tile+(len(linha)-1)*gap; gx=px+(pw-tot)//2
