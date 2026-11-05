@@ -82,3 +82,8 @@ select 'Tha Store', 'Vestuário', 'assets/parceiros/tha-store.jpg',
        E'10% de desconto em compras à vista\nCompras acima de R$ 200 à vista ganham 1 blusinha',
        'Moda feminina. Fale com a Thais.', 'Novembro de 2026', 'tha.store_modafeminina', '(11) 99718-7584', 5
 where not exists (select 1 from public.parcerias where nome = 'Tha Store');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, ordem)
+select 'Bea Toledo', 'Alimentação', 'assets/parceiros/bea-toledo.png',
+       '15% de desconto', 'Em atendimento de personal chef.', 'Novembro de 2026', 'beatoledopersonalchef', '(11) 97342-5383', 6
+where not exists (select 1 from public.parcerias where nome = 'Bea Toledo');
