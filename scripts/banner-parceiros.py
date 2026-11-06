@@ -15,6 +15,7 @@ LOGOS=[
   ('assets/parceiros/riso-e-luz.jpg',None),
   ('assets/parceiros/hashtag-vistos.png',(24,27,42)),
   ('assets/parceiros/diane-oliveira.png',(255,255,255)),
+  ('assets/parceiros/studio-start.png',(255,255,255)),
 ]
 
 W,H=1600,900
@@ -32,7 +33,10 @@ im.paste(painel,(0,0),mask)
 
 gap=22
 por_linha=3 if len(LOGOS)<=6 or len(LOGOS)==9 else 4   # 9: grade 3x3; 7, 8 e 10+: 4 por linha
-linhas=[LOGOS[i:i+por_linha] for i in range(0,len(LOGOS),por_linha)]
+nl=-(-len(LOGOS)//por_linha)                 # linhas equilibradas: 10 vira 4+3+3, não 4+4+2
+tam=[len(LOGOS)//nl+(1 if k<len(LOGOS)%nl else 0) for k in range(nl)]
+linhas=[]; i=0
+for t in tam: linhas.append(LOGOS[i:i+t]); i+=t
 tile=min(236,(pw-60-(por_linha-1)*gap)//por_linha,(ph-120-(len(linhas)-1)*gap)//len(linhas))
 gy=py+(ph-(len(linhas)*tile+(len(linhas)-1)*gap))//2
 for li,linha in enumerate(linhas):
@@ -45,7 +49,7 @@ for li,linha in enumerate(linhas):
             im.paste(lg.resize((tile,tile),Image.LANCZOS).convert('RGB'),(x,y),m)
         else:
             im.paste(Image.new('RGB',(tile,tile),fundo),(x,y),m)
-            s=tile-(28 if lg.width>2*lg.height else 56); lg.thumbnail((s,s),Image.LANCZOS)
+            s=tile-(24 if lg.width>1.6*lg.height else 56); lg.thumbnail((s,s),Image.LANCZOS)
             im.paste(lg,(x+(tile-lg.width)//2,y+(tile-lg.height)//2),lg)
 
 av='/System/Library/Fonts/Avenir Next.ttc'

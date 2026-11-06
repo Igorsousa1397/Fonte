@@ -107,3 +107,9 @@ where not exists (select 1 from public.parcerias where nome = 'Studio Diane Oliv
 
 -- My Life Decor: subnicho de móveis planejados
 update public.parcerias set categoria = 'Móveis Planejados' where nome = 'My Life Decor';
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, endereco, ordem)
+select 'Studio Start', 'Beleza', 'assets/parceiros/studio-start.png',
+       E'15% de desconto na manutenção\nRemoção gratuita', 'Lash designer. Fale com a Tati Barbosa.', 'Novembro de 2026',
+       'studiostart_', '(11) 99008-9245', 'Av. Tenente Marques, 2128', 10
+where not exists (select 1 from public.parcerias where nome = 'Studio Start');
