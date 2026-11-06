@@ -201,18 +201,6 @@
   .ag-cores{display:inline-flex;margin-left:8px;vertical-align:middle}
   .ag-cores i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--breu);margin-left:-3px}
   .ag-item.ag-tema .fcel{border-color:var(--tema)}
-  /* destaque do Através de Você na home */
-  .adv{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:center;border-radius:22px;padding:22px;
-       border:1px solid color-mix(in srgb,var(--tema) 45%,var(--neblina));
-       background:linear-gradient(135deg,var(--grafite) 0%,color-mix(in srgb,var(--tema) 18%,var(--grafite)) 100%);transition:transform .25s}
-  .adv:hover{transform:translateY(-3px)}
-  .adv img{border-radius:14px;width:100%}
-  .adv .adv-tema{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6vw,3.6rem);line-height:.95;letter-spacing:-.03em;color:var(--tema);margin:8px 0 6px}
-  .adv .adv-sub{letter-spacing:.2em;text-transform:uppercase;font-size:.82rem;font-weight:600}
-  .adv .adv-quando{color:var(--cinza-claro);font-weight:600;margin-top:10px}
-  .adv .adv-cores{display:flex;gap:8px;margin:18px 0}
-  .adv .adv-cores i{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.12)}
-  @media(max-width:760px){.adv{grid-template-columns:1fr;padding:16px}}
   .ag-prox{font-size:.72rem;color:var(--agua);font-weight:600;white-space:nowrap}
   .culto{border:var(--borda);border-radius:var(--raio);padding:26px;background:var(--grafite);
          position:relative;overflow:hidden;transition:border-color .25s,transform .25s;
@@ -797,15 +785,6 @@
   </div>
 </section>
 
-<!-- ===================== ATRAVÉS DE VOCÊ (preenchida pelo script) ===================== -->
-<section class="sec" id="atraves" hidden>
-  <div class="wrap">
-    <div class="sec-head"><span class="eyebrow">Através de Você</span><h2>Todo mês, um tema e uma paleta</h2>
-      <p>Um projeto da Pra. Thamires Ponciano: a igreja se veste com as cores do tema e vive a mesma palavra.</p></div>
-    <a class="adv" id="advCard" href="atraves-de-voce.html"></a>
-  </div>
-</section>
-
 <!-- ===================== AGENDA ===================== -->
 <section class="sec alt" id="agenda">
   <div class="wrap">
@@ -1233,23 +1212,6 @@ const ADV_PADRAO=[{data:'2026-11-27',hora:'19h30',tema:'Revival',subtitulo:'Últ
   cores:[{hex:'#F8EBD9'},{hex:'#E7C6B8'},{hex:'#D4A496'},{hex:'#CFA370'},{hex:'#B8734F'},{hex:'#6B4A3A'}]}];
 const corOk=h=>/^#[0-9a-f]{6}$/i.test(h||'')?h:'#B8734F';
 const lum=h=>{const n=parseInt(String(h).slice(1),16);return .299*(n>>16)+.587*((n>>8)&255)+.114*(n&255);};
-function montarAdv(lista){
-  const hojeIso=`${HOJE.getFullYear()}-${String(HOJE.getMonth()+1).padStart(2,'0')}-${String(HOJE.getDate()).padStart(2,'0')}`;
-  const a=lista.filter(x=>x.data>=hojeIso).sort((x,y)=>x.data<y.data?-1:1)[0];
-  const sec=document.getElementById('atraves');
-  if(!a){sec.hidden=true;return;}
-  const x=d(a.data),SEMX=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  sec.style.setProperty('--tema',corOk(a.cor));
-  const img=a.banner_url||a.flyer_url;
-  document.getElementById('advCard').innerHTML=(img?`<picture>${a.banner_url&&a.flyer_url?`<source media="(max-width:760px)" srcset="${escH(a.flyer_url)}">`:''}<img src="${escH(img)}" alt="Através de Você · ${escH(a.tema)}" loading="lazy"></picture>`:'')+
-    `<div><span class="eyebrow" style="color:var(--tema)">Próxima edição</span><div class="adv-tema">${escH(a.tema)}</div>`+
-    (a.subtitulo?`<div class="adv-sub">${escH(a.subtitulo)}</div>`:'')+
-    `<div class="adv-quando">${SEMX[x.getDay()]}, ${x.getDate()} de ${MESES[x.getMonth()]}${a.hora?' · '+escH(a.hora):''}</div>`+
-    ((a.cores||[]).length?`<div class="adv-cores">${a.cores.map(c=>`<i style="background:${corOk(c.hex)}"></i>`).join('')}</div>`:'')+
-    `<span class="btn btn-claro">Ver tema e paleta</span></div>`;
-  sec.hidden=false;
-  if(window.revelar)revelar(sec);
-}
 const advPronto=agendaPronta.then(async()=>{
   let lista=ADV_PADRAO;
   try{
@@ -1265,7 +1227,7 @@ const advPronto=agendaPronta.then(async()=>{
       img:(a.banner_url||a.flyer_url)?escH(a.banner_url||a.flyer_url):undefined,
       texto:[a.subtitulo,a.frase].filter(Boolean).map(escH).join(' · ')||'Um culto com tema e paleta de cores. Venha vestido com as cores da edição.'});
   });
-  refazerAgenda();montarAdv(lista);
+  refazerAgenda();
 });
 const heroPronto=Promise.all([buscarBanners(),encontrosProntos,advPronto]).then(([r])=>montarHero(escolherSlides(r)));
 
