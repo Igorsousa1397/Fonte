@@ -113,3 +113,9 @@ select 'Studio Start', 'Beleza', 'assets/parceiros/studio-start.png',
        E'15% de desconto na manutenção\nRemoção gratuita', 'Lash designer. Fale com a Tati Barbosa.', 'Novembro de 2026',
        'studiostart_', '(11) 99008-9245', 'Av. Tenente Marques, 2128', 10
 where not exists (select 1 from public.parcerias where nome = 'Studio Start');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, ordem)
+select 'Cedro Clinic Podologia', 'Saúde', 'assets/parceiros/cedro-clinic.jpg',
+       '20% de desconto', 'Nos tratamentos podológicos. Fale com a Michelle Cabral, podologista.', 'Novembro de 2026',
+       'cedro_clinic_podologia', '(61) 98287-1604', 11
+where not exists (select 1 from public.parcerias where nome = 'Cedro Clinic Podologia');
