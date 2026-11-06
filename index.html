@@ -1059,8 +1059,11 @@ function escolherSlides(r){
   const especiais=on('agenda')?futuros.filter(e=>(!e.fixo||e.img) && d(e.inicio).getMonth()===mes && d(e.inicio).getFullYear()===ano):[];
   const porData=(a,b)=>(a.inicio?d(a.inicio):Infinity)-(b.inicio?d(b.inicio):Infinity);
   // evento da agenda que já tem banner no mesmo dia não vira um segundo slide
-  const base=r.manuais.concat(especiais.filter(e=>!r.manuais.some(m=>m.inicio&&m.inicio===e.inicio))).sort(porData);
-  if(base.length>=MAX)return base.slice(0,MAX);
+  // Através de Você: a próxima edição abre o carrossel (mesmo fora do mês) e não se repete no meio
+  const adv=futuros.find(e=>e.adv&&e.img);
+  const comAdv=l=>adv?[adv].concat(l.filter(e=>e!==adv)).slice(0,MAX):l.slice(0,MAX);
+  const base=r.manuais.concat(especiais.filter(e=>!e.adv&&!r.manuais.some(m=>m.inicio&&m.inicio===e.inicio))).sort(porData);
+  if(base.length>=MAX-(adv?1:0))return comAdv(base);
   // completa com os cultos recorrentes ligados: cada um uma vez só, na data mais próxima
   const vistos=new Set();
   const fillers=futuros.filter(e=>e.fixo).map(e=>{
@@ -1071,7 +1074,7 @@ function escolherSlides(r){
     if(k==='ceia')return comTextos('ceia',{...e,titulo:'Santa Ceia',img:'assets/banner-ceia.jpg'});
     return comTextos('domingo',{...e,titulo:'Domingo em Família',img:undefined});
   }).filter(Boolean);
-  return base.concat(fillers.slice(0,MAX-base.length)).sort(porData);
+  return comAdv(base.concat(fillers.slice(0,MAX-base.length-(adv?1:0))).sort(porData));
 }
 const track=document.getElementById('track'),dotsBox=document.getElementById('dots');
 function textoSlide(e){
@@ -1241,7 +1244,7 @@ const advPronto=agendaPronta.then(async()=>{
     // o "Através de Você" avulso da agenda no mesmo dia dá lugar à edição com tema
     for(let k=AGENDA.length-1;k>=0;k--)if(AGENDA[k].inicio===a.data&&/^atrav[eé]s de voc[eê]$/i.test(String(AGENDA[k].titulo).trim()))AGENDA.splice(k,1);
     AGENDA.push({inicio:a.data,dow:SEM[d(a.data).getDay()],titulo:'Através de Você · '+escH(a.tema),tipo:'culto',hora:a.hora?escH(a.hora):undefined,
-      cor:corOk(a.cor),cores:(a.cores||[]).map(c=>corOk(c.hex)),link:'atraves-de-voce.html',cta:'Ver tema',
+      cor:corOk(a.cor),cores:(a.cores||[]).map(c=>corOk(c.hex)),link:'atraves-de-voce.html',cta:'Ver tema',adv:true,
       img:(a.banner_url||a.flyer_url)?escH(a.banner_url||a.flyer_url):undefined,
       texto:[a.subtitulo,a.frase].filter(Boolean).map(escH).join(' · ')||'Um culto com tema e paleta de cores. Venha vestido com as cores da edição.'});
   });
