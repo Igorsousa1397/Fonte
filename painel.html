@@ -500,7 +500,7 @@
   const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]','[data-view="atraves"]',
     '#btn-fin','#subnav-fin','#btn-acao','#subnav-acao','#btn-contato','#subnav'];
   const PERFIS={
-    admin:       {},
+    admin:       { inicio:['membros'] },
     acao_social: { itens:['#btn-acao','#subnav-acao'], abre:'#subnav-acao', inicio:['acao','solicitacoes'] },
     ministerios: { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','inscricoes'], carregaTudo:false, ocultos:['[data-min="escalas"]'] },
     // líder de um ministério (profiles.ministerio): só a escala do ministério dele
@@ -3042,7 +3042,7 @@ ${serve ? `
       (perf.ocultos||[]).forEach(function(sel){ var e=$(sel); if(e) e.style.display='none'; });
       (perf.mostrar||[]).forEach(function(sel){ var e=$(sel); if(e) e.style.display=''; });
     }
-    const inicio = perf.inicio || [window.innerWidth<=860 ? 'membros' : 'batismo'];
+    const inicio = perf.inicio || ['membros'];
     irPara(inicio[0], inicio[1]);
   })();
 </script>
