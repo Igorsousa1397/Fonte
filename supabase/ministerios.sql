@@ -64,3 +64,8 @@ end;
 $$;
 revoke all on function public.ministerio_remover(text) from public, anon;
 grant execute on function public.ministerio_remover(text) to authenticated;
+
+-- Pastoral (nov/2026): entra fechado para o "Quero servir"; abre pela chave no painel se quiser
+insert into public.ministerio_config (nome, aberto)
+select 'Pastoral', false
+where not exists (select 1 from public.ministerio_config where lower(nome) = 'pastoral');
