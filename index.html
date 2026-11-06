@@ -101,6 +101,19 @@
       radial-gradient(120% 90% at 82% 15%, rgba(122,212,207,.10), transparent 55%),
       radial-gradient(90% 120% at 10% 90%, rgba(255,255,255,.04), transparent 60%),
       linear-gradient(180deg,#0c0c0e 0%, #0a0a0b 100%)}
+  /* fundo na cor do banner: a própria arte bem desfocada + brilhos + sombra para o texto */
+  .slide-bg.com-arte{overflow:hidden;background:#0a0a0b}
+  .slide-bg.com-arte::before{content:"";position:absolute;inset:-12%;background:var(--img) center/cover no-repeat;
+      filter:blur(60px) saturate(2.1) contrast(1.15) brightness(.8);transform:scale(1.2);opacity:1}
+  .slide-bg.com-arte::after{content:"";position:absolute;inset:0;background:
+      radial-gradient(70% 85% at 78% 45%, color-mix(in srgb,var(--c1,transparent) 60%,transparent), transparent 72%),
+      radial-gradient(65% 75% at 8% 95%, color-mix(in srgb,var(--c2,transparent) 62%,transparent), transparent 68%),
+      linear-gradient(90deg, rgba(8,8,9,.70) 0%, rgba(8,8,9,.42) 42%, rgba(8,8,9,.12) 100%),
+      radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(5,5,6,.7) 100%),
+      linear-gradient(180deg, rgba(8,8,9,0) 60%, #0a0a0b 100%)}
+  @media(max-width:860px){.slide-bg.com-arte::after{background:
+      radial-gradient(90% 60% at 50% 25%, color-mix(in srgb,var(--c1,transparent) 40%,transparent), transparent 70%),
+      linear-gradient(180deg, rgba(8,8,9,.35) 0%, rgba(8,8,9,.72) 55%, #0a0a0b 100%)}}
   .slide-foto{align-items:stretch}
   .slide-foto .slide-inner{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:48px}
   /* toda arte do carrossel no mesmo quadro 16:9; flyer em pé aparece inteiro, com fundo escuro */
@@ -1128,7 +1141,10 @@ lista.forEach((e,i)=>{
   const inner=e.img
     ?`<img class="foto-topo" src="${e.img}" alt="${e.titulo}" loading="lazy" style="cursor:zoom-in" onload="this.classList.toggle('retrato', this.naturalHeight>this.naturalWidth)" onclick="abrirFoto(this.src)"><div class="slide-txt">${corpoTxt}</div>`
     :corpoTxt;
-  s.innerHTML=`<div class="slide-bg"></div><div class="slide-inner">${inner}</div>`;
+  // fundo: arte desfocada; no Através de Você os brilhos vêm da paleta (cores mais escuras)
+  const tons=(e.cores||[]).slice().sort((a,b)=>lum(a)-lum(b));
+  const bgVars=e.img?` style="--img:url('${e.img}')${tons.length?`;--c1:${e.cor||tons[0]};--c2:${tons[0]}`:''}"`:'';
+  s.innerHTML=`<div class="slide-bg${e.img?' com-arte':''}"${bgVars}></div><div class="slide-inner">${inner}</div>`;
   track.appendChild(s);
   const b=document.createElement('button');if(i===0)b.className='on';b.onclick=()=>irPara(i);
   b.setAttribute('aria-label','Ir para '+e.titulo);dotsBox.appendChild(b);
@@ -1216,6 +1232,7 @@ const ADV_PADRAO=[{data:'2026-11-27',hora:'19h30',tema:'Revival',subtitulo:'Últ
   flyer_url:'assets/atraves/2026-11-revival.jpg',banner_url:'assets/atraves/2026-11-revival-largo.jpg',
   cores:[{hex:'#F8EBD9'},{hex:'#E7C6B8'},{hex:'#D4A496'},{hex:'#CFA370'},{hex:'#B8734F'},{hex:'#6B4A3A'}]}];
 const corOk=h=>/^#[0-9a-f]{6}$/i.test(h||'')?h:'#B8734F';
+const lum=h=>{const n=parseInt(String(h).slice(1),16);return .299*(n>>16)+.587*((n>>8)&255)+.114*(n&255);};
 function montarAdv(lista){
   const hojeIso=`${HOJE.getFullYear()}-${String(HOJE.getMonth()+1).padStart(2,'0')}-${String(HOJE.getDate()).padStart(2,'0')}`;
   const a=lista.filter(x=>x.data>=hojeIso).sort((x,y)=>x.data<y.data?-1:1)[0];
