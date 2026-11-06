@@ -208,7 +208,9 @@
     var fotos=Array.isArray(e.fotos)?e.fotos.filter(function(f){return f&&f.url;}):[];
     if(!fotos.length && PADRAO[0].data===e.data) fotos=PADRAO[0].fotos;
     if(fotos.length){
-      html+='<section class="sec"><span class="eyebrow">Inspire-se</span><h2>Looks nas cores do tema</h2>'+
+      // "GLOW" vem do nome da paleta (sem a palavra Paleta); sem paleta, usa o tema
+      var nomePal=String(e.paleta_nome||e.tema||'').replace(/^paleta\s+/i,'').trim().toUpperCase();
+      html+='<section class="sec"><span class="eyebrow">Inspire-se</span><h2>Looks nas cores do tema'+(nomePal?' <span style="color:var(--tema)">'+esc(nomePal)+'</span>':'')+'</h2>'+
         '<p class="lead">Ideias de como vestir cada cor da paleta. Toque nas fotos ao lado para ver as outras.</p>'+
         '<div class="insp" id="insp"><div class="insp-palco">'+fotos.map(function(f,i){
           var c=cores.find(function(x){return (x.nome||'').toLowerCase()===(f.legenda||'').toLowerCase();});
@@ -216,7 +218,6 @@
             (f.legenda?'<figcaption class="leg">'+(c?'<i style="background:'+hexOk(c.hex)+'"></i>':'')+esc(f.legenda)+'</figcaption>':'')+'</figure>';
         }).join('')+'</div>'+
         '<div class="insp-nav"><button id="inspAnt" aria-label="Anterior">‹</button><div class="insp-dots" id="inspDots">'+fotos.map(function(){return '<i></i>';}).join('')+'</div><button id="inspProx" aria-label="Próxima">›</button></div></div>'+
-        (e.paleta_url?'<a class="ver-arte" href="'+esc(e.paleta_url)+'" data-arte>Ver a arte completa da paleta</a>':'')+
       '</section>';
     } else if(e.paleta_url){
       html+='<section class="sec"><span class="eyebrow">Inspire-se</span><h2>Looks nas cores do tema</h2>'+
