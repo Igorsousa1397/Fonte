@@ -136,8 +136,10 @@
   @keyframes brilhos{0%{background-position:60% 40%,0% 100%,0 0,0 0,0 0}50%{background-position:85% 65%,20% 70%,0 0,0 0,0 0}100%{background-position:40% 20%,10% 100%,0 0,0 0,0 0}}
   @media(prefers-reduced-motion:reduce){.slide-bg.com-arte::before,.slide-bg.com-arte::after{animation:none}}
   @media(max-width:860px){.slide-bg.com-arte::after{background:
-      radial-gradient(90% 60% at 50% 25%, color-mix(in srgb,var(--c1,transparent) 40%,transparent), transparent 70%),
-      linear-gradient(180deg, rgba(8,8,9,.35) 0%, rgba(8,8,9,.72) 55%, #0a0a0b 100%)}}
+      radial-gradient(90% 60% at 50% 25%, color-mix(in srgb,var(--c1,transparent) 45%,transparent), transparent 70%),
+      linear-gradient(180deg, rgba(8,8,9,.35) 0%, rgba(8,8,9,.72) 55%, #0a0a0b 100%);
+      background-size:180% 180%,100% 100%;background-position:30% 10%,0 0;animation:brilhosM 14s ease-in-out infinite alternate}}
+  @keyframes brilhosM{0%{background-position:25% 5%,0 0}50%{background-position:75% 35%,0 0}100%{background-position:40% 60%,0 0}}
   .slide-foto{align-items:stretch}
   .slide-foto .slide-inner{display:flex;flex-direction:row-reverse;align-items:center;justify-content:space-between;gap:48px;perspective:1100px}
   .foto-topo{rotate:var(--ax,0) var(--ay,1) 0 var(--ang,0deg);transition:rotate .35s ease-out}
@@ -157,6 +159,10 @@
        box-shadow:0 0 0 4px var(--agua-fundo)}
   .slide h1{font-family:var(--display);font-weight:800;font-size:clamp(2.6rem,7vw,5.2rem);
             line-height:.98;letter-spacing:-.03em;max-width:16ch;margin-bottom:16px}
+  /* um brilho água atravessa o título de tempos em tempos */
+  .slide.on h1{background:linear-gradient(100deg,var(--luz) 0 40%,#c9f3ef 50%,var(--luz) 60% 100%) 100% 0/320% 100% no-repeat;
+     -webkit-background-clip:text;background-clip:text;color:transparent;animation:brilhoTitulo 8s ease-in-out 2.5s infinite}
+  @keyframes brilhoTitulo{0%,30%{background-position:100% 0}70%,100%{background-position:0% 0}}
   .slide p{color:var(--cinza-claro);font-size:clamp(1rem,1.6vw,1.15rem);max-width:52ch;margin-bottom:28px}
   .slide-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .conta{font-size:.85rem;color:var(--agua);font-weight:600;display:inline-flex;align-items:center;gap:7px}
@@ -230,6 +236,11 @@
   .ag-item.ag-tema:hover .ag-dia,.ag-item.ag-tema:hover .ag-tipo,.ag-item.ag-tema:hover .ag-dow{color:#1c110c}
   .ag-item.ag-tema:hover .ag-cores i{border-color:rgba(0,0,0,.25)}
   .ag-item.ag-tema:hover .fcel{border-color:rgba(255,255,255,.45);background:rgba(0,0,0,.28);color:#fff}
+  /* a paleta desliza devagar por trás da linha o tempo todo (no celular é o que dá vida) */
+  .ag-item.ag-tema{position:relative;isolation:isolate}
+  .ag-item.ag-tema::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+     background:var(--paleta,none);background-size:220% 100%;opacity:.28;animation:paletaDesliza 10s ease-in-out infinite alternate}
+  @keyframes paletaDesliza{from{background-position:0% 0}to{background-position:100% 0}}
   .ag-cores{display:inline-flex;margin-left:8px;vertical-align:middle}
   .ag-cores i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--breu);margin-left:-3px}
   .ag-item.ag-tema .fcel{border-color:var(--tema)}
@@ -502,12 +513,17 @@
   .slide{transition:opacity .9s ease}
   .anim .slide .slide-tag,.anim .slide h1,.anim .slide p,.anim .slide .slide-cta{opacity:0}
   .anim .slide.on .slide-tag{animation:entra .7s cubic-bezier(.2,.6,.2,1) .05s forwards}
-  .anim .slide.on h1{animation:entra .8s cubic-bezier(.2,.6,.2,1) .18s forwards}
+  .anim .slide.on h1{animation:entra .8s cubic-bezier(.2,.6,.2,1) .18s forwards,brilhoTitulo 8s ease-in-out 2.5s infinite}
   .anim .slide.on p{animation:entra .8s cubic-bezier(.2,.6,.2,1) .32s forwards}
   .anim .slide.on .slide-cta{animation:entra .8s cubic-bezier(.2,.6,.2,1) .46s forwards}
   @keyframes entra{from{opacity:0;transform:translateY(22px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
   .anim .slide .foto-topo{opacity:0}
   .anim .slide.on .foto-topo{animation:fotoEntra 1.1s cubic-bezier(.2,.6,.2,1) .1s forwards,fotoFlutua 7s ease-in-out 1.2s infinite alternate}
+  /* sem mouse (celular), o banner balança sozinho em 3D */
+  @media(hover:none){
+    .anim .slide.on .foto-topo{animation:fotoEntra 1.1s cubic-bezier(.2,.6,.2,1) .1s forwards,fotoFlutua 7s ease-in-out 1.2s infinite alternate,balanca 9s ease-in-out 1.2s infinite alternate}
+  }
+  @keyframes balanca{from{rotate:.45 1 0 -4deg}to{rotate:-.45 1 0 4deg}}
   @keyframes fotoEntra{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
   @keyframes fotoFlutua{from{transform:translateY(0)}to{transform:translateY(-8px)}}
   .slide .dot{animation:dotPulse 2s ease-out infinite}
@@ -527,6 +543,7 @@
     .anim .sec-head .eyebrow::before{transform:none!important}
     .anim .slide .slide-tag,.anim .slide h1,.anim .slide p,.anim .slide .slide-cta,.anim .slide .foto-topo{opacity:1!important;animation:none!important}
     .hero::before,.hero::after,.slide .dot{animation:none!important}
+    .slide.on h1,.ag-item.ag-tema::after,.slide-bg.com-arte::before,.slide-bg.com-arte::after{animation:none!important}
     .dots button.on::after{animation:none;transform:scaleX(1)}
   }
   header.scrolled{background:rgba(10,10,11,.86);box-shadow:0 12px 30px -22px #000}
@@ -1146,6 +1163,7 @@ async function buscarBanners(){
     return {ok:true,autos,manuais};
   }catch(err){console.warn('banners:',err);return {ok:false,autos:{},manuais:[]};}
 }
+const WA_PARCEIRO='https://wa.me/5511945132157?text=Ol%C3%A1%21%20Tenho%20um%20neg%C3%B3cio%20e%20quero%20ser%20parceiro%20da%20Igreja%20Fonte.%0A%0ANome%20do%20neg%C3%B3cio%3A%0ARespons%C3%A1vel%20e%20contato%3A%0AInstagram%20%28se%20tiver%29%3A%0AEndere%C3%A7o%20%28se%20tiver%29%3A%0ABenef%C3%ADcio%20para%20membros%20Fonte%3A%0ALogomarca%20%28envie%20a%20imagem%20nesta%20conversa%29%3A';
 let atual=0,timer,slides=[],dots=[];
 function montarHero(lista){
 track.innerHTML='';dotsBox.innerHTML='';atual=0;
@@ -1153,7 +1171,10 @@ document.getElementById('topo').style.display=lista.length?'':'none';   // tudo 
 lista.forEach((e,i)=>{
   const dias=e.inicio?diasAte(e.inicio):null;
   const conta=dias>1?`faltam ${dias} dias`:dias===1?'é amanhã':dias===0?'é hoje':'acontecendo agora';
-  const cta=e.link?`<a class="btn btn-claro" href="${e.link}"${/^https?:/.test(e.link)?' target="_blank" rel="noopener"':''}>${e.cta||'Inscrever-se'} <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7M11 4L4 11"/></svg></a><a class="btn btn-fantasma" href="#agenda">Ver agenda</a>`
+  // no slide dos Parceiros, o segundo botão chama quem tem negócio para o WhatsApp (mesma mensagem da página Parceiros)
+  const ehParceiros=/parcerias\.html/.test(e.link||'');
+  const segundo=ehParceiros?`<a class="btn btn-fantasma" href="${WA_PARCEIRO}" target="_blank" rel="noopener">Quero ser parceiro</a>`:`<a class="btn btn-fantasma" href="#agenda">Ver agenda</a>`;
+  const cta=e.link?`<a class="btn btn-claro" href="${e.link}"${/^https?:/.test(e.link)?' target="_blank" rel="noopener"':''}>${e.cta||'Inscrever-se'} <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7v7M11 4L4 11"/></svg></a>${segundo}`
     :`<a class="btn btn-claro" href="#agenda">Ver na agenda</a>`;
   const s=document.createElement('div');s.className='slide'+(i===0?' on':'')+(e.img?' slide-foto':'');
   if(e.id)s.dataset.enc=e.id;
