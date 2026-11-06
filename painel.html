@@ -223,6 +223,13 @@
   .bn-info b{display:block;font-family:var(--display);font-size:1.02rem}
   .bn-info .sub2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bn-acoes{display:flex;gap:8px;align-items:center;flex:0 0 auto}
+  .adv-cor{display:grid;grid-template-columns:44px 1fr 96px auto auto;gap:8px;align-items:center;margin-bottom:8px}
+  .adv-cor input[type=color]{width:44px;height:38px;border:var(--borda);border-radius:8px;background:var(--breu);padding:2px;cursor:pointer}
+  .adv-cor input[type=text]{background:var(--breu);border:var(--borda);color:var(--luz);border-radius:8px;padding:8px 10px;font:inherit;font-size:.88rem;min-width:0}
+  .adv-cor label{display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--cinza);white-space:nowrap;cursor:pointer}
+  .adv-bol{display:inline-flex;margin-left:6px;vertical-align:middle}
+  .adv-bol i{width:14px;height:14px;border-radius:50%;border:2px solid var(--grafite);margin-left:-4px}
+  @media(max-width:560px){.adv-cor{grid-template-columns:44px 1fr auto auto}.adv-cor .adv-hex{display:none}}
   .bn-prev{width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:var(--borda);background:var(--breu);margin-top:8px;display:none}
   @media(max-width:600px){.bn-card{flex-wrap:wrap}.bn-acoes{width:100%;justify-content:flex-end}}
   .fld input[type=file]{padding:8px 10px;font-size:.85rem}
@@ -344,6 +351,9 @@
       </div>
       <button class="nav-item" data-view="agenda">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg><span class="lbl">Agenda</span>
+      </button>
+      <button class="nav-item" data-view="atraves">
+        <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg><span class="lbl">Através de Você</span>
       </button>
       <button class="nav-item" data-view="banners">
         <svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span class="lbl">Banners</span>
@@ -486,7 +496,7 @@
   //   abre   = subnav que já vem expandida
   //   inicio = [view, sub] em que o painel abre
   // Atenção: isto só monta o menu. Quem barra o acesso aos dados é o RLS no banco.
-  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]',
+  const NAV_ITENS=['[data-view="batismo"]','[data-view="membros"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]','[data-view="atraves"]',
     '#btn-fin','#subnav-fin','#btn-acao','#subnav-acao','#btn-contato','#subnav'];
   const PERFIS={
     admin:       {},
@@ -497,7 +507,7 @@
     escalas:     { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','escalas'], carregaTudo:false, ocultos:['[data-min="inscricoes"]'] },
     lider_ministerio: { itens:['#btn-min','#subnav-min'], abre:'#subnav-min', inicio:['ministerios','escalas'], carregaTudo:false, ocultos:['[data-min="inscricoes"]'] },
     // conteúdo do site: no Batismo vê só a página de inscrição (foto e data), sem a lista de inscritos
-    site:        { itens:['[data-view="batismo"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]'],
+    site:        { itens:['[data-view="batismo"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]','[data-view="atraves"]'],
                    inicio:['banners'], carregaTudo:false, batismoSoPagina:true, ocultos:['[data-min="escalas"]'] },
     // estabelecimento parceiro: só confere se a pessoa é membro ativo (busca por nome/CPF ou QR da carteirinha)
     parceiro:    { itens:[], mostrar:['#nav-validar'], inicio:['validar'], carregaTudo:false }
@@ -539,6 +549,7 @@
     if(view==='celulas') renderCelulas();
     if(view==='agenda') renderAgendaPainel();
     if(view==='parcerias') renderParcerias();
+    if(view==='atraves') renderAtraves();
     if(view==='validar') renderValidar();
   }
 
@@ -1616,6 +1627,129 @@ ${serve ? `
     const {error}=await sb.from('parcerias').delete().eq('id',p.id);
     if(error){ alert('Erro: '+error.message); return; }
     fechaBanner(); renderParcerias();
+  }
+
+  /* ===================== ATRAVÉS DE VOCÊ (página atraves-de-voce.html) ===================== */
+  // Projeto da Pra. Thamires: uma edição por mês com data, tema e paleta. A "cor na agenda"
+  // pinta o evento na agenda do site; a paleta aparece na página com os nomes e códigos.
+  let ADV=[];
+  const advHex=h=>/^#[0-9a-f]{6}$/i.test(h||'')?h.toUpperCase():'#B8734F';
+  async function renderAtraves(){
+    $('#titulo').textContent='Através de Você';
+    $('#view').innerHTML='<div class="carregando">Carregando…</div>';
+    const {data,error}=await sb.from('atraves_de_voce').select('*').order('data',{ascending:false});
+    if(error){ $('#view').innerHTML='<div class="vazio">Rode o arquivo supabase/atraves-de-voce.sql no Supabase para editar o Através de Você aqui.</div>'; return; }
+    ADV=data||[];
+    const hoje=new Date().toISOString().slice(0,10);
+    let html='<div class="cards">'+card('Próximas edições',ADV.filter(e=>e.ativo&&e.data>=hoje).length,true)+card('Já aconteceram',ADV.filter(e=>e.data<hoje).length)+'</div>';
+    html+='<p class="view-sub">Cada edição aparece na página <a href="atraves-de-voce.html" target="_blank" style="color:var(--agua)">Através de Você</a>, num destaque na home e na agenda do site, pintada com a cor escolhida para o tema.</p>';
+    html+='<div class="min-barra" style="justify-content:flex-end;margin-top:18px"><button class="mini-btn go" id="advNovo">+ Nova edição</button></div>';
+    if(!ADV.length) html+='<div class="tabela"><div class="vazio">Nenhuma edição ainda.</div></div>';
+    ADV.forEach(e=>{
+      const cores=Array.isArray(e.cores)?e.cores:[], p=e.data.split('-');
+      html+='<div class="bn-card'+(e.ativo?'':' off')+'" style="border-left:3px solid '+advHex(e.cor)+'">'+
+        (e.flyer_url||e.banner_url?'<img class="bn-thumb" src="'+esc(e.flyer_url||e.banner_url)+'" alt="">':'<div class="bn-thumb vazio">sem arte</div>')+
+        '<div class="bn-info"><b style="color:'+advHex(e.cor)+'">'+esc(e.tema)+'</b><div class="sub2">'+p[2]+'/'+p[1]+'/'+p[0]+(e.hora?' · '+esc(e.hora):'')+' · '+(e.ativo?'No site':'Desligada')+'</div>'+
+          '<div class="sub2">'+esc(e.paleta_nome||'Sem paleta')+'<span class="adv-bol">'+cores.map(c=>'<i style="background:'+advHex(c.hex)+'"></i>').join('')+'</span></div></div>'+
+        '<div class="bn-acoes"><label class="sw"><input type="checkbox" data-adv="'+e.id+'"'+(e.ativo?' checked':'')+'><span class="track"></span></label>'+
+          '<button class="mini-btn" data-adved="'+e.id+'">Editar</button>'+
+          '<button class="mini-btn warn" data-advdel="'+e.id+'">Excluir</button></div>'+
+      '</div>';
+    });
+    $('#view').innerHTML=html;
+    $('#advNovo').onclick=()=>abreAtraves(null);
+    $$('#view [data-adved]').forEach(b=> b.onclick=()=>abreAtraves(ADV.find(x=>x.id===b.dataset.adved)));
+    $$('#view [data-advdel]').forEach(b=> b.onclick=()=>excluirAtraves(ADV.find(x=>x.id===b.dataset.advdel)));
+    $$('#view .sw input[data-adv]').forEach(cb=> cb.onchange=async()=>{
+      cb.disabled=true;
+      const {error}=await sb.from('atraves_de_voce').update({ativo:cb.checked}).eq('id',cb.dataset.adv);
+      if(error){ cb.checked=!cb.checked; cb.disabled=false; alert('Erro: '+error.message); return; }
+      renderAtraves();
+    });
+  }
+  function advLinhaCor(c,principal){
+    const h=advHex(c.hex);
+    return '<div class="adv-cor"><input type="color" value="'+h.toLowerCase()+'"><input type="text" class="adv-nome" maxlength="30" placeholder="Nome da cor" value="'+esc(c.nome||'')+'">'+
+      '<input type="text" class="adv-hex" maxlength="7" value="'+h+'"><label><input type="radio" name="adv-principal"'+(principal?' checked':'')+'> agenda</label>'+
+      '<button type="button" class="mini-btn warn" data-advtira aria-label="Tirar cor">×</button></div>';
+  }
+  function advLigarCores(){
+    $$('#adv-cores .adv-cor').forEach(l=>{
+      const pk=l.querySelector('input[type=color]'), hx=l.querySelector('.adv-hex');
+      pk.oninput=()=>{ hx.value=pk.value.toUpperCase(); };
+      hx.oninput=()=>{ if(/^#[0-9a-f]{6}$/i.test(hx.value)) pk.value=hx.value.toLowerCase(); };
+      l.querySelector('[data-advtira]').onclick=()=>{ l.remove(); };
+    });
+  }
+  function abreAtraves(e0){
+    const e=e0||{ativo:true,hora:'19h30',endereco:'Rua Catiguá, 130 · Cajamar/SP',cores:[],cor:'#B8734F'};
+    const fld=(id,rot,val,ph,extra)=>'<div class="fld"><label>'+rot+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+ph+'"'+(extra||'')+'></div>';
+    const arte=(id,rot,url,dica)=>'<div class="fld"><label>'+rot+'</label><input type="file" id="'+id+'" accept="image/*">'+
+      '<img class="bn-prev" id="'+id+'-prev" alt=""'+(url?' src="'+esc(url)+'" style="display:block"':'')+'><div class="ithint">'+(url?'Já tem arte. Escolha outra só se quiser trocar.':dica)+'</div></div>';
+    const cores=Array.isArray(e.cores)?e.cores:[];
+    const corAg=advHex(e.cor);
+    $('#bnBody').innerHTML=
+      '<h2>'+(e0?'Editar edição':'Nova edição')+'</h2><div class="msub">Aparece na página Através de Você, na home e na agenda do site</div>'+
+      '<div class="f2">'+fld('adv-data','Data',e.data,'',' type="date"')+fld('adv-hora','Horário',e.hora,'Ex.: 19h30',' maxlength="12"')+'</div>'+
+      '<div class="f2">'+fld('adv-tema','Tema',e.tema,'Ex.: Revival',' maxlength="40"')+fld('adv-sub','Subtítulo (opcional)',e.subtitulo,'Ex.: Último do ano',' maxlength="60"')+'</div>'+
+      fld('adv-frase','Frase (opcional)',e.frase,'Ex.: Preparando o altar para 2027',' maxlength="120"')+
+      '<div class="fld"><label>Quem vai ministrar (opcional)</label><textarea id="adv-preg" rows="3" maxlength="300" placeholder="Um nome por linha">'+esc(e.preletores||'')+'</textarea></div>'+
+      fld('adv-end','Endereço',e.endereco,'Rua, número · cidade',' maxlength="120"')+
+      fld('adv-paleta','Nome da paleta',e.paleta_nome,'Ex.: Paleta Glow',' maxlength="40"')+
+      '<div class="fld"><label>Cores da paleta</label><div id="adv-cores">'+
+        (cores.length?cores.map(c=>advLinhaCor(c,advHex(c.hex)===corAg)).join(''):'')+'</div>'+
+        '<button type="button" class="mini-btn" id="adv-maiscor">+ Adicionar cor</button>'+
+        '<div class="ithint">Marque em "agenda" a cor que pinta o evento na agenda do site.</div></div>'+
+      arte('adv-flyer','Arte em pé (celular)',e.flyer_url,'Flyer vertical. Até 5MB.')+
+      arte('adv-banner','Arte deitada (computador, opcional)',e.banner_url,'Formato 16:9. Também vira o banner do topo do site no mês.')+
+      arte('adv-pal','Arte da paleta (opcional)',e.paleta_url,'Imagem com as cores e sugestões de roupa.')+
+      '<label class="chkline"><input type="checkbox" id="adv-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
+      '<div class="modal-actions"><button class="btn-primary" id="adv-salvar">Salvar</button><button class="btn-ghost" id="adv-cancelar">Cancelar</button>'+
+        (e0?'<button class="btn-danger" id="adv-excluir">Excluir</button>':'')+'</div>';
+    advLigarCores();
+    if(!cores.length){ $('#adv-cores').insertAdjacentHTML('beforeend',advLinhaCor({nome:'',hex:corAg},true)); advLigarCores(); }
+    $('#adv-maiscor').onclick=()=>{ $('#adv-cores').insertAdjacentHTML('beforeend',advLinhaCor({nome:'',hex:'#CFA370'},!$('#adv-cores input[type=radio]:checked'))); advLigarCores(); };
+    ['adv-flyer','adv-banner','adv-pal'].forEach(id=>{ $('#'+id).onchange=function(){ const f=this.files[0]; if(!f) return; const pv=$('#'+id+'-prev'); pv.src=URL.createObjectURL(f); pv.style.display='block'; }; });
+    $('#adv-cancelar').onclick=fechaBanner;
+    $('#adv-salvar').onclick=()=>salvarAtraves(e0);
+    if(e0) $('#adv-excluir').onclick=()=>excluirAtraves(e0);
+    $('#bnBg').classList.add('on');
+  }
+  async function salvarAtraves(e0){
+    const v=id=>($('#'+id).value||'').trim();
+    const data=v('adv-data'), tema=v('adv-tema');
+    if(!data||!tema){ alert('Preencha a data e o tema.'); return; }
+    const linhas=Array.from($$('#adv-cores .adv-cor'));
+    const cores=linhas.map(l=>({nome:l.querySelector('.adv-nome').value.trim(), hex:advHex(l.querySelector('.adv-hex').value.trim())}));
+    const marcada=linhas.find(l=>l.querySelector('input[type=radio]').checked);
+    const cor=marcada?advHex(marcada.querySelector('.adv-hex').value.trim()):(cores[0]?cores[0].hex:'#B8734F');
+    const btn=$('#adv-salvar'); btn.disabled=true; btn.textContent='Salvando…';
+    try{
+      const sobe=async(id,atual)=>{
+        const f=$('#'+id).files[0]; if(!f) return atual||null;
+        if(!/^image\//.test(f.type)) throw new Error('Selecione uma imagem.');
+        if(f.size>5*1024*1024) throw new Error('Imagem muito grande (máx 5MB).');
+        btn.textContent='Enviando arte…';
+        const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+        const path='atraves/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+        const up=await sb.storage.from('banners').upload(path,f,{upsert:false,contentType:f.type});
+        if(up.error) throw up.error;
+        return sb.storage.from('banners').getPublicUrl(path).data.publicUrl;
+      };
+      const reg={data, hora:v('adv-hora')||null, tema, subtitulo:v('adv-sub')||null, frase:v('adv-frase')||null,
+        preletores:v('adv-preg')||null, endereco:v('adv-end')||null, paleta_nome:v('adv-paleta')||null, cores, cor,
+        flyer_url:await sobe('adv-flyer',e0&&e0.flyer_url), banner_url:await sobe('adv-banner',e0&&e0.banner_url),
+        paleta_url:await sobe('adv-pal',e0&&e0.paleta_url), ativo:$('#adv-ativo').checked};
+      const {error}= e0 ? await sb.from('atraves_de_voce').update(reg).eq('id',e0.id) : await sb.from('atraves_de_voce').insert(reg);
+      if(error) throw error;
+      fechaBanner(); renderAtraves();
+    }catch(err){ alert('Não foi possível salvar: '+(err.message||err)); btn.disabled=false; btn.textContent='Salvar'; }
+  }
+  async function excluirAtraves(e){
+    if(!confirm('Excluir a edição "'+e.tema+'"? Isso não pode ser desfeito. Se for só por um tempo, use a chave para desligar.')) return;
+    const {error}=await sb.from('atraves_de_voce').delete().eq('id',e.id);
+    if(error){ alert('Erro: '+error.message); return; }
+    fechaBanner(); renderAtraves();
   }
 
   /* ===================== VALIDAR MEMBRO (perfil parceiro) ===================== */
