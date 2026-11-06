@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
             <div style="color:#f5f5f6;font:700 20px/1.2 Arial,sans-serif;margin-bottom:2px">${esc(m.nome)}</div>
             <div style="color:#8b8b95;font:11px Arial,sans-serif;letter-spacing:1px;margin-bottom:10px">IGREJA APOSTÓLICA FONTE</div>
             <table role="presentation" cellpadding="0" cellspacing="0">
-              ${linha("Célula", cel && !SEM_CELULA.includes(cel.toLowerCase()) ? cel : "—")}${linha("Ministério", ministerio)}${linha("Nascimento", nasc)}${linha("Membro desde", desde)}
+              ${cel && !SEM_CELULA.includes(cel.toLowerCase()) ? linha("Célula", cel) : ""}${linha("Ministério", ministerio)}${linha("Nascimento", nasc)}${linha("Membro desde", desde)}
             </table>
           </td></tr>
       <tr><td colspan="3" style="padding-top:16px;border-top:1px solid #2a2a31;color:#7ad4cf;font:700 13px monospace;letter-spacing:1px">${cod}

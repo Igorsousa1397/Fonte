@@ -99,9 +99,12 @@
     var serve=false; // crachá só no painel (admin); membro emite só o cartão
     var avCard=m.foto_url ? '<div class="av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="av ini">'+esc(iniciais)+'</div>';
     var avCracha=m.foto_url ? '<div class="cr-av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
-    var rowsCartao=[['Célula',m.celula],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
+    var SEM_CELULA=['ainda não participo','não participo de célula','não pertenço a nenhuma célula','não participo','nao participo','sem célula'];
+    var cel=String(m.celula||'').trim();
+    var linCel=(cel && SEM_CELULA.indexOf(cel.toLowerCase())<0)?[['Célula',cel]]:[];   // sem célula, a linha não aparece
+    var rowsCartao=linCel.concat([['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]])
       .map(function(l){return '<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>';}).join('');
-    var rowsCracha=[['Célula',m.celula],['Membro desde',desde]]
+    var rowsCracha=linCel.concat([['Membro desde',desde]])
       .map(function(l){return '<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>';}).join('');
 
     var doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>

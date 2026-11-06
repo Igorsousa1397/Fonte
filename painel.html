@@ -859,9 +859,10 @@
     const serve=!!(m.ministerio && m.ministerio!=='Não serve em nenhum');
     const avCard=m.foto_url ? '<div class="av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="av ini">'+esc(iniciais)+'</div>';
     const avCracha=m.foto_url ? '<div class="cr-av" style="background-image:url('+esc(m.foto_url)+')"></div>' : '<div class="cr-av ini">'+esc(iniciais)+'</div>';
-    const rowsCartao=[['Célula',temCelula(m.celula)?m.celula:''],['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]]
+    const linCel=temCelula(m.celula)?[['Célula',m.celula]]:[];   // sem célula, a linha não aparece
+    const rowsCartao=linCel.concat([['Ministério',m.ministerio||'Não serve em nenhum'],['Nascimento',nasc],['Membro desde',desde]])
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
-    const rowsCracha=[['Célula',temCelula(m.celula)?m.celula:''],['Membro desde',desde]]
+    const rowsCracha=linCel.concat([['Membro desde',desde]])
       .map(l=>'<div class="row"><span>'+l[0]+'</span><b>'+(esc(l[1])||'—')+'</b></div>').join('');
     const doc=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carteirinha · ${nome}</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
