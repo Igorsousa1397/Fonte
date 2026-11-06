@@ -147,15 +147,6 @@
   @keyframes brilhoTitulo{0%{background-position:100% 0}100%{background-position:-100% 0}}
   .eyebrow,.intro{animation:palavra .8s cubic-bezier(.2,.8,.2,1) forwards;opacity:0}
   .intro{animation-delay:.5s}
-  /* balões e confetes subindo bem devagar no topo */
-  .baloes{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:-1}
-  .baloes i{position:absolute;bottom:-40px;width:14px;height:18px;border-radius:50% 50% 50% 50%/45% 45% 55% 55%;opacity:0;
-            background:var(--c);box-shadow:inset -3px -4px 0 rgba(0,0,0,.18);animation:sobe var(--t,14s) linear var(--d,0s) infinite}
-  .baloes i::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:22px;background:color-mix(in srgb,var(--c) 60%,transparent)}
-  .baloes i.conf{width:8px;height:8px;border-radius:2px;box-shadow:none;animation-name:sobeGira}
-  .baloes i.conf::after{display:none}
-  @keyframes sobe{0%{transform:translateY(0) translateX(0);opacity:0}8%{opacity:.75}92%{opacity:.6}100%{transform:translateY(-110vh) translateX(var(--x,30px));opacity:0}}
-  @keyframes sobeGira{0%{transform:translateY(0) rotate(0);opacity:0}8%{opacity:.8}92%{opacity:.6}100%{transform:translateY(-110vh) translateX(var(--x,-40px)) rotate(720deg);opacity:0}}
   main{position:relative}
   /* pílulas das turmas: bolinha pulsa e a pílula dá uma mexida ao passar o mouse */
   .turmas{opacity:0;animation:palavra .7s cubic-bezier(.2,.8,.2,1) .7s forwards}
@@ -246,22 +237,6 @@
 </header>
 
 <main class="wrap hero">
-  <div class="baloes" aria-hidden="true">
-    <i style="--c:var(--baby);left:6%;--t:16s;--d:-3s;--x:40px"></i>
-    <i style="--c:var(--kids);left:18%;--t:19s;--d:-9s;--x:-30px"></i>
-    <i style="--c:var(--jr);left:31%;--t:15s;--d:-6s;--x:25px"></i>
-    <i style="--c:var(--agua);left:47%;--t:21s;--d:-12s;--x:-45px"></i>
-    <i style="--c:var(--kids);left:63%;--t:17s;--d:-1s;--x:35px"></i>
-    <i style="--c:var(--baby);left:78%;--t:20s;--d:-14s;--x:-20px"></i>
-    <i style="--c:var(--jr);left:91%;--t:18s;--d:-7s;--x:30px"></i>
-    <i class="conf" style="--c:var(--jr);left:12%;--t:13s;--d:-2s"></i>
-    <i class="conf" style="--c:var(--baby);left:26%;--t:12s;--d:-8s;--x:50px"></i>
-    <i class="conf" style="--c:var(--kids);left:41%;--t:14s;--d:-5s"></i>
-    <i class="conf" style="--c:var(--agua);left:56%;--t:11s;--d:-10s;--x:40px"></i>
-    <i class="conf" style="--c:var(--jr);left:70%;--t:13s;--d:-4s"></i>
-    <i class="conf" style="--c:var(--baby);left:85%;--t:12s;--d:-9s;--x:-50px"></i>
-    <i class="conf" style="--c:var(--kids);left:96%;--t:15s;--d:-1s"></i>
-  </div>
   <span class="eyebrow">Ministério Infantil · Igreja Fonte Cajamar</span>
   <h1>A igreja também é <em>lugar de criança</em></h1>
   <p class="intro">Um ambiente acolhedor, seguro e feito para cada idade, para que cada criança conheça mais a Deus, desenvolva a sua fé e cresça na Palavra, enquanto os pais participam tranquilos do culto no templo.</p>
@@ -425,3 +400,4 @@
   alvos.forEach((el,i)=>{el.style.transitionDelay=((i%4)*.08)+'s';io.observe(el);});
 })();
 </script>
+<script src="assets/baloes.js" defer></script>
