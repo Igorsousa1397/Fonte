@@ -524,6 +524,9 @@
     .anim .slide.on .foto-topo{animation:fotoEntra 1.1s cubic-bezier(.2,.6,.2,1) .1s forwards,fotoFlutua 7s ease-in-out 1.2s infinite alternate,balanca 9s ease-in-out 1.2s infinite alternate}
   }
   @keyframes balanca{from{rotate:.45 1 0 -4deg}to{rotate:-.45 1 0 4deg}}
+  /* com giroscópio ligado, o banner segue o movimento do celular em vez de balançar sozinho */
+  .giro.anim .slide.on .foto-topo{animation:fotoEntra 1.1s cubic-bezier(.2,.6,.2,1) .1s forwards,fotoFlutua 7s ease-in-out 1.2s infinite alternate}
+  .giro .foto-topo{transition:rotate .14s linear}
   @keyframes fotoEntra{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
   @keyframes fotoFlutua{from{transform:translateY(0)}to{transform:translateY(-8px)}}
   .slide .dot{animation:dotPulse 2s ease-out infinite}
@@ -1854,6 +1857,28 @@ if(menuOverlay)menuOverlay.onclick=()=>setMenu(false);
       });
     });
     hero.addEventListener('mouseleave',reset);
+  }
+  // no celular, o banner inclina conforme o aparelho se mexe (giroscópio).
+  // No iPhone precisa de permissão, que só pode ser pedida num toque; no Android já começa.
+  if(!matchMedia('(hover:hover)').matches&&!prefMov&&'DeviceOrientationEvent' in window){
+    const hero=document.querySelector('.hero');let raf=0,b0=null,g0=null,ultimo=null;
+    const aplica=()=>{raf=0;const f=hero.querySelector('.slide.on .foto-topo');if(!f||!ultimo)return;
+      let {beta,gamma}=ultimo;if(beta==null||gamma==null)return;
+      const ori=(screen.orientation&&screen.orientation.angle)||window.orientation||0;   // deitado: troca os eixos
+      if(ori===90){[beta,gamma]=[gamma,-beta];}else if(ori===-90||ori===270){[beta,gamma]=[-gamma,beta];}
+      if(b0==null){b0=beta;g0=gamma;}
+      b0+=(beta-b0)*.02;g0+=(gamma-g0)*.02;                      // o "neutro" acompanha devagar a posição em que a pessoa segura
+      const lim=v=>Math.max(-22,Math.min(22,v))/22;
+      const rx=-lim(beta-b0)*7,ry=lim(gamma-g0)*9,ang=Math.hypot(rx,ry);
+      if(ang<.01){f.style.setProperty('--ang','0deg');return;}
+      f.style.setProperty('--ax',(rx/ang).toFixed(3));f.style.setProperty('--ay',(ry/ang).toFixed(3));f.style.setProperty('--ang',ang.toFixed(2)+'deg');
+    };
+    const liga=()=>{document.documentElement.classList.add('giro');
+      addEventListener('deviceorientation',e=>{ultimo=e;if(!raf)raf=requestAnimationFrame(aplica);},{passive:true});};
+    if(typeof DeviceOrientationEvent.requestPermission==='function'){
+      const pede=()=>{DeviceOrientationEvent.requestPermission().then(r=>{if(r==='granted')liga();}).catch(()=>{});};
+      document.addEventListener('touchend',pede,{once:true,passive:true});
+    }else liga();
   }
   document.querySelectorAll('.sec-head,.culto,.templo,.valor,.passo,.card,.form,.pastores,.quem>div,.cel-topo,.pix,.foot-grid>div,.cel-filtros')
     .forEach(el=>el.classList.add('reveal'));
