@@ -1204,6 +1204,13 @@ const prefMov=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function reiniciar(){clearInterval(timer);if(!prefMov)timer=setInterval(()=>irPara(atual+1),6000);}
 document.getElementById('next').onclick=()=>irPara(atual+1);
 document.getElementById('prev').onclick=()=>irPara(atual-1);
+// celular: arrastar o banner para o lado troca de slide (a rolagem vertical continua normal)
+(()=>{const h=document.querySelector('.hero');let x0=null,y0=null;
+  h.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;clearInterval(timer);},{passive:true});
+  h.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=y0=null;
+    if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3)irPara(atual+(dx<0?1:-1));else reiniciar();},{passive:true});
+  h.addEventListener('touchcancel',()=>{x0=y0=null;reiniciar();},{passive:true});
+})();
 
 /* ---- cards inscrição (encontros ligados/desligados no painel → encontro_config) ---- */
 const boxIns=document.getElementById('inscricoes');

@@ -77,7 +77,30 @@
   .cor b{display:block;font-family:var(--display);font-size:1.02rem}
   .cor span{font-size:.8rem;color:var(--cinza);font-family:ui-monospace,Menlo,monospace}
   .cor.copiado span{color:var(--agua)}
-  .paleta-arte{margin-top:22px;max-width:520px;border-radius:var(--raio);cursor:zoom-in}
+  .ver-arte{display:inline-block;margin-top:16px;color:var(--cinza);font-size:.86rem;border-bottom:1px solid var(--neblina)}
+  .ver-arte:hover{color:var(--luz)}
+
+  /* Inspire-se: carrossel com a foto do meio grande e as vizinhas menores ao lado */
+  .insp{position:relative;margin-top:26px;--w:300px;--h:380px;height:calc(var(--h) + 70px);user-select:none;touch-action:pan-y;overflow:hidden}
+  .insp-palco{position:absolute;left:50%;top:0;width:var(--w);height:var(--h);transform:translateX(-50%);perspective:1200px}
+  .insp-item{position:absolute;inset:0;border-radius:18px;overflow:hidden;background:var(--grafite);border:1px solid rgba(255,255,255,.08);
+             box-shadow:0 30px 60px -30px #000;cursor:pointer;transition:transform .65s cubic-bezier(.2,.8,.2,1),opacity .65s,filter .65s;
+             will-change:transform}
+  .insp-item img{width:100%;height:100%;object-fit:cover;display:block}
+  .insp-item.on{cursor:zoom-in;border-color:color-mix(in srgb,var(--tema) 55%,transparent)}
+  .insp-item .leg{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 12px;color:#fff;font-family:var(--display);font-weight:700;font-size:1.05rem;
+                  background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .4s}
+  .insp-item.on .leg{opacity:1}
+  .insp-item .leg i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.7);flex:0 0 auto}
+  .insp-nav{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:14px}
+  .insp-nav button{width:40px;height:40px;border-radius:50%;border:1px solid var(--neblina);background:var(--grafite);color:var(--luz);font-size:1.3rem;cursor:pointer;
+                   display:inline-flex;align-items:center;justify-content:center;transition:border-color .2s}
+  .insp-nav button:hover{border-color:var(--tema)}
+  .insp-dots{display:flex;gap:6px}
+  .insp-dots i{width:7px;height:7px;border-radius:50%;background:var(--neblina);transition:background .3s,transform .3s}
+  .insp-dots i.on{background:var(--tema);transform:scale(1.3)}
+  @media(max-width:600px){.insp{--w:220px;--h:290px;margin-left:-22px;margin-right:-22px}}   /* as fotos dos lados vão até a borda da tela, sem alargar a página */
+  @media(prefers-reduced-motion:reduce){.insp-item{transition:none}}
 
   .anteriores{margin-top:20px;display:flex;flex-direction:column}
   .ant{display:grid;grid-template-columns:96px 1fr auto;gap:16px;align-items:center;padding:14px 4px;border-bottom:1px solid rgba(42,42,49,.6)}
@@ -135,6 +158,9 @@
     preletores:'Pra. Thamires Ponciano\nPra. Jemima Gonzalez\nMiss Rhayline Resplande',endereco:'Rua Catiguá, 130 · Cajamar/SP',
     paleta_nome:'Paleta Glow',cor:'#B8734F',flyer_url:'assets/atraves/2026-11-revival.jpg',banner_url:'assets/atraves/2026-11-revival-largo.jpg',
     paleta_url:'assets/atraves/2026-11-paleta.jpg',
+    fotos:[{url:'assets/atraves/2026-11-look-champagne.jpg',legenda:'Champagne'},{url:'assets/atraves/2026-11-look-nude-glow.jpg',legenda:'Nude Glow'},
+           {url:'assets/atraves/2026-11-look-rose-brilho.jpg',legenda:'Rosé Brilho'},{url:'assets/atraves/2026-11-look-dourado-suave.jpg',legenda:'Dourado Suave'},
+           {url:'assets/atraves/2026-11-look-terracota.jpg',legenda:'Terracota'},{url:'assets/atraves/2026-11-look-marrom-glow.jpg',legenda:'Marrom Glow'}],
     cores:[{nome:'Champagne',hex:'#F8EBD9'},{nome:'Nude Glow',hex:'#E7C6B8'},{nome:'Rosé Brilho',hex:'#D4A496'},
            {nome:'Dourado Suave',hex:'#CFA370'},{nome:'Terracota',hex:'#B8734F'},{nome:'Marrom Glow',hex:'#6B4A3A'}]}];
 
@@ -176,8 +202,25 @@
         '<p class="lead">Escolha uma ou mais cores da paleta para vir ao culto. Toque numa cor para copiar o código.</p>'+
         '<div class="cores">'+cores.map(function(c){ var h=hexOk(c.hex);
           return '<button class="cor" data-hex="'+h+'"><div class="amostra" style="background:'+h+'"></div><div class="info"><b>'+esc(c.nome||h)+'</b><span>'+h.toUpperCase()+'</span></div></button>'; }).join('')+'</div>'+
-        (e.paleta_url?'<img class="paleta-arte" src="'+esc(e.paleta_url)+'" alt="'+esc(e.paleta_nome||'Paleta')+'" data-zoom loading="lazy">':'')+
       '</section>';
+    }
+    // Inspire-se: fotos de looks nas cores do tema (coluna fotos; a edição de novembro tem as fotos no código)
+    var fotos=Array.isArray(e.fotos)?e.fotos.filter(function(f){return f&&f.url;}):[];
+    if(!fotos.length && PADRAO[0].data===e.data) fotos=PADRAO[0].fotos;
+    if(fotos.length){
+      html+='<section class="sec"><span class="eyebrow">Inspire-se</span><h2>Looks nas cores do tema</h2>'+
+        '<p class="lead">Ideias de como vestir cada cor da paleta. Toque nas fotos ao lado para ver as outras.</p>'+
+        '<div class="insp" id="insp"><div class="insp-palco">'+fotos.map(function(f,i){
+          var c=cores.find(function(x){return (x.nome||'').toLowerCase()===(f.legenda||'').toLowerCase();});
+          return '<figure class="insp-item" data-i="'+i+'"><img src="'+esc(f.url)+'" alt="'+esc(f.legenda||'Look')+'" loading="lazy" draggable="false">'+
+            (f.legenda?'<figcaption class="leg">'+(c?'<i style="background:'+hexOk(c.hex)+'"></i>':'')+esc(f.legenda)+'</figcaption>':'')+'</figure>';
+        }).join('')+'</div>'+
+        '<div class="insp-nav"><button id="inspAnt" aria-label="Anterior">‹</button><div class="insp-dots" id="inspDots">'+fotos.map(function(){return '<i></i>';}).join('')+'</div><button id="inspProx" aria-label="Próxima">›</button></div></div>'+
+        (e.paleta_url?'<a class="ver-arte" href="'+esc(e.paleta_url)+'" data-arte>Ver a arte completa da paleta</a>':'')+
+      '</section>';
+    } else if(e.paleta_url){
+      html+='<section class="sec"><span class="eyebrow">Inspire-se</span><h2>Looks nas cores do tema</h2>'+
+        '<img src="'+esc(e.paleta_url)+'" alt="'+esc(e.paleta_nome||'Paleta')+'" data-zoom loading="lazy" style="margin-top:22px;max-width:520px;border-radius:var(--raio);cursor:zoom-in"></section>';
     }
     var outras=lista.filter(function(o){ return o!==e && o.data<hoje; }).reverse();
     if(outras.length){
@@ -190,12 +233,46 @@
     }
     box.innerHTML=html;
     box.querySelectorAll('[data-zoom]').forEach(function(im){ im.onclick=function(){ abreFoto(im.currentSrc||im.src); }; });
+    box.querySelectorAll('[data-arte]').forEach(function(a){ a.onclick=function(ev){ ev.preventDefault(); abreFoto(a.getAttribute('href')); }; });
+    montaInspire();
     box.querySelectorAll('.cor').forEach(function(b){ b.onclick=function(){
       var h=b.dataset.hex.toUpperCase(), s=b.querySelector('span');
       (navigator.clipboard?navigator.clipboard.writeText(h):Promise.reject()).then(function(){
         b.classList.add('copiado'); s.textContent='Copiado!'; setTimeout(function(){ b.classList.remove('copiado'); s.textContent=h; },1400);
       }).catch(function(){});
     }; });
+  }
+
+  // carrossel Inspire-se: a foto ativa fica grande no centro; as vizinhas, menores e mais apagadas dos lados
+  function montaInspire(){
+    var box=document.getElementById('insp'); if(!box) return;
+    var itens=Array.prototype.slice.call(box.querySelectorAll('.insp-item')), dots=Array.prototype.slice.call(box.querySelectorAll('.insp-dots i'));
+    var n=itens.length, i=0, timer=null, reduz=matchMedia('(prefers-reduced-motion:reduce)').matches;
+    function vai(k){
+      i=(k+n)%n;
+      itens.forEach(function(el,j){
+        var d=j-i; if(d>n/2) d-=n; if(d<-n/2) d+=n;      // distância circular até a ativa
+        var ad=Math.abs(d), vis=ad<=2;
+        el.classList.toggle('on',d===0);
+        el.style.zIndex=10-ad;
+        el.style.opacity=vis?(d===0?1:ad===1?.75:.4):0;
+        el.style.filter=d===0?'none':'brightness(.75)';
+        el.style.pointerEvents=vis?'':'none';
+        el.style.transform='translateX('+(d*62)+'%) translateZ('+(-ad*140)+'px) rotateY('+(-d*18)+'deg) scale('+(d===0?1:ad===1?.8:.62)+')';
+      });
+      dots.forEach(function(p,j){ p.classList.toggle('on',j===i); });
+    }
+    function auto(){ clearInterval(timer); if(!reduz && n>1) timer=setInterval(function(){ vai(i+1); },4200); }
+    itens.forEach(function(el,j){ el.onclick=function(){ if(j===i) abreFoto(el.querySelector('img').src); else vai(j); auto(); }; });
+    dots.forEach(function(p,j){ p.onclick=function(){ vai(j); auto(); }; });
+    document.getElementById('inspAnt').onclick=function(){ vai(i-1); auto(); };
+    document.getElementById('inspProx').onclick=function(){ vai(i+1); auto(); };
+    box.addEventListener('mouseenter',function(){ clearInterval(timer); });
+    box.addEventListener('mouseleave',auto);
+    var x0=null;
+    box.addEventListener('touchstart',function(ev){ x0=ev.touches[0].clientX; clearInterval(timer); },{passive:true});
+    box.addEventListener('touchend',function(ev){ if(x0===null) return; var dx=ev.changedTouches[0].clientX-x0; if(Math.abs(dx)>40) vai(i+(dx<0?1:-1)); auto(); x0=null; });
+    vai(0); auto();
   }
 
   (async function(){

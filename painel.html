@@ -1667,6 +1667,17 @@ ${serve ? `
       renderAtraves();
     });
   }
+  let ADV_ARQS=[];   // arquivos novos escolhidos no modal (índice = data-arq)
+  function advLinhaFoto(url,legenda,arqIdx){
+    // foto nova: o url é só a prévia (blob); quem vale é o arquivo em data-arq, que sobe ao salvar
+    return '<div class="adv-cor" style="grid-template-columns:54px 1fr auto"'+(url&&arqIdx==null?' data-url="'+esc(url)+'"':'')+(arqIdx!=null?' data-arq="'+arqIdx+'"':'')+'>'+
+      '<img src="'+esc(url)+'" alt="" style="width:54px;height:68px;object-fit:cover;border-radius:8px;border:var(--borda)">'+
+      '<input type="text" class="adv-leg" maxlength="30" placeholder="Legenda (ex.: Champagne)" value="'+esc(legenda)+'">'+
+      '<button type="button" class="mini-btn warn" data-advtirafoto aria-label="Tirar foto">×</button></div>';
+  }
+  function advLigarFotos(){
+    $$('#adv-fotos [data-advtirafoto]').forEach(b=>{ b.onclick=()=>b.closest('.adv-cor').remove(); });
+  }
   function advLinhaCor(c,principal){
     const h=advHex(c.hex);
     return '<div class="adv-cor"><input type="color" value="'+h.toLowerCase()+'"><input type="text" class="adv-nome" maxlength="30" placeholder="Nome da cor" value="'+esc(c.nome||'')+'">'+
@@ -1703,6 +1714,9 @@ ${serve ? `
       arte('adv-flyer','Arte em pé (celular)',e.flyer_url,'Flyer vertical. Até 5MB.')+
       arte('adv-banner','Arte deitada (computador, opcional)',e.banner_url,'Formato 16:9. Também vira o banner do topo do site no mês.')+
       arte('adv-pal','Arte da paleta (opcional)',e.paleta_url,'Imagem com as cores e sugestões de roupa.')+
+      '<div class="fld"><label>Fotos de inspiração (carrossel Inspire-se)</label><div id="adv-fotos">'+
+        (Array.isArray(e.fotos)?e.fotos:[]).map(f=>advLinhaFoto(f.url,f.legenda||'',null)).join('')+'</div>'+
+        '<input type="file" id="adv-fotos-add" accept="image/*" multiple><div class="ithint">Looks nas cores do tema, em pé. Pode escolher várias de uma vez; a legenda com o nome da cor liga a foto à paleta. Arraste não funciona: a ordem é a da lista.</div></div>'+
       '<label class="chkline"><input type="checkbox" id="adv-ativo"'+(e.ativo!==false?' checked':'')+'> Mostrar no site</label>'+
       '<div class="modal-actions"><button class="btn-primary" id="adv-salvar">Salvar</button><button class="btn-ghost" id="adv-cancelar">Cancelar</button>'+
         (e0?'<button class="btn-danger" id="adv-excluir">Excluir</button>':'')+'</div>';
@@ -1710,6 +1724,11 @@ ${serve ? `
     if(!cores.length){ $('#adv-cores').insertAdjacentHTML('beforeend',advLinhaCor({nome:'',hex:corAg},true)); advLigarCores(); }
     $('#adv-maiscor').onclick=()=>{ $('#adv-cores').insertAdjacentHTML('beforeend',advLinhaCor({nome:'',hex:'#CFA370'},!$('#adv-cores input[type=radio]:checked'))); advLigarCores(); };
     ['adv-flyer','adv-banner','adv-pal'].forEach(id=>{ $('#'+id).onchange=function(){ const f=this.files[0]; if(!f) return; const pv=$('#'+id+'-prev'); pv.src=URL.createObjectURL(f); pv.style.display='block'; }; });
+    ADV_ARQS=[]; advLigarFotos();
+    $('#adv-fotos-add').onchange=function(){
+      Array.from(this.files).forEach(f=>{ ADV_ARQS.push(f); $('#adv-fotos').insertAdjacentHTML('beforeend',advLinhaFoto(URL.createObjectURL(f),'',ADV_ARQS.length-1)); });
+      this.value=''; advLigarFotos();
+    };
     $('#adv-cancelar').onclick=fechaBanner;
     $('#adv-salvar').onclick=()=>salvarAtraves(e0);
     if(e0) $('#adv-excluir').onclick=()=>excluirAtraves(e0);
@@ -1736,7 +1755,25 @@ ${serve ? `
         if(up.error) throw up.error;
         return sb.storage.from('banners').getPublicUrl(path).data.publicUrl;
       };
-      const reg={data, hora:v('adv-hora')||null, tema, subtitulo:v('adv-sub')||null, frase:v('adv-frase')||null,
+      // fotos de inspiração: as que já estavam ficam; as novas sobem para o storage
+      const fotos=[];
+      for(const l of Array.from($$('#adv-fotos .adv-cor'))){
+        const legenda=l.querySelector('.adv-leg').value.trim();
+        let url=l.dataset.url||null;
+        if(!url && l.dataset.arq!=null){
+          const f=ADV_ARQS[+l.dataset.arq];
+          if(!/^image\//.test(f.type)) throw new Error('Selecione só imagens nas fotos de inspiração.');
+          if(f.size>5*1024*1024) throw new Error('Foto muito grande (máx 5MB): '+f.name);
+          btn.textContent='Enviando fotos…';
+          const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+          const path='atraves/'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+          const up=await sb.storage.from('banners').upload(path,f,{upsert:false,contentType:f.type});
+          if(up.error) throw up.error;
+          url=sb.storage.from('banners').getPublicUrl(path).data.publicUrl;
+        }
+        if(url) fotos.push({url,legenda});
+      }
+      const reg={data, hora:v('adv-hora')||null, tema, subtitulo:v('adv-sub')||null, frase:v('adv-frase')||null, fotos,
         preletores:v('adv-preg')||null, endereco:v('adv-end')||null, paleta_nome:v('adv-paleta')||null, cores, cor,
         flyer_url:await sobe('adv-flyer',e0&&e0.flyer_url), banner_url:await sobe('adv-banner',e0&&e0.banner_url),
         paleta_url:await sobe('adv-pal',e0&&e0.paleta_url), ativo:$('#adv-ativo').checked};

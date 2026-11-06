@@ -42,3 +42,14 @@ select date '2026-11-27', '19h30', 'Revival', 'Último do ano', 'Preparando o al
          {"nome":"Dourado Suave","hex":"#CFA370"},{"nome":"Terracota","hex":"#B8734F"},{"nome":"Marrom Glow","hex":"#6B4A3A"}]'::jsonb,
        '#B8734F', 'assets/atraves/2026-11-revival.jpg', 'assets/atraves/2026-11-revival-largo.jpg', 'assets/atraves/2026-11-paleta.jpg'
 where not exists (select 1 from public.atraves_de_voce where data = date '2026-11-27');
+
+-- Inspire-se: fotos de looks nas cores do tema (carrossel na página). [{"url":"…","legenda":"Champagne"}, …]
+alter table public.atraves_de_voce add column if not exists fotos jsonb not null default '[]';
+update public.atraves_de_voce set fotos = '[
+  {"url":"assets/atraves/2026-11-look-champagne.jpg","legenda":"Champagne"},
+  {"url":"assets/atraves/2026-11-look-nude-glow.jpg","legenda":"Nude Glow"},
+  {"url":"assets/atraves/2026-11-look-rose-brilho.jpg","legenda":"Rosé Brilho"},
+  {"url":"assets/atraves/2026-11-look-dourado-suave.jpg","legenda":"Dourado Suave"},
+  {"url":"assets/atraves/2026-11-look-terracota.jpg","legenda":"Terracota"},
+  {"url":"assets/atraves/2026-11-look-marrom-glow.jpg","legenda":"Marrom Glow"}
+]'::jsonb where data = date '2026-11-27' and jsonb_array_length(fotos) = 0;
