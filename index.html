@@ -223,6 +223,13 @@
   .ag-item.ag-tema{border-left:3px solid var(--tema);padding-left:14px;margin-left:-17px;border-radius:0 8px 8px 0;
            background:linear-gradient(90deg,color-mix(in srgb,var(--tema) 22%,transparent),transparent 85%)}
   .ag-item.ag-tema .ag-dia,.ag-item.ag-tema .ag-tipo{color:var(--tema)}
+  /* com o mouse em cima, a linha mostra a paleta inteira: clara à esquerda, escura à direita */
+  .ag-item.ag-tema{transition:background .4s,color .4s}
+  .ag-item.ag-tema .ag-dia,.ag-item.ag-tema .ag-tipo,.ag-item.ag-tema .ag-dow{transition:color .4s}
+  .ag-item.ag-tema:hover{background:var(--paleta,linear-gradient(90deg,var(--tema),var(--tema)));color:#1c110c}
+  .ag-item.ag-tema:hover .ag-dia,.ag-item.ag-tema:hover .ag-tipo,.ag-item.ag-tema:hover .ag-dow{color:#1c110c}
+  .ag-item.ag-tema:hover .ag-cores i{border-color:rgba(0,0,0,.25)}
+  .ag-item.ag-tema:hover .fcel{border-color:rgba(255,255,255,.45);background:rgba(0,0,0,.28);color:#fff}
   .ag-cores{display:inline-flex;margin-left:8px;vertical-align:middle}
   .ag-cores i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--breu);margin-left:-3px}
   .ag-item.ag-tema .fcel{border-color:var(--tema)}
@@ -1260,7 +1267,7 @@ const advPronto=agendaPronta.then(async()=>{
     // o "Através de Você" avulso da agenda no mesmo dia dá lugar à edição com tema
     for(let k=AGENDA.length-1;k>=0;k--)if(AGENDA[k].inicio===a.data&&/^atrav[eé]s de voc[eê]$/i.test(String(AGENDA[k].titulo).trim()))AGENDA.splice(k,1);
     AGENDA.push({inicio:a.data,dow:SEM[d(a.data).getDay()],titulo:'Através de Você · '+escH(a.tema),tipo:'culto',hora:a.hora?escH(a.hora):undefined,
-      cor:corOk(a.cor),cores:(a.cores||[]).map(c=>corOk(c.hex)),link:'atraves-de-voce.html',cta:'Ver tema',adv:true,
+      cor:corOk(a.cor),cores:(a.cores||[]).map(c=>corOk(c.hex)).sort((x,y)=>lum(y)-lum(x)),link:'atraves-de-voce.html',cta:'Ver tema',adv:true,
       img:(a.banner_url||a.flyer_url)?escH(a.banner_url||a.flyer_url):undefined,
       texto:[a.subtitulo,a.frase].filter(Boolean).map(escH).join(' · ')||'Um culto com tema e paleta de cores. Venha vestido com as cores da edição.'});
   });
@@ -1301,6 +1308,7 @@ function renderAgenda(){
       const row=document.createElement('div');
       row.className='ag-item'+(e.cor?' ag-tema':e.destaque?' ag-dest':'');
       if(e.cor)row.style.setProperty('--tema',e.cor);
+      if(e.cores&&e.cores.length>1)row.style.setProperty('--paleta','linear-gradient(90deg,'+e.cores.join(',')+')');
       row.innerHTML=`<div class="ag-quando"><div class="ag-dia">${e.fim?i.getDate()+'–'+d(e.fim).getDate():i.getDate()}</div><div class="ag-dow">${e.dow}</div></div>
         <div class="ag-titulo">${e.titulo}<span class="ag-tipo">${TIPO_LABEL[e.tipo]}${e.hora?`<span class="ag-hora"> · ${e.hora}</span>`:''}${e.cores&&e.cores.length?`<span class="ag-cores">${e.cores.map(c=>`<i style="background:${c}"></i>`).join('')}</span>`:''}</span></div>
         <div class="ag-acao">${acao}</div>`;
