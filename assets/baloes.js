@@ -26,17 +26,13 @@
       'background:linear-gradient(var(--c),transparent);opacity:.7}' +
     '#baloes-fonte .bl::before{content:"";position:absolute;inset:-12px -12px -6px}' +  /* área de toque maior */
     '#baloes-fonte .bl:hover b{opacity:1}' +
-    '#baloes-fonte .conf{position:absolute;bottom:-20px;width:8px;height:8px;border-radius:2px;background:var(--c);opacity:0;' +
-      'animation:blConf var(--t,13s) linear var(--d,0s) infinite}' +
-    '#baloes-fonte .pedaco{position:absolute;width:7px;height:7px;border-radius:2px;background:var(--c);' +
+    '#baloes-fonte .pedaco{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--c);' +
       'animation:blPedaco .7s cubic-bezier(.2,.7,.3,1) forwards}' +
     '#baloes-fonte .palavra{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;' +
       'font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:clamp(1.3rem,3.2vw,2rem);letter-spacing:-.01em;' +
       'color:var(--c);text-shadow:0 2px 18px rgba(0,0,0,.65),0 0 2px rgba(0,0,0,.6);animation:blPalavra 2.4s cubic-bezier(.2,.7,.2,1) forwards}' +
     '@keyframes blSobe{0%{transform:translate(0,0)}100%{transform:translate(var(--x,30px),calc(-100vh - 140px))}}' +
     '@keyframes blBalanca{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}' +
-    '@keyframes blConf{0%{transform:translateY(0) rotate(0);opacity:0}8%{opacity:.75}90%{opacity:.55}' +
-      '100%{transform:translate(var(--x,-40px),calc(-100vh - 60px)) rotate(720deg);opacity:0}}' +
     '@keyframes blPedaco{from{transform:translate(0,0) rotate(0);opacity:1}to{transform:translate(var(--px),var(--py)) rotate(240deg);opacity:0}}' +
     '@keyframes blPalavra{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}18%{opacity:1;transform:translate(-50%,-70%) scale(1.12)}' +
       '30%{transform:translate(-50%,-75%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-190%) scale(1)}}' +
@@ -48,7 +44,7 @@
     document.body.appendChild(palco);
 
     var celular = innerWidth < 700;
-    var nBaloes = celular ? 6 : 9, nConf = celular ? 5 : 8;
+    var nBaloes = celular ? 6 : 9;
     var rnd = function (a, b) { return a + Math.random() * (b - a); };
     var cor = function () { return CORES[Math.floor(Math.random() * CORES.length)]; };
     var ultima = '';
@@ -59,14 +55,6 @@
       el.style.setProperty('--x', Math.round(rnd(-60, 60)) + 'px');
       var t = rnd(17, 27); el.style.setProperty('--t', t.toFixed(1) + 's');
       el.style.setProperty('--d', (primeira ? -rnd(0, t) : rnd(0, 6)).toFixed(1) + 's');
-    }
-
-    for (var i = 0; i < nConf; i++) {
-      var c = document.createElement('i'); c.className = 'conf';
-      c.style.left = rnd(2, 98).toFixed(1) + '%'; c.style.setProperty('--c', cor());
-      c.style.setProperty('--x', Math.round(rnd(-50, 50)) + 'px');
-      var tc = rnd(11, 16); c.style.setProperty('--t', tc.toFixed(1) + 's'); c.style.setProperty('--d', (-rnd(0, tc)).toFixed(1) + 's');
-      palco.appendChild(c);
     }
 
     function estoura(bl) {
