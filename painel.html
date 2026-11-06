@@ -485,8 +485,9 @@
   const temCelula=c=>!!(c&&c.trim()) && SEM_CELULA.indexOf(c.trim().toLowerCase())<0;
   // nas listas, só o nome da célula: "A Forja — Santana de Parnaíba" vira "A Forja"
   const celNome=c=>String(c==null?'':c).split(/\s+[—–-]\s+/)[0].trim();
-  const LIDER_MIN='Líder de ministério';   // libera a carteirinha sem célula
-  const podeValidar=m=>temCelula(m.celula) || (m.ministerio||'').trim()===LIDER_MIN;
+  const LIDER_MIN='Líder de ministério';
+  const SEM_CELULA_OK=[LIDER_MIN,'Pastoral'];   // ministérios que liberam a carteirinha sem célula
+  const podeValidar=m=>temCelula(m.celula) || SEM_CELULA_OK.includes((m.ministerio||'').trim());
   const temMinisterio=x=>!!(x&&x.trim()) && x!=='Não serve em nenhum';
   // lista padrão; trocada pela do banco (ministerio_config) quando a tela Ministérios carrega
   let MINISTERIOS=['Ação Social','Boas-vindas','Dança','Dorcas','Estacionamento','Fonte Coffee','Fonte Store','Intercessão','Líder de célula','Líder de ministério','Louvor','Mídia Social','Mídia Técnica','Ministério Baby','Ministério Kids','Ministério Juniores','Ministério Teens','Obreiros','Pastoral','Voluntários'];
@@ -684,10 +685,10 @@
       '<div class="msub">Cadastrado em '+dataBR(m.created_at)+'</div>'+
       foto+
       '<div class="det">'+linhas.map(l=>'<div class="det-lin"><span class="k">'+l[0]+'</span><span class="v">'+(l[2]||esc(l[1])||'—')+'</span></div>').join('')+'</div>'+
-      (!validado && !podeValidar(m) ? '<div class="sub2" style="margin-top:12px;color:#e0b341">Para validar e liberar a carteirinha, o membro precisa fazer parte de uma célula (ou ser Líder de ministério). Use "Editar dados" para informar a célula.</div>' : '')+
+      (!validado && !podeValidar(m) ? '<div class="sub2" style="margin-top:12px;color:#e0b341">Para validar e liberar a carteirinha, o membro precisa fazer parte de uma célula (ou ser Líder de ministério ou do Pastoral). Use "Editar dados" para informar a célula.</div>' : '')+
       '<div class="mb-acoes"><button class="btn-ghost" data-act="edit">Editar dados</button>'+(validado
         ? ('<button class="btn-ghost" data-val="0">Voltar para pendente</button>'+(ativo ? '<button class="btn-val" data-act="cart">Criar carteirinha virtual</button>'+(m.carteirinha_enviada_em ? '' : '<button class="btn-ghost" data-act="mail"'+(m.email?'':' disabled title="Sem e-mail no cadastro"')+'>Enviar carteirinha por e-mail</button>') : ''))
-        : '<button class="btn-val" data-val="1"'+(podeValidar(m)?'':' disabled title="O membro precisa fazer parte de uma célula ou ser Líder de ministério"')+'>Validar dados / OK</button>')+
+        : '<button class="btn-val" data-val="1"'+(podeValidar(m)?'':' disabled title="O membro precisa fazer parte de uma célula ou ser Líder de ministério ou do Pastoral"')+'>Validar dados / OK</button>')+
         (!ativo ? (m.arquivado ? '<button class="btn-ghost" data-act="desarq">Desarquivar</button>' : '<button class="btn-ghost" data-act="arq">Arquivar</button>')+'<button class="btn-del" data-act="del">Excluir membro</button>' : '')+
       '</div><div class="sub2" id="mbMailSt" style="margin-top:10px">'+(validado && m.carteirinha_enviada_em ? 'Carteirinha enviada por e-mail em '+dataBR(m.carteirinha_enviada_em)+'.' : '')+'</div>';
     const vb=$('#mbBody .btn-val[data-val]');
@@ -820,7 +821,7 @@
   }
   async function setValidadoMembro(id, val){
     const mv=MEMBROS.find(x=>x.id===id);
-    if(val && mv && !podeValidar(mv)){ alert('Para validar, o membro precisa fazer parte de uma célula ou ser Líder de ministério. Edite os dados primeiro.'); return; }
+    if(val && mv && !podeValidar(mv)){ alert('Para validar, o membro precisa fazer parte de uma célula ou ser Líder de ministério ou do Pastoral. Edite os dados primeiro.'); return; }
     const vb=$('#mbBody .btn-val'); if(vb){ vb.disabled=true; vb.textContent='Salvando…'; }
     const {error}=await sb.from('membros').update({validado:val, validado_em: val?new Date().toISOString():null}).eq('id',id);
     if(error){ if(vb){ vb.disabled=false; vb.textContent='Validar dados / OK'; } alert('Não foi possível salvar a validação: '+(error.message||error)); return; }

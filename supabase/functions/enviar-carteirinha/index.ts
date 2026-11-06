@@ -1,6 +1,6 @@
 // Envia a carteirinha de membro por e-mail (Resend), chamada pelo painel ao validar o membro.
 // Só um admin logado pode chamar. O membro precisa estar validado, ativo, com célula (ou ser
-// Líder de ministério) e e-mail.
+// Líder de ministério ou do Pastoral) e e-mail.
 // Envia uma vez só: grava membros.carteirinha_enviada_em e recusa um segundo envio.
 //
 // Segredos (Supabase → Edge Functions → Secrets):
@@ -12,7 +12,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const SITE = "https://igrejaapostolicafonte.com.br";
 const REMETENTE = "Igreja Fonte <carteirinha@mail.igrejaapostolicafonte.com.br>";
 const SEM_CELULA = ["ainda não participo", "não participo de célula", "não pertenço a nenhuma célula", "não participo", "nao participo", "sem célula"];
-const LIDER_MIN = "Líder de ministério"; // libera a carteirinha sem célula
+const SEM_CELULA_OK = ["Líder de ministério", "Pastoral"]; // ministérios que liberam a carteirinha sem célula
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 const cors = {
@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
   if (m.validado !== true) return resposta(422, { erro: "O membro ainda não foi validado" });
   if (m.ativo === false || m.arquivado === true) return resposta(422, { erro: "O membro está inativo" });
   const cel = (m.celula ?? "").trim();
-  const liderMin = String(m.ministerio ?? "").trim() === LIDER_MIN;
-  if (!liderMin && (!cel || SEM_CELULA.includes(cel.toLowerCase()))) return resposta(422, { erro: "O membro não faz parte de uma célula" });
+  const semCelulaOk = SEM_CELULA_OK.includes(String(m.ministerio ?? "").trim());
+  if (!semCelulaOk && (!cel || SEM_CELULA.includes(cel.toLowerCase()))) return resposta(422, { erro: "O membro não faz parte de uma célula" });
 
   const partes = String(m.nome ?? "").trim().split(/\s+/);
   const primeiroNome = partes[0] ?? "";
