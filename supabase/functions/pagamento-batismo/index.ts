@@ -152,8 +152,8 @@ Deno.serve(async (req) => {
   // {telefone} vem da própria página, logo depois da inscrição.
   const credito = (corpo as { tipo?: string }).tipo === "credito";
   const idPedido = String((corpo as { id?: string }).id ?? "").trim();
-  const campos = "id,nome,telefone,camiseta_opcao,pagamento_status,created_at";
-  let insc: { id: string; nome: string; pagamento_status: string | null } | undefined;
+  const campos = "id,nome,telefone,email,camiseta_opcao,pagamento_status,created_at";
+  let insc: { id: string; nome: string; telefone: string | null; email: string | null; pagamento_status: string | null } | undefined;
   if (idPedido) {
     if (!/^[0-9a-f-]{36}$/i.test(idPedido)) return resposta(400, { erro: "Link de pagamento inválido." });
     const { data, error } = await admin.from("inscricoes_batismo").select(campos)
@@ -178,18 +178,33 @@ Deno.serve(async (req) => {
 
   const volta = (pago: string) => `${SITE}/batismo.html?pago=${pago}`;
   const valor = VALOR_CAMISETA.toFixed(2);
+  // Dados de quem paga: sem eles o antifraude do MP recusa muito cartão (high_risk).
+  // A documentação da API de Orders pede pelo menos o e-mail; nome e telefone ajudam na análise.
+  const partesNome = String(insc.nome ?? "").trim().split(/\s+/).filter(Boolean);
+  const telPagador = soNumeros(insc.telefone).replace(/^55(?=\d{10,11}$)/, "");
+  const emailPagador = String(insc.email ?? "").trim().toLowerCase();
+  const payer: Record<string, unknown> = {};
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPagador)) payer.email = emailPagador;
+  if (partesNome.length) payer.first_name = partesNome[0];
+  if (partesNome.length > 1) payer.last_name = partesNome.slice(1).join(" ");
+  if (telPagador.length >= 10) payer.phone = { area_code: telPagador.slice(0, 2), number: telPagador.slice(2) };
   const basica = {
     type: "online",
     processing_mode: "manual",
     total_amount: valor,
     external_reference: PREFIXO + insc.id,
     description: "Camiseta do batismo",
-    items: [{ title: "Camiseta do batismo — Igreja Fonte", unit_price: valor, quantity: 1 }],
+    ...(Object.keys(payer).length ? { payer } : {}),
+    items: [{
+      external_code: "camiseta-batismo", title: "Camiseta do batismo — Igreja Fonte",
+      description: "Camiseta do batismo da Igreja Fonte", category_id: "fashion", unit_price: valor, quantity: 1,
+    }],
   };
   const completa = {
     ...basica,
     expiration_time: `PT${MINUTOS_VALIDADE}M`,
     config: {
+      statement_descriptor: "IGR FONTE",   // nome na fatura do cartão (até ~10 letras)
       online: { success_url: volta("true"), failure_url: volta("false"), pending_url: volta("pending"), auto_return: "approved" },
       payment_method: {
         max_installments: 1,
