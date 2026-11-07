@@ -1,6 +1,6 @@
 // Pagamento da camiseta do batismo pelo Mercado Pago (mesmo modelo do app do encontro).
 // Uma função só, com dois papéis:
-//   1) a página batismo.html chama com {telefone, tipo} logo depois da inscrição, ou {id, tipo}
+//   1) a página batismo.html chama com {telefone} logo depois da inscrição, ou {id}
 //      pelo link de cobrança do painel →
 //      cria a order e devolve o link do checkout (o valor é definido aqui, nunca pelo site);
 //   2) o Mercado Pago chama a mesma URL quando a order muda (webhook) →
@@ -150,7 +150,6 @@ Deno.serve(async (req) => {
   // ---------- 1) criar o checkout ----------
   // {id} vem do link de cobrança que a equipe manda no WhatsApp (batismo.html?pagar=<id>);
   // {telefone} vem da própria página, logo depois da inscrição.
-  const credito = (corpo as { tipo?: string }).tipo === "credito";
   const idPedido = String((corpo as { id?: string }).id ?? "").trim();
   const campos = "id,nome,telefone,email,camiseta_opcao,pagamento_status,created_at";
   let insc: { id: string; nome: string; telefone: string | null; email: string | null; pagamento_status: string | null } | undefined;
@@ -206,10 +205,10 @@ Deno.serve(async (req) => {
     config: {
       statement_descriptor: "IGR FONTE",   // nome na fatura do cartão (até ~10 letras)
       online: { success_url: volta("true"), failure_url: volta("false"), pending_url: volta("pending"), auto_return: "approved" },
-      payment_method: {
-        max_installments: 1,
-        not_allowed_types: credito ? ["ticket", "bank_transfer"] : ["credit_card", "debit_card", "ticket"],
-      },
+      // Mostra todos os meios no Mercado Pago (PIX, crédito, débito) e a pessoa escolhe lá.
+      // Antes o botão "PIX" bloqueava crédito e débito: quando a conta não oferecia PIX,
+      // sobrava só "cartão pré-pago" e o cartão comum era recusado. Boleto fica fora (o link vale 1 hora).
+      payment_method: { max_installments: 1, not_allowed_types: ["ticket"] },
     },
   };
   const criar = (corpoOrder: Record<string, unknown>) => fetch("https://api.mercadopago.com/v1/orders", {
@@ -233,6 +232,6 @@ Deno.serve(async (req) => {
   }
   await admin.from("inscricoes_batismo").update({ pagamento_status: "pendente" })
     .eq("id", insc.id).neq("pagamento_status", "aprovado");
-  console.log(`batismo: order ${mp.id} para a inscrição ${insc.id} (${credito ? "cartão" : "pix"})`);
+  console.log(`batismo: order ${mp.id} para a inscrição ${insc.id}`);
   return resposta(200, { init_point: mp.checkout_url });
 });

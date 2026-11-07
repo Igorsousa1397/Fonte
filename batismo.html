@@ -309,12 +309,12 @@
         '<p style="color:var(--cinza-claro)">'+texto+'</p>'+(extra||'')+
       '</div>';
   }
-  // botões de pagamento da camiseta (Mercado Pago, mesmo modelo do app do encontro)
+  // botão de pagamento da camiseta (Mercado Pago): lá a pessoa escolhe PIX, crédito ou débito.
+  // data-pagar="credito" só para a função antiga do Supabase não bloquear os cartões; a nova ignora o tipo.
   function botoesPagar(){
     return '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px">'+
-      '<button class="btn" type="button" data-pagar="pix" style="width:auto;margin:0">Pagar com PIX · R$ 42,00</button>'+
-      '<button class="btn" type="button" data-pagar="credito" style="width:auto;margin:0;background:transparent;color:var(--luz);border:1px solid var(--neblina)">Pagar no cartão</button>'+
-      '</div><p class="aviso" id="b-pag-st" style="margin-top:12px">Você será levado ao Mercado Pago para concluir o pagamento.</p>';
+      '<button class="btn" type="button" data-pagar="credito" style="width:auto;margin:0">Pagar a camiseta · R$ 42,00</button>'+
+      '</div><p class="aviso" id="b-pag-st" style="margin-top:12px">No Mercado Pago você escolhe PIX, cartão de crédito ou débito.</p>';
   }
   // ref = {telefone} logo após a inscrição, ou {id} quando vem do link enviado pela equipe (?pagar=<id>)
   function ligarPagar(ref){
