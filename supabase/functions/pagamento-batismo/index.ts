@@ -2,18 +2,18 @@
 // Uma função só, com dois papéis:
 //   1) a página batismo.html chama com {telefone} logo depois da inscrição, ou {id}
 //      pelo link de cobrança do painel →
-//      cria a order e devolve o link do checkout (o valor é definido aqui, nunca pelo site);
-//   2) o Mercado Pago chama a mesma URL quando a order muda (webhook) →
+//      cria a preferência do Checkout Pro e devolve o link (o valor é definido aqui, nunca pelo site);
+//   2) o Mercado Pago chama a mesma URL quando o pagamento muda (notification_url da preferência) →
 //      confere status e valor na API do MP e marca inscricoes_batismo.pagamento_status = 'aprovado'.
 //   3) {acao:"email", telefone, email} logo depois da inscrição → manda o e-mail de confirmação
 //      com o link de pagamento da camiseta (batismo.html?pagar=<id>).
-// Usa a API de Orders do Checkout Pro (a de Preferences vai ser descontinuada).
+// Usa a API de Preferences do Checkout Pro, como o app do encontro. Com a API de Orders o PIX não
+// aparecia no checkout (só cartão), mesmo com chave Pix na conta. Avisos de orders antigas continuam aceitos.
 //
 // Publicar no Supabase → Edge Functions → pagamento-batismo, com "Verify JWT" DESLIGADO
 // (o Mercado Pago não manda token).
-// No Mercado Pago → aplicação "Batismo Igreja Fonte" → Webhooks → Produção:
-//   URL = https://iheracfrwyswhfxqrfrs.supabase.co/functions/v1/pagamento-batismo
-//   evento = "Order (Mercado Pago)"
+// O aviso de pagamento vai pela notification_url de cada preferência (não depende do painel de Webhooks).
+// O webhook do painel (evento "Order") pode ficar como está: só serve para orders criadas antes.
 // Segredos (Supabase → Edge Functions → Secrets):
 //   MP_ACCESS_TOKEN = access token de produção do Mercado Pago da igreja (APP_USR-…)
 //   RESEND_API_KEY  = já existe (é a mesma da carteirinha); usada no e-mail de confirmação
@@ -49,40 +49,45 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const corpo = await req.json().catch(() => ({} as Record<string, unknown>));
 
-  // ---------- 2) aviso do Mercado Pago (API de Orders) ----------
-  // Webhook do painel do MP, evento "Order (Mercado Pago)": {type:"order", data:{id}} ou ?type=order&data.id=…
-  // Não confia no aviso: busca a order na API do MP com o nosso token antes de marcar pago.
+  // ---------- 2) aviso do Mercado Pago ----------
+  // notification_url da preferência: {type:"payment", data:{id}} ou ?type=payment&data.id=… ou IPN ?topic=payment&id=…
+  // Orders antigas: {type:"order", data:{id}}. Não confia no aviso: busca na API do MP com o nosso token.
   const tipoAviso = (corpo as { type?: string }).type ?? url.searchParams.get("type") ?? url.searchParams.get("topic");
   if (tipoAviso) {
-    const orderId = (corpo as { data?: { id?: string } }).data?.id ?? url.searchParams.get("data.id") ?? url.searchParams.get("id");
-    if (tipoAviso !== "order" || !orderId) return resposta(200, { ok: "ignorado" });
+    const idAviso = (corpo as { data?: { id?: string } }).data?.id ?? url.searchParams.get("data.id") ?? url.searchParams.get("id");
+    if ((tipoAviso !== "payment" && tipoAviso !== "order") || !idAviso) return resposta(200, { ok: "ignorado" });
 
-    const r = await fetch(`https://api.mercadopago.com/v1/orders/${orderId}`, {
+    const ehOrder = tipoAviso === "order";
+    const r = await fetch(`https://api.mercadopago.com/v1/${ehOrder ? "orders" : "payments"}/${idAviso}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!r.ok) {
-      console.error(`batismo: MP devolveu ${r.status} ao consultar a order ${orderId}`);
-      return resposta(500, { erro: "erro ao consultar a order" });   // o MP tenta de novo
+      console.error(`batismo: MP devolveu ${r.status} ao consultar ${tipoAviso} ${idAviso}`);
+      return resposta(500, { erro: "erro ao consultar o pagamento" });   // o MP tenta de novo
     }
-    const order = await r.json();
-    const ref = String(order.external_reference ?? "");
-    console.log(`batismo: order ${orderId} status=${order.status}/${order.status_detail} ref="${ref}" valor=${order.total_amount}`);
+    const mpObj = await r.json();
+    const ref = String(mpObj.external_reference ?? "");
+    const aprovado = ehOrder
+      ? mpObj.status === "processed" && mpObj.status_detail === "accredited"
+      : mpObj.status === "approved";
+    const pago = Number(ehOrder ? (mpObj.total_paid_amount ?? mpObj.total_amount) : mpObj.transaction_amount);
+    console.log(`batismo: ${tipoAviso} ${idAviso} status=${mpObj.status}/${mpObj.status_detail} ` +
+      `meio=${mpObj.payment_method_id ?? "-"} ref="${ref}" valor=${pago}`);
     if (!ref.startsWith(PREFIXO)) return resposta(200, { ok: "não é do batismo" });
-    if (order.status !== "processed" || order.status_detail !== "accredited") return resposta(200, { ok: "não aprovado" });
-    const pago = Number(order.total_paid_amount ?? order.total_amount);
-    if (pago + 0.01 < VALOR_CAMISETA) {
+    if (!aprovado) return resposta(200, { ok: "não aprovado" });
+    if (!(pago + 0.01 >= VALOR_CAMISETA)) {
       console.error(`batismo: valor pago ${pago} menor que ${VALOR_CAMISETA} (${ref})`);
       return resposta(200, { ok: "valor divergente" });
     }
     const id = ref.slice(PREFIXO.length);
     const { data, error } = await admin.from("inscricoes_batismo")
-      .update({ pagamento_status: "aprovado", pagamento_id: String(orderId) })
+      .update({ pagamento_status: "aprovado", pagamento_id: String(idAviso) })
       .eq("id", id).select("id");
     if (error) {
       console.error("batismo: erro ao marcar pago", error.message);
       return resposta(500, { erro: error.message });
     }
-    if (!data?.length) console.error(`batismo: inscrição ${id} não encontrada (order ${orderId})`);
+    if (!data?.length) console.error(`batismo: inscrição ${id} não encontrada (${tipoAviso} ${idAviso})`);
     return resposta(200, { ok: "pago" });
   }
 
@@ -176,62 +181,55 @@ Deno.serve(async (req) => {
   if (insc.pagamento_status === "aprovado") return resposta(409, { erro: "A camiseta desta inscrição já está paga." });
 
   const volta = (pago: string) => `${SITE}/batismo.html?pago=${pago}`;
-  const valor = VALOR_CAMISETA.toFixed(2);
   // Dados de quem paga: sem eles o antifraude do MP recusa muito cartão (high_risk).
-  // A documentação da API de Orders pede pelo menos o e-mail; nome e telefone ajudam na análise.
   const partesNome = String(insc.nome ?? "").trim().split(/\s+/).filter(Boolean);
   const telPagador = soNumeros(insc.telefone).replace(/^55(?=\d{10,11}$)/, "");
   const emailPagador = String(insc.email ?? "").trim().toLowerCase();
   const payer: Record<string, unknown> = {};
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailPagador)) payer.email = emailPagador;
-  if (partesNome.length) payer.first_name = partesNome[0];
-  if (partesNome.length > 1) payer.last_name = partesNome.slice(1).join(" ");
+  if (partesNome.length) payer.name = partesNome[0];
+  if (partesNome.length > 1) payer.surname = partesNome.slice(1).join(" ");
   if (telPagador.length >= 10) payer.phone = { area_code: telPagador.slice(0, 2), number: telPagador.slice(2) };
+
+  const agora = Date.now();
   const basica = {
-    type: "online",
-    processing_mode: "manual",
-    total_amount: valor,
-    external_reference: PREFIXO + insc.id,
-    description: "Camiseta do batismo",
-    ...(Object.keys(payer).length ? { payer } : {}),
     items: [{
-      external_code: "camiseta-batismo", title: "Camiseta do batismo — Igreja Fonte",
-      description: "Camiseta do batismo da Igreja Fonte", category_id: "fashion", unit_price: valor, quantity: 1,
+      id: "camiseta-batismo", title: "Camiseta do batismo - Igreja Fonte", description: "Camiseta do batismo da Igreja Fonte",
+      category_id: "fashion", quantity: 1, unit_price: VALOR_CAMISETA, currency_id: "BRL",
     }],
+    ...(Object.keys(payer).length ? { payer } : {}),
+    external_reference: PREFIXO + insc.id,
+    back_urls: { success: volta("true"), failure: volta("false"), pending: volta("pending") },
+    auto_return: "approved",
+    notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/pagamento-batismo`,
   };
   const completa = {
     ...basica,
-    expiration_time: `PT${MINUTOS_VALIDADE}M`,
-    config: {
-      statement_descriptor: "IGR FONTE",   // nome na fatura do cartão (até ~10 letras)
-      online: { success_url: volta("true"), failure_url: volta("false"), pending_url: volta("pending"), auto_return: "approved" },
-      // Mostra todos os meios no Mercado Pago (PIX, crédito, débito) e a pessoa escolhe lá.
-      // Antes o botão "PIX" bloqueava crédito e débito: quando a conta não oferecia PIX,
-      // sobrava só "cartão pré-pago" e o cartão comum era recusado. Boleto fica fora (o link vale 1 hora).
-      payment_method: { max_installments: 1, not_allowed_types: ["ticket"] },
-    },
+    statement_descriptor: "IGR FONTE",   // nome na fatura do cartão
+    expires: true,                       // link antigo não pode ser pago depois
+    expiration_date_from: new Date(agora - 60_000).toISOString(),
+    expiration_date_to: new Date(agora + MINUTOS_VALIDADE * 60_000).toISOString(),
+    // PIX, crédito e débito no mesmo checkout; boleto fica fora (o link vale 1 hora)
+    payment_methods: { excluded_payment_types: [{ id: "ticket" }], installments: 1 },
   };
-  const criar = (corpoOrder: Record<string, unknown>) => fetch("https://api.mercadopago.com/v1/orders", {
+  const criar = (pref: Record<string, unknown>) => fetch("https://api.mercadopago.com/checkout/preferences", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json", accept: "application/json",
-      Authorization: `Bearer ${token}`, "X-Idempotency-Key": crypto.randomUUID(),
-    },
-    body: JSON.stringify(corpoOrder),
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, "X-Idempotency-Key": crypto.randomUUID() },
+    body: JSON.stringify(pref),
   }).then((r) => r.json());
 
   let mp = await criar(completa);
-  if (!mp.checkout_url) {
-    // se o MP recusar alguma configuração (prazo, restrição de meio), tenta só com o essencial + volta ao site
-    console.error("batismo: MP recusou a order completa", JSON.stringify(mp));
-    mp = await criar({ ...basica, config: { online: completa.config.online } });
+  if (!mp.init_point) {
+    // se o MP recusar alguma configuração (prazo, restrição de meio), tenta só com o essencial
+    console.error("batismo: MP recusou a preferência completa", JSON.stringify(mp));
+    mp = await criar(basica);
   }
-  if (!mp.checkout_url) {
-    console.error("batismo: MP recusou a order", JSON.stringify(mp));
+  if (!mp.init_point) {
+    console.error("batismo: MP recusou a preferência", JSON.stringify(mp));
     return resposta(500, { erro: "Não foi possível abrir o pagamento agora." });
   }
   await admin.from("inscricoes_batismo").update({ pagamento_status: "pendente" })
     .eq("id", insc.id).neq("pagamento_status", "aprovado");
-  console.log(`batismo: order ${mp.id} para a inscrição ${insc.id}`);
-  return resposta(200, { init_point: mp.checkout_url });
+  console.log(`batismo: preferência ${mp.id} para a inscrição ${insc.id}`);
+  return resposta(200, { init_point: mp.init_point });
 });
