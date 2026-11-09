@@ -1144,12 +1144,16 @@ function textoSlide(e){
   if(e.tipo==='marco')return 'Uma data especial na vida da nossa comunidade.';
   return 'Reserve a data na sua agenda e venha viver esse momento com a Fonte.';}
 const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// versão das artes em assets/banners/: muda quando uma arte é refeita, para o navegador não mostrar a antiga do cache
+// (scripts/banner-parceiros.py atualiza sozinho)
+const BANNERS_V='20261109-2026';
+const comVersao=u=>/^assets\/banners\//.test(u)&&!/[?]/.test(u)?u+'?v='+BANNERS_V:u;
 const DOW=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 function bannerParaSlide(b){
   const fim=(b.data_fim&&b.data_fim!==b.data)?b.data_fim:undefined;
   const dow=b.data?DOW[d(b.data).getDay()]+(fim?'–'+DOW[d(fim).getDay()]:''):'';
   return {inicio:b.data||null, fim, dow, titulo:escH(b.titulo), texto:escH(b.descricao||''),
-    img:b.imagem_url?escH(b.imagem_url):undefined, link:b.link?escH(b.link):undefined, cta:escH(b.cta||'Saiba mais')};
+    img:b.imagem_url?escH(comVersao(b.imagem_url)):undefined, link:b.link?escH(b.link):undefined, cta:escH(b.cta||'Saiba mais')};
 }
 // o banco só devolve os ativos: recorrente ausente = desligado no painel
 async function buscarBanners(){

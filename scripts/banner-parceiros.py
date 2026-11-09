@@ -69,4 +69,11 @@ for linha in ['PAR','CEI','ROS']:
 esp('BENEFÍCIOS EXCLUSIVOS',x0,y+40,F(34,7),(245,245,246),6)
 esp('APRESENTE SUA CARTEIRINHA',x0,y+95,F(26,5),(122,212,207),5)
 im.save('assets/banners/parcerias.jpg',quality=88,optimize=True)
+
+# muda a versão das artes na home, para o navegador baixar o banner novo em vez de mostrar o antigo do cache
+import re, time
+home=open('index.html',encoding='utf-8').read()
+home,n=re.subn(r"const BANNERS_V='[^']*';","const BANNERS_V='"+time.strftime('%Y%m%d-%H%M')+"';",home)
+if n==1: open('index.html','w',encoding='utf-8').write(home)
+else: print('aviso: BANNERS_V não encontrado em index.html')
 print('ok', len(LOGOS), 'logos')
