@@ -125,3 +125,9 @@ select 'Emagrecentro Cajamar', 'Saúde', 'assets/parceiros/emagrecentro.png',
        '10% de desconto', 'Centro especializado em emagrecimento e saúde. Fale com a Anne Caroline.', 'Novembro de 2026',
        'emagrecentro_cajamar', '(11) 93929-5890', 'Rua Gloriosa, 151 · Portal dos Ipês', 12
 where not exists (select 1 from public.parcerias where nome = 'Emagrecentro Cajamar');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, ordem)
+select 'Unic Beauty', 'Beleza', 'assets/parceiros/unic-beauty.jpg',
+       'A partir de 15% de desconto', 'Stúdio de beleza. Fale com a Joice Kelly.', 'Novembro de 2026',
+       'unicbeauty__', '(11) 98963-0363', 13
+where not exists (select 1 from public.parcerias where nome = 'Unic Beauty');
