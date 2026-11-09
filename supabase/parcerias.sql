@@ -119,3 +119,9 @@ select 'Cedro Clinic Podologia', 'Saúde', 'assets/parceiros/cedro-clinic.jpg',
        '20% de desconto', 'Nos tratamentos podológicos. Fale com a Michelle Cabral, podologista.', 'Novembro de 2026',
        'cedro_clinic_podologia', '(61) 98287-1604', 11
 where not exists (select 1 from public.parcerias where nome = 'Cedro Clinic Podologia');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, endereco, ordem)
+select 'Emagrecentro Cajamar', 'Saúde', 'assets/parceiros/emagrecentro.png',
+       '10% de desconto', 'Centro especializado em emagrecimento e saúde. Fale com a Anne Caroline.', 'Novembro de 2026',
+       'emagrecentro_cajamar', '(11) 93929-5890', 'Rua Gloriosa, 151 · Portal dos Ipês', 12
+where not exists (select 1 from public.parcerias where nome = 'Emagrecentro Cajamar');

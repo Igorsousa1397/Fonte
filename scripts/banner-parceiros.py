@@ -17,6 +17,7 @@ LOGOS=[
   ('assets/parceiros/diane-oliveira.png',(255,255,255)),
   ('assets/parceiros/studio-start.png',(255,255,255)),
   ('assets/parceiros/cedro-clinic.jpg',None),
+  ('assets/parceiros/emagrecentro.png',(255,255,255)),
 ]
 
 W,H=1600,900
