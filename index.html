@@ -1155,10 +1155,12 @@ function bannerParaSlide(b){
   return {inicio:b.data||null, fim, dow, titulo:escH(b.titulo), texto:escH(b.descricao||''),
     img:b.imagem_url?escH(comVersao(b.imagem_url)):undefined, link:b.link?escH(b.link):undefined, cta:escH(b.cta||'Saiba mais')};
 }
-// o banco só devolve os ativos: recorrente ausente = desligado no painel
+// só os ativos: recorrente ausente = desligado no painel.
+// O filtro de ativo é explícito porque o admin logado no site enxerga também os desligados.
 async function buscarBanners(){
   try{
     const {data,error}=await sb.from('banners').select('auto,titulo,descricao,imagem_url,data,data_fim,link,cta,criado_em')
+      .eq('ativo',true)
       .order('data',{ascending:true,nullsFirst:false}).order('criado_em',{ascending:true});
     if(error)throw error;
     const autos={};(data||[]).filter(b=>b.auto).forEach(b=>{autos[b.auto]=b;});
