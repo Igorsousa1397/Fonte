@@ -1105,7 +1105,7 @@ function escolherSlides(r){
   const MAX=5;   // até 5 avisos no carrossel
   const on=k=>!r.ok||!!r.autos[k];
   const comTextos=(k,e)=>{const a=r.autos[k];if(!a)return e;
-    return {...e,titulo:escH(a.titulo),texto:a.descricao!=null?escH(a.descricao):undefined,img:a.imagem_url?escH(a.imagem_url):undefined};};
+    return {...e,titulo:escH(a.titulo),texto:a.descricao!=null?escH(a.descricao):undefined,img:a.imagem_url?escH(comVersao(a.imagem_url)):undefined};};
   const futuros=AGENDA.filter(e=>diasAte(e.fim||e.inicio)>=0).sort((a,b)=>d(a.inicio)-d(b.inicio));   // de novo: datas podem ter vindo do banco
   const mes=HOJE.getMonth(), ano=HOJE.getFullYear();
   // eventos especiais do MÊS atual (têm flyer OU não são culto fixo)
@@ -1146,7 +1146,7 @@ function textoSlide(e){
 const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // versão das artes em assets/banners/: muda quando uma arte é refeita, para o navegador não mostrar a antiga do cache
 // (scripts/banner-parceiros.py atualiza sozinho)
-const BANNERS_V='20261109-2026';
+const BANNERS_V='20261111-2057';
 const comVersao=u=>/^assets\/banners\//.test(u)&&!/[?]/.test(u)?u+'?v='+BANNERS_V:u;
 const DOW=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 function bannerParaSlide(b){
@@ -1252,7 +1252,7 @@ const agendaPronta=(async()=>{
       const fim=(r.fim&&r.fim!==r.inicio)?r.fim:undefined;
       return {inicio:r.inicio,fim,dow:SEM[d(r.inicio).getDay()]+(fim?'–'+SEM[d(fim).getDay()]:''),titulo:escH(r.titulo),
         tipo:TIPO_LABEL[r.tipo]?r.tipo:'evento',hora:r.hora?escH(r.hora):undefined,destaque:!!r.destaque,
-        img:r.imagem_url?escH(r.imagem_url):undefined,link:r.link?escH(r.link):undefined,cta:r.cta?escH(r.cta):undefined};
+        img:r.imagem_url?escH(comVersao(r.imagem_url)):undefined,link:r.link?escH(r.link):undefined,cta:r.cta?escH(r.cta):undefined};
     });
     for(let k=AGENDA.length-1;k>=0;k--)if(!AGENDA[k].id&&!AGENDA[k].fixo)AGENDA.splice(k,1);
     AGENDA.push(...doBanco);
@@ -1372,21 +1372,21 @@ const CELULAS=[
   {nome:'Betesda',lider:'Cris e Carol',end:'Rua dos Flox, 400 — Cond. San Miguel (T8 ap.05)',hora:'20h',cidade:'Cajamar',tag:'Mulheres',lat:-23.4035007,lng:-46.8587154,foto:'assets/celulas/betesda.jpg', wpp:'5511916405273'},
   {nome:'Beraká',lider:'Pr. Amilton e Pra. Kátia',end:'Na Igreja (R. Catiguá, 130) — Templo Kids',hora:'20h',cidade:'Cajamar',lat:-23.40868,lng:-46.86781,foto:'assets/celulas/beraka.jpg', wpp:'5511953656812'},
   {nome:'Reobote',lider:'Thais e Junior',end:'Rua Irmã Daria Moreira, 39 — Pq. Paraíso',hora:'20h',cidade:'Cajamar',lat:-23.4106936,lng:-46.8272042,foto:'assets/celulas/reobote.jpg', wpp:'5511997187584'},
-  {nome:'Emaús',lider:'Simone e Tiago',end:'Rua Waldemar Meira, 434 — Portal',hora:'20h',cidade:'Cajamar',lat:-23.4077369,lng:-46.853676,foto:'assets/celulas/emaus.jpg', wpp:'5511914680682'},
-  {nome:'Fire',lider:'Paulo e Fabiana',end:'Rua Alto Porã, 306 — Apto 22B, Colina Maria Luiza (Jordanésia)',hora:'20h',cidade:'Cajamar',lat:-23.3608,lng:-46.8712,foto:'assets/celulas/fire.jpg', wpp:'5511997093085'},
-  {nome:'Kerygma',lider:'João e Anchelly',end:'Av. dos Ingás, 416 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3970186,lng:-46.8668598,foto:'assets/celulas/kerygma.jpg', wpp:'5511942418154'},
-  {nome:'Ebenézer',lider:'Sóstenes e Kelly',end:'Rua das Alpínias, 577 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3988088,lng:-46.859581,foto:'assets/celulas/ebenezer.jpg', wpp:'5511950413682'},
-  {nome:'Betel',lider:'Rodnei e Débora',end:'Av. das Palmeiras, 720 — ap.97 (Portal)',hora:'19h30',cidade:'Cajamar',lat:-23.4041966,lng:-46.8627586,foto:'assets/celulas/betel.jpg', wpp:'5511950932007'},
+  {nome:'Emaús',lider:'Simone e Tiago',end:'Rua Waldemar Meira, 434 — Portal',hora:'20h',cidade:'Cajamar',lat:-23.407335,lng:-46.852179,foto:'assets/celulas/emaus.jpg', wpp:'5511914680682'},
+  {nome:'Fire',lider:'Paulo e Fabiana',end:'Rua Alto Porã, 306 — Apto 22B, Colina Maria Luiza (Jordanésia)',hora:'20h',cidade:'Cajamar',lat:-23.345961,lng:-46.826125,foto:'assets/celulas/fire.jpg', wpp:'5511997093085'},
+  {nome:'Kerygma',lider:'João e Anchelly',end:'Av. dos Ingás, 416 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.399847,lng:-46.863315,foto:'assets/celulas/kerygma.jpg', wpp:'5511942418154'},
+  {nome:'Ebenézer',lider:'Sóstenes e Kelly',end:'Rua das Alpínias, 577 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.395618,lng:-46.859727,foto:'assets/celulas/ebenezer.jpg', wpp:'5511950413682'},
+  {nome:'Betel',lider:'Rodnei e Débora',end:'Av. das Palmeiras, 720 — ap.97 (Portal)',hora:'19h30',cidade:'Cajamar',lat:-23.404007,lng:-46.86461,foto:'assets/celulas/betel.jpg', wpp:'5511950932007'},
   {nome:'Transbordo',lider:'Marlucia e Cícero',end:'Rua Cosmópolis, 123 — Pq. Paraíso',hora:'Sáb 19h',cidade:'Cajamar',lat:-23.4192869,lng:-46.8263836,foto:'assets/celulas/transbordo.jpg', wpp:'55119'},
   {nome:'Ekklesia',lider:'Carol e Claiton',end:'Rua das Malvas, 245 — Portal dos Ipês',hora:'20h',cidade:'Cajamar',lat:-23.3968332,lng:-46.8646969,foto:'assets/celulas/ekklesia.jpg', wpp:'5511971792236'},
   {nome:'Ekballo',lider:'Felipe e Larissa',end:'Na Igreja (R. Catiguá, 130) — Sala Pastoral',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.40868,lng:-46.86807,foto:'assets/celulas/ekballo.jpg', wpp:'5511939345629'},
-  {nome:'Atos 29',lider:'Nicolas e Agatha',end:'Rua Campos do Jordão, 175 — Cond. Vitória 1 (Polvilho/Panorama)',hora:'19h30',cidade:'Cajamar',lat:-23.4129728,lng:-46.8455715,foto:'assets/celulas/atos-29.jpg', wpp:'5511955850282'},
-  {nome:'Identidade',lider:'Douglas e Fran',end:'Rua das Caliandras, 401 — Portal 3',hora:'20h',cidade:'Cajamar',lat:-23.3991101,lng:-46.8573909,foto:'assets/celulas/identidade.jpg', wpp:'5511950932007'},
-  {nome:'Pedra Angular',lider:'Miriam',end:'Rua Gilberto de Carvalho, 239 — Panorama',hora:'20h',cidade:'Cajamar',tag:'Mulheres',lat:-23.4184663,lng:-46.851825,foto:'assets/celulas/pedra-angular.jpg', wpp:'5511993174500'},
+  {nome:'Atos 29',lider:'Nicolas e Agatha',end:'Rua Campos do Jordão, 175 — Cond. Vitória 1 (Polvilho/Panorama)',hora:'19h30',cidade:'Cajamar',lat:-23.411253,lng:-46.844681,foto:'assets/celulas/atos-29.jpg', wpp:'5511955850282'},
+  {nome:'Identidade',lider:'Douglas e Fran',end:'Rua das Caliandras, 401 — Portal 3',hora:'20h',cidade:'Cajamar',lat:-23.397666,lng:-46.860111,foto:'assets/celulas/identidade.jpg', wpp:'5511950932007'},
+  {nome:'Pedra Angular',lider:'Miriam',end:'Rua Gilberto de Carvalho, 239 — Panorama',hora:'20h',cidade:'Cajamar',tag:'Mulheres',lat:-23.41103,lng:-46.847518,foto:'assets/celulas/pedra-angular.jpg', wpp:'5511993174500'},
   {nome:'Carta Viva',lider:'Mateus e Ingrid',end:'Rua Takaharu Urano, 706 — Portal 1',hora:'20h',cidade:'Cajamar',lat:-23.4101862,lng:-46.8484336,foto:'assets/celulas/carta-viva.jpg', wpp:'5511957810047'},
   // SANTANA DE PARNAÍBA
   {nome:'Luz do Mundo',lider:'Ev. Islany e Ev. Silas',end:'Rua Bento Crispim, 842 — Gleba C',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4305852,lng:-46.856698, wpp:'5511951709482'},
-  {nome:'Gileade',lider:'Carol e Sávio',end:'Rua Rouxinol, 106 — Cidade São Pedro',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4238086,lng:-46.8598876,foto:'assets/celulas/gileade.jpg', wpp:'5511958851937'},
+  {nome:'Gileade',lider:'Carol e Sávio',end:'Rua Rouxinol, 106 — Cidade São Pedro',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.423094,lng:-46.860581,foto:'assets/celulas/gileade.jpg', wpp:'5511958851937'},
   {nome:'A Forja',lider:'Jhonny e Tais',end:'Rua Geraldo Ramos da Silva Filho, 35 — Gleba B, São Pedro',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4251156,lng:-46.8505617,foto:'assets/celulas/a-forja.jpg', wpp:'5511950932007'},
   {nome:'Nahal',lider:'Larissa e Inês',end:'Rua Spártaco Bastianon, 10 — Gleba B, São Pedro',hora:'20h',cidade:'Santana de Parnaíba',lat:-23.4286921,lng:-46.8488236, wpp:'5511978083493'},
   {nome:'Deus Forte',lider:'Joabio e Kátia',end:'Rua Alfa, 09 — Pq. Jaguari',hora:'Sex 20h',cidade:'Santana de Parnaíba',lat:-23.4182965,lng:-46.8720568,foto:'assets/celulas/deus-forte.jpg', wpp:'5511975449567'},
@@ -1524,7 +1524,8 @@ if(pertoForm) pertoForm.addEventListener('submit',async e=>{
       if(!achou && v.bairro){ await new Promise(r=>setTimeout(r,1100)); achou=await busca('q='+encodeURIComponent(v.bairro+', '+v.localidade+', '+v.uf)); }
       if(!achou){ await new Promise(r=>setTimeout(r,1100)); achou=await busca('city='+encodeURIComponent(v.localidade)+'&state='+encodeURIComponent(v.uf)); }
     }else{
-      achou=await busca('q='+encodeURIComponent(txt));
+      // endereço digitado: prefere a região das células (sem isso, "Rua do Rouxinol" caía numa rua de mesmo nome em Salvador)
+      achou=await busca('q='+encodeURIComponent(txt)+'&viewbox=-47.10,-23.20,-46.70,-23.65');
     }
     if(!achou){ nota.textContent='Não achei esse endereço no mapa. Tente com rua, número e cidade, ou só o CEP.'; return; }
     mostrarMaisProxima(+achou.lat,+achou.lon,rotulo);
