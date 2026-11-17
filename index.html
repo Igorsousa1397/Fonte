@@ -1056,7 +1056,7 @@ const AGENDA = [
   { inicio:'2026-10-16', fim:'2026-10-18', dow:'Sex–Dom', titulo:'Seminário de Honra', tipo:'evento', destaque:true },
   { inicio:'2026-10-24', dow:'Sáb', titulo:'Culto DN4', tipo:'culto' },
   { inicio:'2026-10-26', dow:'Seg', titulo:'Discipulado com Líderes de Célula', tipo:'lideranca', img:'assets/discipulado-lideres.jpg' },
-  { inicio:'2026-11-13', dow:'Sex', titulo:'Culto de Homens · For Men', tipo:'culto', hora:'19h30', img:'assets/banners/formen.jpg' },
+  { inicio:'2026-12-01', dow:'Ter', titulo:'Culto de Homens · For Men', tipo:'culto', hora:'19h30', img:'assets/banners/formen.jpg' },
   { inicio:'2026-11-14', dow:'Sáb', titulo:'Casamento do Tiago', tipo:'marco' },
   { inicio:'2026-11-17', dow:'Ter', titulo:'Discipulado com Líderes de Ministério', tipo:'lideranca' },
   { inicio:'2026-11-20', fim:'2026-11-22', dow:'Sex–Dom', id:'peniel', titulo:'Encontro Peniel', tipo:'evento', destaque:true, cor:'#5FA84A', link:'https://encontrocomdeus-fonte.vercel.app/?inscricao', cta:'Inscrever-se', selo:'3º e último de 2026' },
@@ -1146,7 +1146,7 @@ function textoSlide(e){
 const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // versão das artes em assets/banners/: muda quando uma arte é refeita, para o navegador não mostrar a antiga do cache
 // (scripts/banner-parceiros.py atualiza sozinho)
-const BANNERS_V='20261111-2057';
+const BANNERS_V='20261117-1103';
 const comVersao=u=>/^assets\/banners\//.test(u)&&!/[?]/.test(u)?u+'?v='+BANNERS_V:u;
 const DOW=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 function bannerParaSlide(b){
