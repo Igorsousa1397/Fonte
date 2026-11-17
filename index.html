@@ -1146,7 +1146,7 @@ function textoSlide(e){
 const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // versão das artes em assets/banners/: muda quando uma arte é refeita, para o navegador não mostrar a antiga do cache
 // (scripts/banner-parceiros.py atualiza sozinho)
-const BANNERS_V='20261117-1103';
+const BANNERS_V='20261117-1106';
 const comVersao=u=>/^assets\/banners\//.test(u)&&!/[?]/.test(u)?u+'?v='+BANNERS_V:u;
 const DOW=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 function bannerParaSlide(b){

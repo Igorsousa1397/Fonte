@@ -131,3 +131,9 @@ select 'Unic Beauty', 'Beleza', 'assets/parceiros/unic-beauty.jpg',
        'A partir de 15% de desconto', 'Stúdio de beleza. Fale com a Joice Kelly.', 'Novembro de 2026',
        'unicbeauty__', '(11) 98963-0363', 13
 where not exists (select 1 from public.parcerias where nome = 'Unic Beauty');
+
+insert into public.parcerias (nome, categoria, logo_url, beneficios, observacao, periodo, instagram, whatsapp, ordem)
+select 'Clothing Seja Luz', 'Vestuário', 'assets/parceiros/clothing-seja-luz.png',
+       '5% de desconto ou frete grátis', 'Loja online. Fale com a Ana Clara.', 'Novembro de 2026',
+       'clothing.sejaluz', '(11) 96169-7279', 14
+where not exists (select 1 from public.parcerias where nome = 'Clothing Seja Luz');

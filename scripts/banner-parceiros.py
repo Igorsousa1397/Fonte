@@ -19,6 +19,7 @@ LOGOS=[
   ('assets/parceiros/cedro-clinic.jpg',None),
   ('assets/parceiros/emagrecentro.png',(255,255,255)),
   ('assets/parceiros/unic-beauty.jpg',None),
+  ('assets/parceiros/clothing-seja-luz.png',None),
 ]
 
 W,H=1600,900
