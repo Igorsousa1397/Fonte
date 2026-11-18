@@ -96,6 +96,30 @@
          border:1px solid var(--agua-forte);color:var(--luz);padding:12px 18px;border-radius:100px;
          font-size:.9rem;opacity:0;pointer-events:none;transition:all .3s;z-index:50}
   .toast.on{opacity:1;transform:translate(-50%,0)}
+  /* pagamento na própria página: PIX (QR Code) e cartão */
+  .pag{margin-top:22px;text-align:left}
+  .pag-abas{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--breu);border:var(--borda);border-radius:100px;padding:5px;margin-bottom:18px}
+  .pag-abas button{border:none;background:transparent;color:var(--cinza-claro);font-family:var(--corpo);font-weight:600;font-size:.95rem;
+     padding:11px 10px;border-radius:100px;cursor:pointer;min-height:44px}
+  .pag-abas button.on{background:var(--agua);color:#04211f}
+  .pag .campo{margin-bottom:14px}
+  .pag-st{color:var(--cinza-claro);font-size:.9rem;margin-top:12px;text-align:center;min-height:1.2em}
+  .pag-st.erro{color:#ff9a9a}
+  .pix-qr{background:#fff;border-radius:14px;padding:14px;width:min(260px,100%);margin:6px auto 14px}
+  .pix-qr img{width:100%;height:auto;image-rendering:pixelated}
+  .pix-cc{display:flex;gap:8px}
+  .pix-cc input{flex:1;min-width:0;font-size:.8rem!important;color:var(--cinza-claro)!important}
+  .pix-cc button{flex:0 0 auto;width:auto;padding:0 18px}
+  .espera{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--agua);font-size:.92rem;margin-top:14px}
+  .espera i{width:16px;height:16px;border-radius:50%;border:2px solid var(--agua-fundo);border-top-color:var(--agua);animation:gira 1s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  .mp-campo{background:#fff;border-radius:var(--raio-sm);height:50px;padding:0 14px;border:2px solid transparent}
+  .mp-campo iframe{height:100%!important;width:100%!important}
+  .pag #mp-titular{background:#fff;color:#111;border-color:transparent;height:50px}
+  .pag #mp-titular::placeholder{color:#8a8a92}
+  .mp-linha{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pag .escondido{display:none!important}
+  .pag-alt{display:block;text-align:center;margin-top:16px;font-size:.85rem;color:var(--cinza);text-decoration:underline;cursor:pointer;background:none;border:none;width:100%;font-family:var(--corpo)}
   @media(max-width:560px){.form{padding:22px}}
 </style>
 
@@ -309,40 +333,174 @@
         '<p style="color:var(--cinza-claro)">'+texto+'</p>'+(extra||'')+
       '</div>';
   }
-  // botão de pagamento da camiseta (Mercado Pago): lá a pessoa escolhe PIX, crédito ou débito.
-  // data-pagar="credito" só para a função antiga do Supabase não bloquear os cartões; a nova ignora o tipo.
+  // ---------- pagamento da camiseta na própria página (Mercado Pago, Checkout Transparente) ----------
+  // PIX: a função cria o pagamento e devolve o QR Code; a página pergunta a cada 4 s se já caiu.
+  // Cartão: os campos de número, validade e código são do Mercado Pago (iframes); a página só recebe um token.
+  // Public Key de produção da aplicação "Batismo Igreja Fonte" (Mercado Pago Developers → Credenciais de produção).
+  // É pública por natureza; sem ela, a aba Cartão manda para o site do Mercado Pago.
+  var MP_PUBLIC_KEY='';
+  var VALOR_TXT='R$ 42,00', emailInscricao='';
+  function chamarFuncao(corpo){
+    return fetch(SUPABASE_URL+'/functions/v1/pagamento-batismo',{method:'POST',
+      headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON},
+      body:JSON.stringify(corpo)}).then(function(r){return r.json().catch(function(){return {};});});
+  }
+  function cpfValido(v){
+    var c=String(v||'').replace(/\D/g,''); if(c.length!==11||/^(\d)\1{10}$/.test(c)) return false;
+    function dv(n){var s=0;for(var i=0;i<n;i++)s+=+c[i]*(n+1-i);var r=(s*10)%11;return r===10?0:r;}
+    return dv(9)===+c[9]&&dv(10)===+c[10];
+  }
+  function mascaraCpf(el){ el.addEventListener('input',function(){ var d=el.value.replace(/\D/g,'').slice(0,11);
+    el.value=d.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/,'.$1-$2'); }); }
   function botoesPagar(){
-    return '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px">'+
-      '<button class="btn" type="button" data-pagar="credito" style="width:auto;margin:0">Pagar a camiseta · R$ 42,00</button>'+
-      '</div><p class="aviso" id="b-pag-st" style="margin-top:12px">No Mercado Pago você escolhe PIX, cartão de crédito ou débito.</p>';
+    return '<div class="pag">'+
+      '<div class="pag-abas" role="tablist"><button type="button" data-aba="pix" class="on" role="tab">PIX</button><button type="button" data-aba="cartao" role="tab">Cartão</button></div>'+
+      '<div class="campo"><label for="p-cpf">CPF de quem paga <span class="req">*</span></label><input id="p-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"></div>'+
+      '<div class="campo"><label for="p-email">E-mail <span class="req">*</span><span class="aj">O comprovante chega neste e-mail.</span></label><input id="p-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com"></div>'+
+      '<div id="aba-pix">'+
+        '<button class="btn" type="button" id="pix-gerar">Gerar QR Code do PIX · '+VALOR_TXT+'</button>'+
+        '<div id="pix-res" class="escondido">'+
+          '<div class="pix-qr"><img id="pix-img" alt="QR Code do PIX"></div>'+
+          '<div class="campo"><label for="pix-codigo">PIX copia e cola</label><div class="pix-cc"><input id="pix-codigo" readonly><button class="btn" type="button" id="pix-copiar">Copiar</button></div></div>'+
+          '<div class="espera"><i></i> Aguardando o pagamento…</div>'+
+          '<p class="aviso">Abra o app do seu banco, escolha pagar com PIX e leia o QR Code ou cole o código. Esta tela confirma sozinha quando o pagamento cair.</p>'+
+        '</div>'+
+      '</div>'+
+      '<form id="aba-cartao" class="escondido" autocomplete="on">'+
+        '<div class="campo"><label>Número do cartão</label><div id="mp-numero" class="mp-campo"></div></div>'+
+        '<div class="mp-linha"><div class="campo"><label>Validade</label><div id="mp-validade" class="mp-campo"></div></div>'+
+          '<div class="campo"><label>Código de segurança</label><div id="mp-cvv" class="mp-campo"></div></div></div>'+
+        '<div class="campo"><label for="mp-titular">Nome impresso no cartão</label><input id="mp-titular" autocomplete="cc-name" placeholder="Como está no cartão"></div>'+
+        '<select id="mp-emissor" class="escondido"></select><select id="mp-parcelas" class="escondido"></select>'+
+        '<select id="mp-doc-tipo" class="escondido"></select><input id="mp-doc" class="escondido"><input id="mp-email" class="escondido">'+
+        '<button class="btn" type="submit" id="mp-pagar">Pagar '+VALOR_TXT+'</button>'+
+      '</form>'+
+      '<p class="pag-st" id="b-pag-st" role="status"></p>'+
+      '<button type="button" class="pag-alt" data-pagar="credito">Prefere pagar no site do Mercado Pago?</button>'+
+    '</div>';
   }
   // ref = {telefone} logo após a inscrição, ou {id} quando vem do link enviado pela equipe (?pagar=<id>)
   function ligarPagar(ref){
-    document.querySelectorAll('[data-pagar]').forEach(function(b){
-      b.onclick=function(){ pagar(ref,b.getAttribute('data-pagar'),b); };
-    });
+    var st=document.getElementById('b-pag-st'), cpf=document.getElementById('p-cpf'), email=document.getElementById('p-email');
+    var msg=function(t,erro){ st.textContent=t||''; st.classList.toggle('erro',!!erro); };
+    mascaraCpf(cpf); if(emailInscricao) email.value=emailInscricao;
+    document.querySelectorAll('[data-pagar]').forEach(function(b){ b.onclick=function(){ pagar(ref,b.getAttribute('data-pagar'),b); }; });
+    var dados=function(){
+      if(!cpfValido(cpf.value)){ msg('Confira o CPF.',true); cpf.focus(); return null; }
+      var e=email.value.trim().toLowerCase();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){ msg('Informe um e-mail válido.',true); email.focus(); return null; }
+      msg(''); return {cpf:cpf.value.replace(/\D/g,''),email:e};
+    };
+    var pagamentoId=null, timerPix=null, fim=0;
+    function pago(){ clearInterval(timerPix);
+      cartao('Pagamento confirmado!','Sua inscrição e a camiseta do batismo estão garantidas. Nos vemos no batismo!'); }
+    function conferir(){
+      if(Date.now()>fim){ clearInterval(timerPix); msg('O QR Code expirou. Gere um novo para pagar.',true);
+        document.getElementById('pix-res').classList.add('escondido'); var g=document.getElementById('pix-gerar'); g.disabled=false; g.classList.remove('escondido'); return; }
+      chamarFuncao(Object.assign({acao:'status',pagamento_id:pagamentoId},ref)).then(function(d){ if(d&&d.pago) pago(); }).catch(function(){});
+    }
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden&&pagamentoId&&timerPix) conferir(); });
+    // abas
+    var abas=document.querySelectorAll('.pag-abas button');
+    abas.forEach(function(b){ b.onclick=function(){
+      abas.forEach(function(x){x.classList.toggle('on',x===b);});
+      document.getElementById('aba-pix').classList.toggle('escondido',b.dataset.aba!=='pix');
+      document.getElementById('aba-cartao').classList.toggle('escondido',b.dataset.aba!=='cartao');
+      msg(''); if(b.dataset.aba==='cartao') montarCartao();
+    }; });
+    // PIX
+    var gerar=document.getElementById('pix-gerar');
+    gerar.onclick=async function(){
+      var d=dados(); if(!d) return;
+      gerar.disabled=true; var orig=gerar.textContent; gerar.textContent='Gerando o QR Code…';
+      try{
+        var r=await chamarFuncao(Object.assign({acao:'pix'},ref,d));
+        if(!r.qr_code) throw {msg:r.erro};
+        pagamentoId=r.pagamento_id;
+        document.getElementById('pix-img').src='data:image/png;base64,'+r.qr_code_base64;
+        document.getElementById('pix-codigo').value=r.qr_code;
+        document.getElementById('pix-res').classList.remove('escondido'); gerar.classList.add('escondido');
+        fim=Date.now()+60*60*1000; clearInterval(timerPix); timerPix=setInterval(conferir,4000);
+      }catch(err){ msg(((err&&err.msg)||'Não foi possível gerar o PIX agora.')+' Tente de novo em instantes.',true); }
+      finally{ gerar.disabled=false; gerar.textContent=orig; }
+    };
+    document.getElementById('pix-copiar').onclick=function(){
+      var c=document.getElementById('pix-codigo'); c.select();
+      (navigator.clipboard?navigator.clipboard.writeText(c.value):Promise.reject()).then(function(){toast('Código PIX copiado ✓');})
+        .catch(function(){ try{document.execCommand('copy');toast('Código PIX copiado ✓');}catch(e){toast('Selecione e copie o código.');} });
+    };
+    // cartão: carrega o SDK do Mercado Pago só quando a pessoa abre a aba
+    var montado=false;
+    function carregar(src,attrs){ return new Promise(function(ok,falha){ var s=document.createElement('script'); s.src=src;
+      Object.keys(attrs||{}).forEach(function(k){s.setAttribute(k,attrs[k]);}); s.onload=ok; s.onerror=falha; document.head.appendChild(s); }); }
+    async function montarCartao(){
+      if(montado) return; montado=true;
+      var form=document.getElementById('aba-cartao'), btnPg=document.getElementById('mp-pagar');
+      if(!MP_PUBLIC_KEY){
+        form.innerHTML='<p class="aviso" style="margin:0 0 12px">O pagamento com cartão abre no site do Mercado Pago.</p>'+
+          '<button class="btn" type="button" data-pagar="credito">Pagar com cartão · '+VALOR_TXT+'</button>';
+        form.querySelector('[data-pagar]').onclick=function(){ pagar(ref,'credito',this); };
+        return;
+      }
+      btnPg.disabled=true; msg('Carregando o pagamento com cartão…');
+      try{
+        await carregar('https://sdk.mercadopago.com/js/v2');
+        carregar('https://www.mercadopago.com/v2/security.js',{view:'checkout'}).catch(function(){});   // ajuda o antifraude
+        var mp=new MercadoPago(MP_PUBLIC_KEY,{locale:'pt-BR'});
+        var cf=mp.cardForm({amount:'42.00', iframe:true, form:{
+          id:'aba-cartao',
+          cardNumber:{id:'mp-numero',placeholder:'0000 0000 0000 0000'},
+          expirationDate:{id:'mp-validade',placeholder:'MM/AA'},
+          securityCode:{id:'mp-cvv',placeholder:'123'},
+          cardholderName:{id:'mp-titular',placeholder:'Como está no cartão'},
+          issuer:{id:'mp-emissor'}, installments:{id:'mp-parcelas'},
+          identificationType:{id:'mp-doc-tipo'}, identificationNumber:{id:'mp-doc'}, cardholderEmail:{id:'mp-email'}
+        }, callbacks:{
+          onFormMounted:function(e){ if(e){ msg('Não foi possível carregar o cartão. Use o PIX ou o site do Mercado Pago.',true); return; } btnPg.disabled=false; msg(''); },
+          onIdentificationTypesReceived:function(e,tipos){ var sel=document.getElementById('mp-doc-tipo'); setTimeout(function(){ sel.value='CPF'; },0); },
+          onSubmit:async function(ev){
+            ev.preventDefault();
+            var d=dados(); if(!d) return;
+            document.getElementById('mp-doc').value=d.cpf; document.getElementById('mp-email').value=d.email;
+            document.getElementById('mp-doc-tipo').value='CPF';
+            btnPg.disabled=true; var orig=btnPg.textContent; btnPg.textContent='Processando…'; msg('');
+            try{
+              var t=await cf.createCardToken();
+              var f=cf.getCardFormData();
+              var r=await chamarFuncao(Object.assign({acao:'cartao',token:(t&&t.token)||f.token,payment_method_id:f.paymentMethodId,
+                issuer_id:f.issuerId,device_id:window.MP_DEVICE_SESSION_ID||''},ref,d));
+              if(r.pago){ pago(); return; }
+              if(r.em_analise){ pagamentoId=r.pagamento_id; msg('Pagamento em análise. Esta tela confirma sozinha quando for aprovado.');
+                fim=Date.now()+60*60*1000; clearInterval(timerPix); timerPix=setInterval(conferir,5000); return; }
+              msg(r.motivo||r.erro||'O pagamento não foi aprovado. Confira os dados ou pague com PIX.',true);
+            }catch(err){
+              var e=(err&&(err.message||(Array.isArray(err)&&err[0]&&err[0].message)))||'';
+              msg('Confira os dados do cartão.'+(e?' ('+e+')':''),true);
+            }finally{ btnPg.disabled=false; btnPg.textContent=orig; }
+          }
+        }});
+      }catch(e){ montado=false; msg('Não foi possível carregar o pagamento com cartão. Use o PIX ou o site do Mercado Pago.',true); }
+    }
   }
+  // opção reserva: checkout no site do Mercado Pago
   async function pagar(ref,tipo,b){
     var st=document.getElementById('b-pag-st');
     document.querySelectorAll('[data-pagar]').forEach(function(x){x.disabled=true;});
-    var orig=b.textContent; b.textContent='Abrindo pagamento…';
+    var orig=b.textContent; b.textContent='Abrindo o Mercado Pago…';
     try{
-      var r=await fetch(SUPABASE_URL+'/functions/v1/pagamento-batismo',{method:'POST',
-        headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON},
-        body:JSON.stringify(Object.assign({tipo:tipo},ref))});
-      var d=await r.json().catch(function(){return {};});
+      var d=await chamarFuncao(Object.assign({tipo:tipo},ref));
       if(d.init_point){ try{sessionStorage.setItem('batismo_ref',JSON.stringify(ref));}catch(e){} window.location.href=d.init_point; return; }
       throw {msg:d.erro};
     }catch(err){
       document.querySelectorAll('[data-pagar]').forEach(function(x){x.disabled=false;});
       b.textContent=orig;
-      if(st) st.textContent=((err&&err.msg)||'Não foi possível abrir o pagamento agora.')+' Tente de novo em instantes.';
+      if(st){ st.textContent=((err&&err.msg)||'Não foi possível abrir o pagamento agora.')+' Tente de novo em instantes.'; st.classList.add('erro'); }
     }
   }
 
   function sucesso(comprar,tel){
     if(!comprar){ cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada com sucesso.'); return; }
-    cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada.<br>Agora é só pagar a camiseta (R$ 42,00):',botoesPagar());
+    cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada.<br>Agora é só pagar a camiseta (R$ 42,00), aqui mesmo:',botoesPagar());
     ligarPagar({telefone:tel});
   }
 
@@ -401,6 +559,7 @@
     }
 
     if(email) enviarEmail(tel,email);
+    emailInscricao=email;
     sucesso(comprar,tel);
   };
 

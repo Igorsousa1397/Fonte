@@ -7,6 +7,11 @@
 //      confere status e valor na API do MP e marca inscricoes_batismo.pagamento_status = 'aprovado'.
 //   3) {acao:"email", telefone, email} logo depois da inscrição → manda o e-mail de confirmação
 //      com o link de pagamento da camiseta (batismo.html?pagar=<id>).
+//   4) pagamento na própria página (Checkout Transparente, API de Payments):
+//      {acao:"pix", id|telefone, cpf, email}  → cria o PIX e devolve o QR Code e o copia e cola;
+//      {acao:"cartao", id|telefone, token, payment_method_id, issuer_id, cpf, email, device_id}
+//        → cobra o cartão (o número nunca passa por aqui: a página manda só o token do Mercado Pago);
+//      {acao:"status", id|telefone, pagamento_id} → diz se a camiseta já está paga (a página pergunta a cada poucos segundos).
 // Usa a API de Preferences do Checkout Pro, como o app do encontro. Com a API de Orders o PIX não
 // aparecia no checkout (só cartão), mesmo com chave Pix na conta. Avisos de orders antigas continuam aceitos.
 //
@@ -35,6 +40,29 @@ const cors = {
 const resposta = (status: number, corpo: Record<string, unknown>) =>
   new Response(JSON.stringify(corpo), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const soNumeros = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+const cpfValido = (v: string) => {
+  const c = soNumeros(v);
+  if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+  const dv = (n: number) => { let s = 0; for (let i = 0; i < n; i++) s += +c[i] * (n + 1 - i); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
+  return dv(9) === +c[9] && dv(10) === +c[10];
+};
+const emailValido = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 200;
+// motivo da recusa do cartão em português (status_detail do Mercado Pago)
+const RECUSA: Record<string, string> = {
+  cc_rejected_bad_filled_card_number: "Confira o número do cartão.",
+  cc_rejected_bad_filled_date: "Confira a validade do cartão.",
+  cc_rejected_bad_filled_security_code: "Confira o código de segurança do cartão.",
+  cc_rejected_bad_filled_other: "Confira os dados do cartão.",
+  cc_rejected_insufficient_amount: "O cartão não tem limite ou saldo suficiente.",
+  cc_rejected_call_for_authorize: "O banco pediu para você autorizar este pagamento. Ligue para o banco e tente de novo.",
+  cc_rejected_card_disabled: "Este cartão está bloqueado ou não foi ativado. Fale com o seu banco.",
+  cc_rejected_duplicated_payment: "Já existe um pagamento igual a este. Espere alguns minutos antes de tentar de novo.",
+  cc_rejected_high_risk: "O pagamento foi recusado pela análise de segurança. Tente com PIX ou com outro cartão.",
+  cc_rejected_max_attempts: "Você chegou ao limite de tentativas com este cartão. Use outro cartão ou PIX.",
+  cc_rejected_blacklist: "O pagamento não pôde ser feito com este cartão. Use outro cartão ou PIX.",
+  cc_rejected_invalid_installments: "O cartão não aceita esse número de parcelas.",
+  cc_rejected_card_type_not_allowed: "Este tipo de cartão não é aceito. Use outro cartão ou PIX.",
+};
 const esc = (v: unknown) =>
   String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
@@ -152,20 +180,20 @@ Deno.serve(async (req) => {
     return resposta(200, { ok: true });
   }
 
-  // ---------- 1) criar o checkout ----------
+  // ---------- inscrição que vai pagar ----------
   // {id} vem do link de cobrança que a equipe manda no WhatsApp (batismo.html?pagar=<id>);
   // {telefone} vem da própria página, logo depois da inscrição.
-  const idPedido = String((corpo as { id?: string }).id ?? "").trim();
-  const campos = "id,nome,telefone,email,camiseta_opcao,pagamento_status,created_at";
-  let insc: { id: string; nome: string; telefone: string | null; email: string | null; pagamento_status: string | null } | undefined;
-  if (idPedido) {
-    if (!/^[0-9a-f-]{36}$/i.test(idPedido)) return resposta(400, { erro: "Link de pagamento inválido." });
-    const { data, error } = await admin.from("inscricoes_batismo").select(campos)
-      .eq("id", idPedido).eq("camiseta_opcao", "comprar").maybeSingle();
-    if (error) return resposta(500, { erro: error.message });
-    insc = data ?? undefined;
-    if (!insc) return resposta(404, { erro: "Inscrição com compra de camiseta não encontrada." });
-  } else {
+  type Insc = { id: string; nome: string; telefone: string | null; email: string | null; pagamento_status: string | null };
+  const acharInscricao = async (): Promise<Insc | Response> => {
+    const idPedido = String((corpo as { id?: string }).id ?? "").trim();
+    const campos = "id,nome,telefone,email,camiseta_opcao,pagamento_status,created_at";
+    if (idPedido) {
+      if (!/^[0-9a-f-]{36}$/i.test(idPedido)) return resposta(400, { erro: "Link de pagamento inválido." });
+      const { data, error } = await admin.from("inscricoes_batismo").select(campos)
+        .eq("id", idPedido).eq("camiseta_opcao", "comprar").maybeSingle();
+      if (error) return resposta(500, { erro: error.message });
+      return data ?? resposta(404, { erro: "Inscrição com compra de camiseta não encontrada." });
+    }
     const tel = soNumeros((corpo as { telefone?: string }).telefone);
     if (tel.length < 10) return resposta(400, { erro: "Telefone inválido." });
     // a inscrição mais recente com compra de camiseta para este telefone (últimos 30 dias)
@@ -175,11 +203,106 @@ Deno.serve(async (req) => {
       .eq("camiseta_opcao", "comprar").gte("created_at", desde)
       .order("created_at", { ascending: false }).limit(200);
     if (error) return resposta(500, { erro: error.message });
-    insc = (lista ?? []).find((i) => soNumeros(i.telefone).endsWith(tel.slice(-10)));
-    if (!insc) return resposta(404, { erro: "Inscrição com compra de camiseta não encontrada para este telefone." });
+    return (lista ?? []).find((i) => soNumeros(i.telefone).endsWith(tel.slice(-10)))
+      ?? resposta(404, { erro: "Inscrição com compra de camiseta não encontrada para este telefone." });
+  };
+  const achou = await acharInscricao();
+  if (achou instanceof Response) return achou;
+  const insc = achou;
+  const marcarPago = async (pagamentoId: string) => {
+    const { error } = await admin.from("inscricoes_batismo")
+      .update({ pagamento_status: "aprovado", pagamento_id: pagamentoId }).eq("id", insc.id);
+    if (error) console.error("batismo: erro ao marcar pago", error.message);
+  };
+  const acao = String((corpo as { acao?: string }).acao ?? "");
+
+  // ---------- 4c) a página pergunta se já pagou ----------
+  if (acao === "status") {
+    if (insc.pagamento_status === "aprovado") return resposta(200, { pago: true });
+    // se o aviso do Mercado Pago ainda não chegou, confere direto o pagamento que esta página criou
+    const pid = soNumeros((corpo as { pagamento_id?: string }).pagamento_id);
+    if (pid) {
+      const r = await fetch(`https://api.mercadopago.com/v1/payments/${pid}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) {
+        const pg = await r.json();
+        if (pg.external_reference !== PREFIXO + insc.id) return resposta(200, { pago: false });   // pagamento de outra inscrição
+        if (pg.status === "approved" && Number(pg.transaction_amount) + 0.01 >= VALOR_CAMISETA) {
+          await marcarPago(pid);
+          return resposta(200, { pago: true });
+        }
+        return resposta(200, { pago: false, status: pg.status });
+      }
+    }
+    return resposta(200, { pago: false });
   }
+
   if (insc.pagamento_status === "aprovado") return resposta(409, { erro: "A camiseta desta inscrição já está paga." });
 
+  // ---------- 4a/4b) PIX e cartão na própria página ----------
+  if (acao === "pix" || acao === "cartao") {
+    const cpf = soNumeros((corpo as { cpf?: string }).cpf);
+    if (!cpfValido(cpf)) return resposta(400, { erro: "Confira o CPF." });
+    const email = String((corpo as { email?: string }).email ?? insc.email ?? "").trim().toLowerCase();
+    if (!emailValido(email)) return resposta(400, { erro: "Informe um e-mail válido." });
+    const partes = String(insc.nome ?? "").trim().split(/\s+/).filter(Boolean);
+    const payer: Record<string, unknown> = {
+      email, identification: { type: "CPF", number: cpf },
+      ...(partes.length ? { first_name: partes[0] } : {}),
+      ...(partes.length > 1 ? { last_name: partes.slice(1).join(" ") } : {}),
+    };
+    const base: Record<string, unknown> = {
+      transaction_amount: VALOR_CAMISETA,
+      description: "Camiseta do batismo - Igreja Fonte",
+      external_reference: PREFIXO + insc.id,
+      notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/pagamento-batismo`,
+      statement_descriptor: "IGR FONTE",
+      payer,
+      additional_info: {
+        items: [{ id: "camiseta-batismo", title: "Camiseta do batismo", description: "Camiseta do batismo da Igreja Fonte",
+          category_id: "fashion", quantity: 1, unit_price: VALOR_CAMISETA }],
+        payer: { first_name: partes[0] ?? "", last_name: partes.slice(1).join(" ") },
+      },
+    };
+    let corpoPg: Record<string, unknown>;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json", Authorization: `Bearer ${token}`, "X-Idempotency-Key": crypto.randomUUID(),
+    };
+    if (acao === "pix") {
+      corpoPg = { ...base, payment_method_id: "pix", date_of_expiration: new Date(Date.now() + MINUTOS_VALIDADE * 60_000).toISOString() };
+    } else {
+      const c = corpo as { token?: string; payment_method_id?: string; issuer_id?: string | number; device_id?: string };
+      if (!c.token || !c.payment_method_id) return resposta(400, { erro: "Confira os dados do cartão." });
+      corpoPg = { ...base, token: String(c.token), payment_method_id: String(c.payment_method_id), installments: 1,
+        ...(c.issuer_id ? { issuer_id: Number(c.issuer_id) } : {}), binary_mode: true, capture: true };
+      if (c.device_id) headers["X-meli-session-id"] = String(c.device_id).slice(0, 200);   // ajuda o antifraude
+    }
+    const r = await fetch("https://api.mercadopago.com/v1/payments", { method: "POST", headers, body: JSON.stringify(corpoPg) });
+    const pg = await r.json().catch(() => ({}));
+    if (!r.ok || !pg.id) {
+      console.error(`batismo: MP recusou o ${acao} (${r.status})`, JSON.stringify(pg).slice(0, 500));
+      const semPix = acao === "pix" && /key|chave|qr/i.test(JSON.stringify(pg));
+      return resposta(502, { erro: semPix
+        ? "O PIX não está disponível agora. Pague com cartão ou fale com a equipe do batismo."
+        : acao === "pix" ? "Não foi possível gerar o PIX agora. Tente de novo em instantes."
+        : "Não foi possível processar o cartão agora. Confira os dados e tente de novo." });
+    }
+    console.log(`batismo: ${acao} ${pg.id} status=${pg.status}/${pg.status_detail} inscrição ${insc.id}`);
+    await admin.from("inscricoes_batismo").update({ pagamento_status: "pendente", pagamento_id: String(pg.id) })
+      .eq("id", insc.id).neq("pagamento_status", "aprovado");
+    if (acao === "pix") {
+      const t = pg.point_of_interaction?.transaction_data ?? {};
+      if (!t.qr_code) return resposta(502, { erro: "Não foi possível gerar o PIX agora. Tente de novo em instantes." });
+      return resposta(200, { pagamento_id: String(pg.id), qr_code: t.qr_code, qr_code_base64: t.qr_code_base64, ticket_url: t.ticket_url,
+        expira_em: pg.date_of_expiration });
+    }
+    if (pg.status === "approved") { await marcarPago(String(pg.id)); return resposta(200, { pago: true, pagamento_id: String(pg.id) }); }
+    if (pg.status === "in_process" || pg.status === "pending")
+      return resposta(200, { pago: false, em_analise: true, pagamento_id: String(pg.id) });
+    return resposta(200, { pago: false, recusado: true,
+      motivo: RECUSA[pg.status_detail] ?? "O banco recusou o pagamento. Tente outro cartão ou pague com PIX." });
+  }
+
+  // ---------- 1) checkout no site do Mercado Pago (opção reserva) ----------
   const volta = (pago: string) => `${SITE}/batismo.html?pago=${pago}`;
   // Dados de quem paga: sem eles o antifraude do MP recusa muito cartão (high_risk).
   const partesNome = String(insc.nome ?? "").trim().split(/\s+/).filter(Boolean);
