@@ -1,6 +1,6 @@
 <!--
   IGREJA FONTE · Cajamar — Painel administrativo
-  Protegido (sessão + profiles.role). Perfis: admin (tudo), acao_social, ministerios, site (conteúdo do site).
+  Protegido (sessão + profiles.role). Perfis: admin (tudo), acao_social, ministerios, site (conteúdo do site), batismo (só o Batismo).
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -510,6 +510,8 @@
     // conteúdo do site: no Batismo vê só a página de inscrição (foto e data), sem a lista de inscritos
     site:        { itens:['[data-view="batismo"]','#btn-min','#subnav-min','[data-view="encontros"]','[data-view="banners"]','[data-view="celulas"]','[data-view="agenda"]','[data-view="parcerias"]','[data-view="atraves"]'],
                    inicio:['banners'], carregaTudo:false, batismoSoPagina:true, ocultos:['[data-min="escalas"]'] },
+    // batismo: só a tela de Batismo (inscritos, pagamentos da camiseta e a página de inscrição), sem o resto do painel
+    batismo:     { itens:['[data-view="batismo"]'], inicio:['batismo'], carregaTudo:false, carregaBatismo:true },
     // estabelecimento parceiro: só confere se a pessoa é membro ativo (busca por nome/CPF ou QR da carteirinha)
     parceiro:    { itens:[], mostrar:['#nav-validar'], inicio:['validar'], carregaTudo:false }
   };
@@ -3028,6 +3030,9 @@ ${serve ? `
       ARES = ar.data || [];
       APESSOAS = ap.data || [];
       CONTRIB = co.data || [];
+    } else if(perf.carregaBatismo){
+      const rb = await sb.from('inscricoes_batismo').select('id,nome,celula,telefone,camiseta_numero,camiseta_opcao,pagamento_status,created_at').order('created_at',{ascending:false});
+      BATISMO = rb.data || [];
     }
     montaSubnav();
     // lista de ministérios do banco (usada também no editor de membro)
