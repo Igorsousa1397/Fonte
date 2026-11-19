@@ -338,7 +338,7 @@
   // Cartão: os campos de número, validade e código são do Mercado Pago (iframes); a página só recebe um token.
   // Public Key de produção da aplicação "Batismo Igreja Fonte" (Mercado Pago Developers → Credenciais de produção).
   // É pública por natureza; sem ela, a aba Cartão manda para o site do Mercado Pago.
-  var MP_PUBLIC_KEY='';
+  var MP_PUBLIC_KEY='APP_USR-6bf0a41e-30c1-45ca-a5a0-901185d6e3af';
   var VALOR_TXT='R$ 42,00', emailInscricao='';
   function chamarFuncao(corpo){
     return fetch(SUPABASE_URL+'/functions/v1/pagamento-batismo',{method:'POST',
