@@ -421,7 +421,7 @@
         document.getElementById('pix-codigo').value=r.qr_code;
         document.getElementById('pix-res').classList.remove('escondido'); gerar.classList.add('escondido');
         fim=Date.now()+60*60*1000; clearInterval(timerPix); timerPix=setInterval(conferir,4000);
-      }catch(err){ msg(((err&&err.msg)||'Não foi possível gerar o PIX agora.')+' Tente de novo em instantes.',true); }
+      }catch(err){ msg((err&&err.msg)||'Não foi possível gerar o PIX agora. Tente de novo em instantes.',true); }
       finally{ gerar.disabled=false; gerar.textContent=orig; }
     };
     document.getElementById('pix-copiar').onclick=function(){
@@ -494,7 +494,7 @@
     }catch(err){
       document.querySelectorAll('[data-pagar]').forEach(function(x){x.disabled=false;});
       b.textContent=orig;
-      if(st){ st.textContent=((err&&err.msg)||'Não foi possível abrir o pagamento agora.')+' Tente de novo em instantes.'; st.classList.add('erro'); }
+      if(st){ st.textContent=(err&&err.msg)||'Não foi possível abrir o pagamento agora. Tente de novo em instantes.'; st.classList.add('erro'); }
     }
   }
 
