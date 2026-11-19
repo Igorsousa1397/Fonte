@@ -40,6 +40,14 @@ const cors = {
 const resposta = (status: number, corpo: Record<string, unknown>) =>
   new Response(JSON.stringify(corpo), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const soNumeros = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+// "Maria da Silva" -> "Maria S.": a página mostra para a pessoa conferir que está pagando a inscrição certa,
+// sem expor o nome completo de quem só digitou um telefone.
+const nomeCurto = (n: unknown) => {
+  const p = String(n ?? "").trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return "";
+  const prim = p[0].charAt(0).toUpperCase() + p[0].slice(1).toLowerCase();
+  return p.length > 1 ? `${prim} ${p[p.length - 1].charAt(0).toUpperCase()}.` : prim;
+};
 const cpfValido = (v: string) => {
   const c = soNumeros(v);
   if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
@@ -218,22 +226,23 @@ Deno.serve(async (req) => {
 
   // ---------- 4c) a página pergunta se já pagou ----------
   if (acao === "status") {
-    if (insc.pagamento_status === "aprovado") return resposta(200, { pago: true });
+    const ok = (o: Record<string, unknown>) => resposta(200, { ...o, nome: nomeCurto(insc.nome) });
+    if (insc.pagamento_status === "aprovado") return ok({ pago: true });
     // se o aviso do Mercado Pago ainda não chegou, confere direto o pagamento que esta página criou
     const pid = soNumeros((corpo as { pagamento_id?: string }).pagamento_id);
     if (pid) {
       const r = await fetch(`https://api.mercadopago.com/v1/payments/${pid}`, { headers: { Authorization: `Bearer ${token}` } });
       if (r.ok) {
         const pg = await r.json();
-        if (pg.external_reference !== PREFIXO + insc.id) return resposta(200, { pago: false });   // pagamento de outra inscrição
+        if (pg.external_reference !== PREFIXO + insc.id) return ok({ pago: false });   // pagamento de outra inscrição
         if (pg.status === "approved" && Number(pg.transaction_amount) + 0.01 >= VALOR_CAMISETA) {
           await marcarPago(pid);
-          return resposta(200, { pago: true });
+          return ok({ pago: true });
         }
-        return resposta(200, { pago: false, status: pg.status });
+        return ok({ pago: false, status: pg.status });
       }
     }
-    return resposta(200, { pago: false });
+    return ok({ pago: false });
   }
 
   if (insc.pagamento_status === "aprovado") return resposta(409, { erro: "A camiseta desta inscrição já está paga." });

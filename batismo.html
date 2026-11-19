@@ -103,6 +103,8 @@
      padding:11px 10px;border-radius:100px;cursor:pointer;min-height:44px}
   .pag-abas button.on{background:var(--agua);color:#04211f}
   .pag .campo{margin-bottom:14px}
+  .pag-nome{text-align:center;color:var(--cinza-claro);font-size:.95rem;margin:-6px 0 16px}
+  .pag-nome b{color:var(--luz);font-weight:600}
   .pag-st{color:var(--cinza-claro);font-size:.9rem;margin-top:12px;text-align:center;min-height:1.2em}
   .pag-st.erro{color:#ff9a9a}
   .pix-qr{background:#fff;border-radius:14px;padding:14px;width:min(260px,100%);margin:6px auto 14px}
@@ -379,6 +381,7 @@
     el.value=d.replace(/^(\d{3})(\d)/,'$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/,'.$1-$2'); }); }
   function botoesPagar(){
     return '<div class="pag">'+
+      '<p class="pag-nome escondido" id="pag-nome"></p>'+
       '<div class="pag-abas" role="tablist"><button type="button" data-aba="pix" class="on" role="tab">PIX</button><button type="button" data-aba="cartao" role="tab">Cartão</button></div>'+
       '<div class="campo"><label for="p-cpf">CPF de quem paga <span class="req">*</span></label><input id="p-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"></div>'+
       '<div class="campo"><label for="p-email">E-mail <span class="req">*</span><span class="aj">O comprovante chega neste e-mail.</span></label><input id="p-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com"></div>'+
@@ -405,7 +408,7 @@
     '</div>';
   }
   // ref = {telefone} logo após a inscrição, ou {id} quando vem do link enviado pela equipe (?pagar=<id>)
-  function ligarPagar(ref){
+  function ligarPagar(ref,nome){
     var st=document.getElementById('b-pag-st'), cpf=document.getElementById('p-cpf'), email=document.getElementById('p-email');
     var msg=function(t,erro){ st.textContent=t||''; st.classList.toggle('erro',!!erro); };
     mascaraCpf(cpf); if(emailInscricao) email.value=emailInscricao;
@@ -419,6 +422,14 @@
     var pagamentoId=null, timerPix=null, fim=0;
     function pago(){ clearInterval(timerPix);
       cartao('Pagamento confirmado!','Sua inscrição e a camiseta do batismo estão garantidas. Nos vemos no batismo!'); }
+    // nome de quem está inscrito ("Maria S."), para a pessoa conferir que está pagando a inscrição certa
+    function mostrarNome(n){ var el=document.getElementById('pag-nome'); if(!el||!n) return;
+      el.textContent='Inscrição de '; var b=document.createElement('b'); b.textContent=n; el.appendChild(b); el.classList.remove('escondido'); }
+    if(nome) mostrarNome(nome);
+    else chamarFuncao(Object.assign({acao:'status'},ref)).then(function(d){
+      if(d&&d.pago){ cartao('Camiseta já paga','A camiseta desta inscrição já está paga. Nos vemos no batismo!'); return; }
+      if(d) mostrarNome(d.nome);
+    }).catch(function(){});
     function conferir(){
       if(Date.now()>fim){ clearInterval(timerPix); msg('O QR Code expirou. Gere um novo para pagar.',true);
         document.getElementById('pix-res').classList.add('escondido'); var g=document.getElementById('pix-gerar'); g.disabled=false; g.classList.remove('escondido'); return; }
@@ -554,7 +565,7 @@
             :r.erro,true);
         }else if(r&&r.pago===false){
           cartao('Pagamento da camiseta','Encontramos sua inscrição.<br>Falta só pagar a camiseta (R$ 42,00):',botoesPagar());
-          ligarPagar({telefone:d});
+          ligarPagar({telefone:d},r.nome);
           document.querySelector('.form').scrollIntoView({behavior:'smooth',block:'start'});
         }else{
           aviso('Não foi possível consultar agora. Tente de novo em instantes.',true);
