@@ -196,8 +196,8 @@ Deno.serve(async (req) => {
     }
     const tel = soNumeros((corpo as { telefone?: string }).telefone);
     if (tel.length < 10) return resposta(400, { erro: "Telefone inválido." });
-    // a inscrição mais recente com compra de camiseta para este telefone (últimos 30 dias)
-    const desde = new Date(Date.now() - 30 * 86_400_000).toISOString();
+    // a inscrição mais recente com compra de camiseta para este telefone (últimos 60 dias)
+    const desde = new Date(Date.now() - 60 * 86_400_000).toISOString();
     const { data: lista, error } = await admin.from("inscricoes_batismo")
       .select(campos)
       .eq("camiseta_opcao", "comprar").gte("created_at", desde)
