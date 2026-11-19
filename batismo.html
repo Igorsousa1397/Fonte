@@ -119,6 +119,17 @@
   .pag #mp-titular::placeholder{color:#8a8a92}
   .mp-linha{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .pag .escondido{display:none!important}
+  /* já inscrito: vai direto para o pagamento da camiseta pelo telefone */
+  .ja-insc{border:1px solid var(--agua-forte);background:var(--agua-fundo);border-radius:var(--raio-sm);margin-bottom:26px}
+  .ja-abrir{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:14px 18px;
+            background:none;border:none;color:var(--luz);font-family:var(--corpo);font-size:.95rem;text-align:left;cursor:pointer}
+  .ja-abrir b{font-weight:600}
+  .ja-abrir .seta{color:var(--agua);transition:transform .2s}
+  .ja-abrir[aria-expanded="true"] .seta{transform:rotate(90deg)}
+  .ja-corpo{padding:0 18px 18px}
+  .ja-corpo .campo{margin-bottom:14px}
+  .ja-corpo.escondido{display:none}
+  .ja-st.erro{color:#ff9a9a}
   .pag-alt{display:block;text-align:center;margin-top:16px;font-size:.85rem;color:var(--cinza);text-decoration:underline;cursor:pointer;background:none;border:none;width:100%;font-family:var(--corpo)}
   @media(max-width:560px){.form{padding:22px}}
 </style>
@@ -139,6 +150,20 @@
   <div class="versiculo">"Pois em um só corpo todos nós fomos batizados em um único Espírito: quer judeus, quer gregos, quer escravos, quer livres. E a todos nós foi dado beber de um único Espírito." — 1 Coríntios 12:13</div>
 
   <div class="form">
+    <div class="ja-insc">
+      <button type="button" class="ja-abrir" id="ja-abrir" aria-expanded="false" aria-controls="ja-corpo">
+        <span><b>Já fez sua inscrição?</b> Pague a camiseta aqui</span><span class="seta" aria-hidden="true">›</span>
+      </button>
+      <div class="ja-corpo escondido" id="ja-corpo">
+        <div class="campo">
+          <label for="ja-tel">Telefone usado na inscrição</label>
+          <input id="ja-tel" inputmode="tel" autocomplete="tel" placeholder="(11) 90000-0000">
+        </div>
+        <button type="button" class="btn" id="ja-ir">Ir para o pagamento</button>
+        <p class="aviso ja-st" id="ja-st" role="status"></p>
+      </div>
+    </div>
+
     <h2>Faça sua inscrição</h2>
     <p class="sub">Preencha os dados abaixo. Ao enviar, sua inscrição é encaminhada pelo WhatsApp para a nossa equipe.</p>
 
@@ -294,8 +319,8 @@
     });
   })();
 
-  (function(){
-    var tel=document.getElementById('b-tel'); if(!tel) return;
+  ['b-tel','ja-tel'].forEach(function(id){
+    var tel=document.getElementById(id); if(!tel) return;
     tel.setAttribute('maxlength','16');
     tel.addEventListener('input', function(){
       var d=tel.value.replace(/\D/g,'').slice(0,11);
@@ -305,7 +330,7 @@
       else if(d.length>0)  d=d.replace(/^(\d{0,2}).*/,'($1');
       tel.value=d;
     });
-  })();
+  });
 
   (function(){
     var cbs=document.querySelectorAll('#b-opcoes .cbx');
@@ -503,6 +528,42 @@
     cartao('Inscrição recebida!','Sua inscrição para o batismo foi registrada.<br>Agora é só pagar a camiseta (R$ 42,00), aqui mesmo:',botoesPagar());
     ligarPagar({telefone:tel});
   }
+
+  // "Já fez sua inscrição?": acha a inscrição pelo telefone e abre o pagamento da camiseta
+  (function(){
+    var abrir=document.getElementById('ja-abrir'); if(!abrir) return;
+    var corpo=document.getElementById('ja-corpo'), tel=document.getElementById('ja-tel'),
+        ir=document.getElementById('ja-ir'), st=document.getElementById('ja-st');
+    var aviso=function(t,erro){ st.textContent=t||''; st.classList.toggle('erro',!!erro); };
+    abrir.onclick=function(){
+      var aberto=corpo.classList.toggle('escondido')===false;
+      abrir.setAttribute('aria-expanded',aberto?'true':'false');
+      if(aberto) tel.focus();
+    };
+    function buscar(){
+      var d=tel.value.replace(/\D/g,'');
+      if(d.length<10){ aviso('Digite o telefone com DDD.',true); tel.focus(); return; }
+      ir.disabled=true; aviso('Procurando sua inscrição…');
+      chamarFuncao({acao:'status',telefone:d}).then(function(r){
+        ir.disabled=false;
+        if(r&&r.pago){
+          cartao('Camiseta já paga','A camiseta da sua inscrição já está paga. Nos vemos no batismo!');
+        }else if(r&&r.erro){
+          aviso(/não encontrada/i.test(r.erro)
+            ?'Não encontramos inscrição com compra de camiseta para este telefone. Confira o número ou faça sua inscrição abaixo.'
+            :r.erro,true);
+        }else if(r&&r.pago===false){
+          cartao('Pagamento da camiseta','Encontramos sua inscrição.<br>Falta só pagar a camiseta (R$ 42,00):',botoesPagar());
+          ligarPagar({telefone:d});
+          document.querySelector('.form').scrollIntoView({behavior:'smooth',block:'start'});
+        }else{
+          aviso('Não foi possível consultar agora. Tente de novo em instantes.',true);
+        }
+      }).catch(function(){ ir.disabled=false; aviso('Não foi possível consultar agora. Tente de novo em instantes.',true); });
+    }
+    ir.onclick=buscar;
+    tel.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); buscar(); } });
+  })();
 
   // volta do Mercado Pago: ?pago=true | pending | false
   // link de cobrança enviado pela equipe no WhatsApp: ?pagar=<id da inscrição>
